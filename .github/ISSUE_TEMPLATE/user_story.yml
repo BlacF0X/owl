@@ -1,0 +1,44 @@
+name: User Story
+description: Créer une nouvelle User Story
+title: "[US] En tant que [rôle], je veux [action] pour [bénéfice]"
+labels: ["user-story", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Remplis ce formulaire pour décrire la User Story.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description de la User Story
+      description: Décris ce que l'utilisateur souhaite accomplir.
+      placeholder: "Ex: En tant qu'utilisateur, je veux pouvoir réinitialiser mon mot de passe pour accéder à mon compte en cas d'oubli."
+    validations:
+      required: true
+
+  - type: textarea
+    id: valeur-client
+    attributes:
+      label: Valeur pour le client (optionnel)
+      description: Explique pourquoi cette User Story est importante pour le client.
+      placeholder: "Ex: Réduire le nombre d'appels au support pour les mots de passe oubliés."
+
+  - type: textarea
+    id: maquette
+    attributes:
+      label: Maquette (optionnel)
+      description: Ajoute un lien vers une maquette (Figma, Adobe XD, etc.) ou une description visuelle.
+      placeholder: "Ex: Lien vers la maquette Figma : [lien]"
+
+  - type: textarea
+    id: criteres-acceptation
+    attributes:
+      label: Critères d'acceptation
+      description: Liste les conditions à remplir pour que la User Story soit considérée comme terminée.
+      placeholder: |
+        - L'utilisateur peut cliquer sur "Mot de passe oublié" depuis la page de connexion.
+        - Un email de réinitialisation est envoyé à l'adresse associée au compte.
+        - Le mot de passe peut être réinitialisé via un lien sécurisé.
+    validations:
+      required: true
