@@ -1,6 +1,6 @@
 name: User Story
 description: Créer une nouvelle User Story
-title: "[US] En tant que [rôle], je veux [action] pour [bénéfice]"
+title: "[USXX] Intitulé de la User Story"
 labels: ["user-story", "triage"]
 body:
   - type: markdown
