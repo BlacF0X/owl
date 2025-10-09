@@ -4,6 +4,9 @@
   padding: 1rem 2rem;
   color: #101820;
   background-color: white;
+  position: sticky;
+  top: 0;            
+  z-index: 1000;
 }
 
 .nav-links {
