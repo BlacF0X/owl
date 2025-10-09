@@ -1,0 +1,20 @@
+* {
+  box-sizing: border-box;
+}
+
+body, html {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background: #f8f9fb;
+  color: #222;
+}
+
+.app {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.header {
+  display: flex;
+  justify-content: center;
+}

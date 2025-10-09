@@ -1,0 +1,29 @@
+.stats {
+  background: #101820;
+  color: white;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.stats-grid {
+  display: flex;
+  justify-content: center;
+  gap: 3rem;
+  flex-wrap: wrap;
+  margin-top: 2rem;
+}
+
+.stat-card h3 {
+  font-size: 2rem;
+  margin: 0;
+}
+
+.stat-card p {
+  font-size: 1rem;
+  margin-top: 0.5rem;
+}
+
+.imgCO {
+    height: 450px;
+    width:auto;
+}
