@@ -8,14 +8,14 @@ function Feature() {
         <p>Une équipe de six développeurs motivés !</p>
         <div className="team-lists">
           <ul>
-            <li>Arno Stärkel - développeur backend</li>
-            <li>Clément Vier - développeur backend</li>
-            <li>Corentin Mertens - développeur électronique</li>
+            <li><strong>Arno Stärkel</strong> - développeur backend</li>
+            <li><strong>Clément Vier</strong> - développeur fullstack</li>
+            <li><strong>Corentin Mertens</strong> - développeur électronique</li>
           </ul>
           <ul>
-            <li>Liam Gérard - développeur frontend</li>
-            <li>Lucas Bretenstein - développeur backend</li>
-            <li>Martin Stocq - développeur frontend</li>
+            <li><strong>Liam Gérard</strong> - développeur frontend</li>
+            <li><strong>Lucas Bretenstein</strong> - développeur backend</li>
+            <li><strong>Martin Stocq</strong> - développeur frontend</li>
           </ul>
         </div>
       </div>
