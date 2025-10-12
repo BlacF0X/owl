@@ -1,7 +1,7 @@
-import React from 'react'
-import '../styles/Navbar.css'
+import React from 'react';
+import '../styles/Navbar.css';
 
-function Navbar() {
+const Navbar: React.FC = () => {
   return (
     <nav className="navbar">
       <div className="logo">OwL.</div>
@@ -12,7 +12,7 @@ function Navbar() {
         <li><a href="#contact" className="connection">Se connecter</a></li>
       </ul>
     </nav>
-  )
-}
+  );
+};
 
-export default Navbar
+export default Navbar;

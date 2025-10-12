@@ -2,7 +2,7 @@ import React from 'react'
 import '../styles/Stats.css'
 
 
-function Stats() {
+const Stats: React.FC = () => {
   return (
     <section className="stats" id="stats">
       <h2>À propos de nous</h2>
@@ -21,7 +21,7 @@ function Stats() {
         </div>
       </div>
     </section>
-  )
-}
+  );
+};
 
 export default Stats

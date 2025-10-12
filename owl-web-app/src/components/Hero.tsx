@@ -1,7 +1,7 @@
-import React from 'react'
-import '../styles/Hero.css'
+import React from 'react';
+import '../styles/Hero.css';
 
-function Hero() {
+const Hero: React.FC = () => {
   return (
     <section className="hero">
       <div className="hero-text">
@@ -9,7 +9,7 @@ function Hero() {
         <p>Project OwL vous aide à mieux comprendre votre environnement grâce à des données précises.</p>
       </div>
     </section>
-  )
-}
+  );
+};
 
-export default Hero
+export default Hero;
