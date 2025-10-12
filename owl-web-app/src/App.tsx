@@ -1,10 +1,25 @@
-// App.tsx
 import React from 'react';
-import HomePage from './HomePage';
-import './styles/App.css'; // Assurez-vous d'avoir un fichier CSS pour les styles
+import './styles/App.css';
+
+// Importation des pages
+import HomePage from './pages/HomePage';
+
+// Importation des composants
+import Navbar from './components/Navbar'
+import Hero from './components/Hero'
+import Feature from './components/Feature'
+import Stats from './components/Stats'
 
 const App: React.FC = () => {
-  return <HomePage />;
+  return (
+    <div className="App">
+      <Navbar />
+      <Hero />
+      <HomePage />
+      <Feature />
+      <Stats />
+    </div>
+  );
 };
 
 export default App;
