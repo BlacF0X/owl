@@ -1,6 +1,5 @@
-import React from 'react'
-import '../styles/Stats.css'
-
+import React from 'react';
+import '../styles/Stats.css';
 
 const Stats: React.FC = () => {
   return (
@@ -24,4 +23,4 @@ const Stats: React.FC = () => {
   );
 };
 
-export default Stats
+export default Stats;

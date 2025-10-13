@@ -1,7 +1,7 @@
-import React from 'react'
-import '../styles/App.css'
+import React from 'react';
+import '../styles/App.css';
 
-function HomePage() {
+const HomePage: React.FC = () => {
   return (
     <div className="homepage">
       <header className="header">
@@ -11,7 +11,7 @@ function HomePage() {
         </div>
       </header>
     </div>
-  )
-}
+  );
+};
 
-export default HomePage
+export default HomePage;

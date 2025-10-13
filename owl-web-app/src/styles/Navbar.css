@@ -5,7 +5,7 @@
   color: #101820;
   background-color: white;
   position: sticky;
-  top: 0;            
+  top: 0;
   z-index: 1000;
 }
 
@@ -22,15 +22,15 @@
 }
 
 .connection {
-  color:white !important;  
+  color: white !important;
   background-color: #101820;
   border-radius: 5px;
   padding: 15px;
   transition: background-color 0.3s;
 }
 
-.connection:hover{
-  color:#101820 !important;  
+.connection:hover {
+  color: #101820 !important;
   background-color: #ffffff;
   border-radius: 5px;
   padding: 15px;
@@ -41,7 +41,7 @@
   text-decoration: underline;
 }
 
-.logo{
-    font-size: 30px;
-    font-weight: bolder;
+.logo {
+  font-size: 30px;
+  font-weight: bolder;
 }
