@@ -22,7 +22,7 @@
 }
 
 .hero-btn {
-  background: #4CAF50;
+  background: #4caf50;
   color: white;
   padding: 0.8rem 1.2rem;
   border: none;
@@ -36,5 +36,7 @@
 }
 
 .hero {
-  background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 5)),url('https://prod-saint-gobain-fr.content.saint-gobain.io/sites/saint-gobain.fr/files/2024-07/fenetre-double-vitrage-alu-pvc-que-choisir-la-maison-saint-gobain-01.jpg');
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 5)),
+    url('https://prod-saint-gobain-fr.content.saint-gobain.io/sites/saint-gobain.fr/files/2024-07/fenetre-double-vitrage-alu-pvc-que-choisir-la-maison-saint-gobain-01.jpg');
 }

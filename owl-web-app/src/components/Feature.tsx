@@ -1,5 +1,5 @@
-import React from 'react'
-import '../styles/Features.css'
+import React from 'react';
+import '../styles/Features.css';
 
 const Feature: React.FC = () => {
   return (
@@ -8,19 +8,33 @@ const Feature: React.FC = () => {
         <p>Une équipe de six développeurs motivés !</p>
         <div className="team-lists">
           <ul>
-            <li><strong>Arno Stärkel</strong> - développeur backend</li>
-            <li><strong>Clément Vier</strong> - développeur fullstack</li>
-            <li><strong>Corentin Mertens</strong> - développeur électronique</li>
+            <li>
+              <strong>Arno Stärkel</strong> - développeur backend
+            </li>
+            <li>
+              <strong>Clément Vier</strong> - développeur fullstack
+            </li>
+            <li>
+              <strong>Corentin Mertens</strong> - développeur électronique
+            </li>
           </ul>
           <ul>
-            <li><strong>Liam Gérard</strong> - développeur frontend</li>
-            <li><strong>Lucas Bretenstein</strong> - développeur backend</li>
-            <li><strong>Martin Stocq</strong> - développeur frontend</li>
+            <li>
+              <strong>Liam Gérard</strong> - développeur frontend
+            </li>
+            <li>
+              <strong>Lucas Bretenstein</strong> - développeur backend
+            </li>
+            <li>
+              <strong>Martin Stocq</strong> - développeur frontend
+            </li>
           </ul>
         </div>
       </div>
 
-      <h2><strong>Composants clés</strong></h2>
+      <h2>
+        <strong>Composants clés</strong>
+      </h2>
       <div className="features-grid">
         <div className="feature-card">
           <img
@@ -49,7 +63,7 @@ const Feature: React.FC = () => {
         </div>
       </div>
     </section>
-  )
-}
+  );
+};
 
-export default Feature
+export default Feature;

@@ -2,7 +2,8 @@
   box-sizing: border-box;
 }
 
-body, html {
+body,
+html {
   margin: 0;
   font-family: 'Inter', sans-serif;
   background: #f8f9fb;
@@ -19,6 +20,6 @@ body, html {
   justify-content: center;
 }
 
-.header-content{
+.header-content {
   text-align: center !important;
 }
