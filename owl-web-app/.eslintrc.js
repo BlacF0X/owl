@@ -16,7 +16,7 @@ module.exports = {
   rules: {
     // Vous pouvez ajouter ou surcharger des règles ici.
     // Par exemple, pour forcer les types explicites pour les retours de fonction :
-    '@typescript-eslint/explicit-module-boundary-types': 'warn',
+    '@typescript-eslint/explicit-module-boundary-types': 'error',
     // Règle de Prettier
     'prettier/prettier': 'warn'
   }
