@@ -1,0 +1,40 @@
+name: CI - Linter
+
+# Déclenche le workflow à chaque push sur n'importe quelle branche
+# et à chaque ouverture ou modification d'une Pull Request.
+on: [push, pull_request]
+
+jobs:
+  lint:
+    # Nom du job qui apparaîtra sur GitHub
+    name: Run ESLint
+    
+    # Utilise la dernière version d'Ubuntu pour exécuter le job
+    runs-on: ubuntu-latest
+
+    steps:
+      # Étape 1: Récupère le code de votre dépôt
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      # Étape 2: Configure l'environnement Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          # Utilise une version LTS (Long Term Support) de Node.js
+          node-version: '20'
+          # Utilise le cache de npm pour accélérer les installations futures
+          cache: 'npm'
+          # Le cache est basé sur le contenu de package-lock.json
+          cache-dependency-path: owl-web-app/package-lock.json
+
+      # Étape 3: Installe les dépendances du projet
+      # Utilise "npm ci" qui est plus rapide et plus fiable pour les CI que "npm install"
+      - name: Install dependencies
+        working-directory: ./owl-web-app # Spécifie le répertoire de l'application React
+        run: npm ci
+
+      # Étape 4: Lance la commande de linting définie dans package.json
+      - name: Run ESLint check
+        working-directory: ./owl-web-app # Spécifie le répertoire de l'application React
+        run: npm run lint
