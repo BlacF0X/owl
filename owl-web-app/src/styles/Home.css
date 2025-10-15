@@ -22,7 +22,7 @@
 }
 
 .hero-btn {
-  background: #4CAF50;
+  background: #4caf50;
   color: white;
   padding: 0.8rem 1.2rem;
   border: none;
@@ -36,9 +36,10 @@
 }
 
 .hero {
-  background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 5)),url('https://prod-saint-gobain-fr.content.saint-gobain.io/sites/saint-gobain.fr/files/2024-07/fenetre-double-vitrage-alu-pvc-que-choisir-la-maison-saint-gobain-01.jpg');
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 5)),
+    url('https://prod-saint-gobain-fr.content.saint-gobain.io/sites/saint-gobain.fr/files/2024-07/fenetre-double-vitrage-alu-pvc-que-choisir-la-maison-saint-gobain-01.jpg');
 }
-
 
 .features {
   padding: 4rem 2rem;
@@ -53,8 +54,8 @@
 .team-lists {
   display: flex;
   justify-content: center;
-  gap: 4rem;         /* espace entre les 2 colonnes */
-  flex-wrap: wrap;   /* pour que ça s’adapte en mobile */
+  gap: 4rem; /* espace entre les 2 colonnes */
+  flex-wrap: wrap; /* pour que ça s’adapte en mobile */
 }
 
 .team-lists ul {
@@ -80,19 +81,19 @@
   background: white;
   padding: 2rem;
   border-radius: 10px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-  overflow: hidden;           /* Empêche l’image de dépasser du cadre */
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  overflow: hidden; /* Empêche l’image de dépasser du cadre */
 }
 
 .feature-card img {
   width: 90px;
   margin-bottom: 1rem;
-  transition: transform 0.3s ease;   /* Transition fluide */
+  transition: transform 0.3s ease; /* Transition fluide */
   border-radius: 3px;
 }
 
 .feature-card:hover img {
-  transform: scale(1.2);    /* Zoom de 20 % au survol */
+  transform: scale(1.2); /* Zoom de 20 % au survol */
 }
 
 .feature-card h3 {

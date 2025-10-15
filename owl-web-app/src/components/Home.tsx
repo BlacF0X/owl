@@ -1,7 +1,6 @@
 import React from 'react';
 import '../styles/Home.css';
 
-
 const Home: React.FC = () => {
   return (
     <>
@@ -9,7 +8,8 @@ const Home: React.FC = () => {
         <div className="hero-text">
           <h2>Surveillez l'environnement en temps réel</h2>
           <p>
-            Project OwL vous aide à mieux comprendre votre environnement grâce à des données précises.
+            Project OwL vous aide à mieux comprendre votre environnement grâce à des données
+            précises.
           </p>
         </div>
       </section>
@@ -19,19 +19,33 @@ const Home: React.FC = () => {
           <p>Une équipe de six développeurs motivés !</p>
           <div className="team-lists">
             <ul>
-              <li><strong>Arno Stärkel</strong> - développeur backend</li>
-              <li><strong>Clément Vier</strong> - développeur fullstack</li>
-              <li><strong>Corentin Mertens</strong> - développeur électronique</li>
+              <li>
+                <strong>Arno Stärkel</strong> - développeur backend
+              </li>
+              <li>
+                <strong>Clément Vier</strong> - développeur fullstack
+              </li>
+              <li>
+                <strong>Corentin Mertens</strong> - développeur électronique
+              </li>
             </ul>
             <ul>
-              <li><strong>Liam Gérard</strong> - développeur frontend</li>
-              <li><strong>Lucas Bretenstein</strong> - développeur backend</li>
-              <li><strong>Martin Stocq</strong> - développeur frontend</li>
+              <li>
+                <strong>Liam Gérard</strong> - développeur frontend
+              </li>
+              <li>
+                <strong>Lucas Bretenstein</strong> - développeur backend
+              </li>
+              <li>
+                <strong>Martin Stocq</strong> - développeur frontend
+              </li>
             </ul>
           </div>
         </div>
 
-        <h2><strong>Composants clés</strong></h2>
+        <h2>
+          <strong>Composants clés</strong>
+        </h2>
         <div className="features-grid">
           <div className="feature-card">
             <img
