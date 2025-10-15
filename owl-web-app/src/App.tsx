@@ -6,18 +6,17 @@ import HomePage from './pages/HomePage';
 
 // Importation des composants
 import Navbar from './components/Navbar';
-import Hero from './components/Hero';
-import Feature from './components/Feature';
-import Stats from './components/Stats';
+import Home from './components/Home';
+import Footer from './components/Footer';
+
 
 const App: React.FC = () => {
   return (
     <div className="App">
       <Navbar />
-      <Hero />
+      <Home />
       <HomePage />
-      <Feature />
-      <Stats />
+      <Footer />
     </div>
   );
 };
