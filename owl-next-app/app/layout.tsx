@@ -1,13 +1,13 @@
-import type { Metadata } from "next";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
-import "@/styles/App.css";
-import "@/styles/Navbar.css";
-import "@/styles/Footer.css";
-import "@/styles/Home.css";
+import type { Metadata } from 'next';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+import '@/styles/App.css';
+import '@/styles/Navbar.css';
+import '@/styles/Footer.css';
+import '@/styles/Home.css';
 
 export const metadata: Metadata = {
-  title: "Project OwL",
+  title: 'Project OwL',
   description: "Surveillez l'environnement en temps réel",
 };
 
