@@ -1,15 +1,14 @@
-name: CI - Linter
+name: CI - Code Quality
 
-# Déclenche le workflow à chaque push sur n'importe quelle branche
-# et à chaque ouverture ou modification d'une Pull Request.
+# Déclenche le workflow à chaque push et Pull Request
 on: [push, pull_request]
 
 jobs:
-  lint:
+  quality-checks:
     # Nom du job qui apparaîtra sur GitHub
-    name: Run ESLint
+    name: Run Linters and Formatters
     
-    # Utilise la dernière version d'Ubuntu pour exécuter le job
+    # Utilise la dernière version d'Ubuntu
     runs-on: ubuntu-latest
 
     steps:
@@ -21,20 +20,25 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          # Utilise une version LTS (Long Term Support) de Node.js
           node-version: '20'
-          # Utilise le cache de npm pour accélérer les installations futures
           cache: 'npm'
-          # Le cache est basé sur le contenu de package-lock.json
-          cache-dependency-path: owl-web-app/package-lock.json
+          # CHANGÉ : Le cache pointe maintenant vers le nouveau projet
+          cache-dependency-path: owl-next-app/package-lock.json
 
       # Étape 3: Installe les dépendances du projet
-      # Utilise "npm ci" qui est plus rapide et plus fiable pour les CI que "npm install"
       - name: Install dependencies
-        working-directory: ./owl-web-app # Spécifie le répertoire de l'application React
+        # CHANGÉ : Le répertoire de travail est celui de l'application Next.js
+        working-directory: ./owl-next-app
         run: npm ci
 
-      # Étape 4: Lance la commande de linting définie dans package.json
+      # Étape 4: Lance la commande de linting
       - name: Run ESLint check
-        working-directory: ./owl-web-app # Spécifie le répertoire de l'application React
+        # CHANGÉ : Le répertoire de travail est celui de l'application Next.js
+        working-directory: ./owl-next-app
         run: npm run lint
+
+      # AJOUTÉ : Nouvelle étape pour vérifier le formatage avec Prettier
+      - name: Run Prettier check
+        # CHANGÉ : Le répertoire de travail est celui de l'application Next.js
+        working-directory: ./owl-next-app
+        run: npm run format:check
