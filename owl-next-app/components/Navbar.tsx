@@ -12,13 +12,13 @@ const Navbar: React.FC = () => {
           <a href="#home">Accueil</a>
         </li>
         <li>
-          <a href="#features">Astuces</a>
+          <a href="#mySpace">Mon espace</a>
         </li>
         <li>
-          <a href="#stats">Statistiques</a>
+          <a href="#tips">Astuces</a>
         </li>
         <li>
-          <a href="#contact" className={styles.connection}>
+          <a href="#logIn" className={styles.connection}>
             Se connecter
           </a>
         </li>
