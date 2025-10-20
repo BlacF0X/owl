@@ -20,9 +20,7 @@ const Home: React.FC = () => {
       <section className={styles.features} id="features">
         <div className={styles.teamSection}>
           <p>Une équipe de six développeurs motivés !</p>
-          <div className={styles.teamLists}>
-            {/* ... contenu des listes ... */}
-          </div>
+          <div className={styles.teamLists}>{/* ... contenu des listes ... */}</div>
         </div>
 
         <h2>
@@ -30,28 +28,19 @@ const Home: React.FC = () => {
         </h2>
         <div className={styles.featuresGrid}>
           <div className={styles.featureCard}>
-            <Image
-              src={owl}
-              alt="Boitier central du projet OwL"
-            />
+            <Image src={owl} alt="Boitier central du projet OwL" />
             <h3>Boitier central</h3>
             <p>Aperçu du retour des différents capteurs.</p>
           </div>
 
           <div className={styles.featureCard}>
-            <Image
-              src={owl}
-              alt="Capteurs pour fenêtres"
-            />
+            <Image src={owl} alt="Capteurs pour fenêtres" />
             <h3>Capteurs pour fenêtres</h3>
             <p>Détectent l'état des fenêtres.</p>
           </div>
 
           <div className={styles.featureCard}>
-            <Image
-              src={owl}
-              alt="Capteur de CO2 pour la qualité de l'air"
-            />
+            <Image src={owl} alt="Capteur de CO2 pour la qualité de l'air" />
             <h3>Capteur de CO2</h3>
             <p>Analyse la qualité de l'air.</p>
           </div>
