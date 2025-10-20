@@ -5,8 +5,6 @@ const Navbar: React.FC = () => {
   return (
     <nav className={styles.navbar}>
       <div className={styles.logo}>OwL.</div>
-      {/* Remarque : les classes avec des tirets comme "nav-links"
-          deviennent camelCase : styles.navLinks */}
       <ul className={styles.navLinks}>
         <li>
           <a href="#home">Accueil</a>
