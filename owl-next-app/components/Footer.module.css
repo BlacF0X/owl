@@ -5,7 +5,7 @@
   text-align: center;
 }
 
-.stats-grid {
+.statsGrid {
   display: flex;
   justify-content: center;
   gap: 3rem;
@@ -13,12 +13,12 @@
   margin-top: 2rem;
 }
 
-.stat-card h3 {
+.statCard h3 {
   font-size: 2rem;
   margin: 0;
 }
 
-.stat-card p {
+.statCard p {
   font-size: 1rem;
   margin-top: 0.5rem;
 }

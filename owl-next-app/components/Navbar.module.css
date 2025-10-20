@@ -9,13 +9,13 @@
   z-index: 1000;
 }
 
-.nav-links {
+.navLinks {
   display: flex;
   gap: 1.5rem;
   list-style: none;
 }
 
-.nav-links a {
+.navLinks a {
   color: #101820;
   text-decoration: none;
   font-weight: bold;
@@ -37,7 +37,7 @@
   transition: background-color 0.3s;
 }
 
-.nav-links a:hover {
+.navLinks a:hover {
   text-decoration: underline;
 }
 
