@@ -1,44 +1,38 @@
 name: CI - Code Quality
 
-# Déclenche le workflow à chaque push et Pull Request
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+    branches: [ main, develop ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   quality-checks:
-    # Nom du job qui apparaîtra sur GitHub
     name: Run Linters and Formatters
-    
-    # Utilise la dernière version d'Ubuntu
     runs-on: ubuntu-latest
 
     steps:
-      # Étape 1: Récupère le code de votre dépôt
       - name: Check out repository code
         uses: actions/checkout@v4
 
-      # Étape 2: Configure l'environnement Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-          # CHANGÉ : Le cache pointe maintenant vers le nouveau projet
           cache-dependency-path: owl-next-app/package-lock.json
 
-      # Étape 3: Installe les dépendances du projet
       - name: Install dependencies
-        # CHANGÉ : Le répertoire de travail est celui de l'application Next.js
         working-directory: ./owl-next-app
         run: npm ci
 
-      # Étape 4: Lance la commande de linting
       - name: Run ESLint check
-        # CHANGÉ : Le répertoire de travail est celui de l'application Next.js
         working-directory: ./owl-next-app
         run: npm run lint
 
-      # AJOUTÉ : Nouvelle étape pour vérifier le formatage avec Prettier
       - name: Run Prettier check
-        # CHANGÉ : Le répertoire de travail est celui de l'application Next.js
         working-directory: ./owl-next-app
         run: npm run format:check
