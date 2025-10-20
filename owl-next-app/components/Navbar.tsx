@@ -7,7 +7,7 @@ const Navbar: React.FC = () => {
       <div className={styles.logo}>OwL.</div>
       {/* Remarque : les classes avec des tirets comme "nav-links"
           deviennent camelCase : styles.navLinks */}
-      <ul className={styles['nav-links']}>
+      <ul className={styles.navLinks}>
         <li>
           <a href="#home">Accueil</a>
         </li>
