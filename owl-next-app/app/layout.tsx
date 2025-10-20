@@ -1,10 +1,7 @@
 import type { Metadata } from 'next';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import '@/styles/App.css';
-import '@/styles/Navbar.css';
-import '@/styles/Footer.css';
-import '@/styles/Home.css';
+import './globals.css';
 
 export const metadata: Metadata = {
   title: 'Project OwL',

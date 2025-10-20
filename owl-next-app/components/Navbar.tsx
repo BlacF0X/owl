@@ -1,11 +1,13 @@
 import React from 'react';
-import '../styles/Navbar.css';
+import styles from './Navbar.module.css';
 
 const Navbar: React.FC = () => {
   return (
-    <nav className="navbar">
-      <div className="logo">OwL.</div>
-      <ul className="nav-links">
+    <nav className={styles.navbar}>
+      <div className={styles.logo}>OwL.</div>
+      {/* Remarque : les classes avec des tirets comme "nav-links"
+          deviennent camelCase : styles.navLinks */}
+      <ul className={styles['nav-links']}> 
         <li>
           <a href="#home">Accueil</a>
         </li>
@@ -16,7 +18,7 @@ const Navbar: React.FC = () => {
           <a href="#stats">Statistiques</a>
         </li>
         <li>
-          <a href="#contact" className="connection">
+          <a href="#contact" className={styles.connection}>
             Se connecter
           </a>
         </li>
