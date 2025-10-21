@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { ClerkProvider } from '@clerk/nextjs';
+import { frFR } from '@clerk/localizations';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -14,12 +16,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr">
-      <body>
-        <Navbar />
-        <main>{children}</main> {/* Le contenu de la page sera inséré ici */}
-        <Footer />
-      </body>
-    </html>
+    <ClerkProvider localization={frFR}>
+      <html lang="fr">
+        <body>
+          <Navbar />
+          <main>{children}</main> {/* Le contenu de la page sera inséré ici */}
+          <Footer />
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
