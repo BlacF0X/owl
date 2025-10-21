@@ -9,7 +9,7 @@ const Navbar: React.FC = () => {
       <div className={styles.logo}>OwL.</div>
       <ul className={styles.navLinks}>
         <li>
-          <a href="/home">Accueil</a>
+          <a href="/">Accueil</a>
         </li>
         <li>
           <a href="/dashboard">Mon espace</a>
