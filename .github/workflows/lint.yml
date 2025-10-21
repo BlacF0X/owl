@@ -1,40 +1,38 @@
-name: CI - Linter
+name: CI - Code Quality
 
-# Déclenche le workflow à chaque push sur n'importe quelle branche
-# et à chaque ouverture ou modification d'une Pull Request.
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+    branches: [ main, develop ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  lint:
-    # Nom du job qui apparaîtra sur GitHub
-    name: Run ESLint
-    
-    # Utilise la dernière version d'Ubuntu pour exécuter le job
+  quality-checks:
+    name: Run Linters and Formatters
     runs-on: ubuntu-latest
 
     steps:
-      # Étape 1: Récupère le code de votre dépôt
       - name: Check out repository code
         uses: actions/checkout@v4
 
-      # Étape 2: Configure l'environnement Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          # Utilise une version LTS (Long Term Support) de Node.js
           node-version: '20'
-          # Utilise le cache de npm pour accélérer les installations futures
           cache: 'npm'
-          # Le cache est basé sur le contenu de package-lock.json
-          cache-dependency-path: owl-web-app/package-lock.json
+          cache-dependency-path: owl-next-app/package-lock.json
 
-      # Étape 3: Installe les dépendances du projet
-      # Utilise "npm ci" qui est plus rapide et plus fiable pour les CI que "npm install"
       - name: Install dependencies
-        working-directory: ./owl-web-app # Spécifie le répertoire de l'application React
+        working-directory: ./owl-next-app
         run: npm ci
 
-      # Étape 4: Lance la commande de linting définie dans package.json
       - name: Run ESLint check
-        working-directory: ./owl-web-app # Spécifie le répertoire de l'application React
+        working-directory: ./owl-next-app
         run: npm run lint
+
+      - name: Run Prettier check
+        working-directory: ./owl-next-app
+        run: npm run format:check

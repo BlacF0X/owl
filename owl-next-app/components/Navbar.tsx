@@ -1,22 +1,22 @@
 import React from 'react';
-import '../styles/Navbar.css';
+import styles from './Navbar.module.css';
 
 const Navbar: React.FC = () => {
   return (
-    <nav className="navbar">
-      <div className="logo">OwL.</div>
-      <ul className="nav-links">
+    <nav className={styles.navbar}>
+      <div className={styles.logo}>OwL.</div>
+      <ul className={styles.navLinks}>
         <li>
           <a href="#home">Accueil</a>
         </li>
         <li>
-          <a href="#features">Astuces</a>
+          <a href="#mySpace">Mon espace</a>
         </li>
         <li>
-          <a href="#stats">Statistiques</a>
+          <a href="#tips">Astuces</a>
         </li>
         <li>
-          <a href="#contact" className="connection">
+          <a href="#logIn" className={styles.connection}>
             Se connecter
           </a>
         </li>
