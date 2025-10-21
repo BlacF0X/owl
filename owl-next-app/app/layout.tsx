@@ -3,6 +3,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer'
 import { ClerkProvider } from '@clerk/nextjs';
 import { frFR } from "@clerk/localizations";
+import './globals.css';
 
 export const metadata: Metadata = {
   title: 'Project OwL',
