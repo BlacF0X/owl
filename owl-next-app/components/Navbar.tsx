@@ -19,7 +19,7 @@ const Navbar: React.FC = () => {
         </li>
         <SignedIn>
           <li>
-            <UserButton afterSignOutUrl="/" />
+            <UserButton />
           </li>
         </SignedIn>
         <SignedOut>
