@@ -23,3 +23,14 @@ html {
 .header-content {
   text-align: center !important;
 }
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  /* Utilisez 100svh pour un meilleur support sur les navigateurs mobiles */
+}
+
+.main-content {
+  flex-grow: 1;
+}
