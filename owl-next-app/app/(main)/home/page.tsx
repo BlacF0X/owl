@@ -20,7 +20,35 @@ const Home: React.FC = () => {
       <section className={styles.features} id="features">
         <div className={styles.teamSection}>
           <p>Une équipe de six développeurs motivés !</p>
-          <div className={styles.teamLists}>{/* ... contenu des listes ... */}</div>
+          <div className={styles.teamLists}>
+            <ul>
+              <li>
+                <strong>Arno Stärkel</strong> - développeur backend
+              </li>
+
+              <li>
+                <strong>Clément Vier</strong> - développeur fullstack
+              </li>
+
+              <li>
+                <strong>Corentin Mertens</strong> - développeur électronique
+              </li>
+            </ul>
+
+            <ul>
+              <li>
+                <strong>Liam Gérard</strong> - développeur frontend
+              </li>
+
+              <li>
+                <strong>Lucas Bretenstein</strong> - développeur backend
+              </li>
+
+              <li>
+                <strong>Martin Stocq</strong> - développeur frontend
+              </li>
+            </ul>
+          </div>
         </div>
 
         <h2>

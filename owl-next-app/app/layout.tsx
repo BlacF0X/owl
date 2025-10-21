@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { ClerkProvider } from '@clerk/nextjs';
-import { frFR } from "@clerk/localizations";
+import { frFR } from '@clerk/localizations';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -16,9 +16,7 @@ export default function RootLayout({
   return (
     <ClerkProvider localization={frFR}>
       <html lang="fr">
-        <body>
-          {children}
-        </body>
+        <body>{children}</body>
       </html>
     </ClerkProvider>
   );
