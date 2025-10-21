@@ -16,7 +16,7 @@ const Navbar: React.FC = () => {
           <a href="#tips">Astuces</a>
         </li>
         <li>
-          <a href="#logIn" className={styles.connection}>
+          <a href="/connexion" className={styles.connection}>
             Se connecter
           </a>
         </li>
