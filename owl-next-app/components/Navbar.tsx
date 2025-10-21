@@ -9,13 +9,13 @@ const Navbar: React.FC = () => {
       <div className={styles.logo}>OwL.</div>
       <ul className={styles.navLinks}>
         <li>
-          <a href="/">Accueil</a>
+          <Link href="/">Accueil</Link>
         </li>
         <li>
-          <a href="/dashboard">Mon espace</a>
+          <Link href="/dashboard">Mon espace</Link>
         </li>
         <li>
-          <a href="#tips">Astuces</a>
+          <Link href="#tips">Astuces</Link>
         </li>
         <SignedIn>
           <li>
@@ -24,7 +24,7 @@ const Navbar: React.FC = () => {
         </SignedIn>
         <SignedOut>
           <li>
-            <Link href="/inscription">S'inscrire</Link>
+            <Link href="/inscription">S&apos;inscrire</Link>
           </li>
           <li>
             <Link href="/connexion" className={styles.connection}>

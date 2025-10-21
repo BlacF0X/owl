@@ -9,7 +9,7 @@ const Home: React.FC = () => {
     <>
       <section className={styles.hero}>
         <div className={styles.heroText}>
-          <h2>Surveillez l'environnement en temps réel</h2>
+          <h2>Surveillez l&apos;environnement en temps réel</h2>
           <p>
             Project OwL vous aide à mieux comprendre votre environnement grâce à des données
             précises.
@@ -64,13 +64,13 @@ const Home: React.FC = () => {
           <div className={styles.featureCard}>
             <Image src={owl} alt="Capteurs pour fenêtres" />
             <h3>Capteurs pour fenêtres</h3>
-            <p>Détectent l'état des fenêtres.</p>
+            <p>Détectent l&apos;état des fenêtres.</p>
           </div>
 
           <div className={styles.featureCard}>
             <Image src={owl} alt="Capteur de CO2 pour la qualité de l'air" />
             <h3>Capteur de CO2</h3>
-            <p>Analyse la qualité de l'air.</p>
+            <p>Analyse la qualité de l&apos;air.</p>
           </div>
         </div>
       </section>
