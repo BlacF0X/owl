@@ -8,7 +8,7 @@ import styles from './Navbar.module.css';
 
 const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  
+
   const pathname = usePathname();
 
   // Effet pour fermer le menu lorsque le chemin (pathname) change
