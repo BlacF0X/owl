@@ -47,7 +47,7 @@ Before you begin, ensure you have the following installed on your machine:
     Follow the interactive prompts to select the `owl-next-app` project and the `dev` configuration.
 
 4. **Run the development server:**
-    To run the app, you must use the `doppler run` command, which injects the secrets into the application environment.
+    To run the app, you must use the `npm run dev` command, that will execute `doppler run -- next dev --turbopack` which injects the secrets into the application environment.
 
     ```bash
     npm run dev
@@ -103,7 +103,7 @@ Avant de commencer, assurez-vous d'avoir installé les outils suivants sur votre
     Suivez les instructions interactives pour sélectionner le projet `owl-next-app` et la configuration `dev`.
 
 4. **Lancer le serveur de développement :**
-    Pour lancer l'application, vous devez utiliser la commande `doppler run`, qui injecte les secrets dans l'environnement de l'application.
+    Pour lancer l'application, vous devez utiliser la commande `npm run dev`, cela va exécuter `doppler run -- next dev --turbopack` qui injecte les secrets dans l'environnement de l'application.
 
     ```bash
     npm run dev
