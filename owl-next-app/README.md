@@ -92,6 +92,8 @@ Avant de commencer, assurez-vous d'avoir installé les outils suivants sur votre
 3. **Se connecter à Doppler pour récupérer les variables d'environnement :**
     Vous devez d'abord avoir été invité sur le projet Doppler.
 
+    > Demander les informations de login à Clément (c.vier@students.ephec.be)
+
     ```bash
     # Ceci ouvrira une fenêtre de navigateur pour vous authentifier
     doppler login
