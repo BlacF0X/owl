@@ -12,51 +12,51 @@ This section will guide you through the process of setting up the development en
 
 Before you begin, ensure you have the following installed on your machine:
 
-* [Node.js](https://nodejs.org) (v20 or later recommended)
-* [npm](https://www.npmjs.com) or [yarn](https://yarnpkg.com)
-* The [Doppler CLI](https://docs.doppler.com/reference/install-cli)
+- [Node.js](https://nodejs.org) (v20 or later recommended)
+- [npm](https://www.npmjs.com) or [yarn](https://yarnpkg.com)
+- The [Doppler CLI](https://docs.doppler.com/reference/install-cli)
 
 ### Installation
 
 1. **Clone the repository:**
 
-    ```bash
-    git clone https://github.com/your-repo/owl-next-app.git
-    cd owl-next-app
-    ```
+   ```bash
+   git clone https://github.com/your-repo/owl-next-app.git
+   cd owl-next-app
+   ```
 
 2. **Install project dependencies:**
 
-    ```bash
-    npm install
-    # or
-    # yarn install
-    ```
+   ```bash
+   npm install
+   # or
+   # yarn install
+   ```
 
 3. **Connect to Doppler to fetch environment variables:**
-    You will need to be invited to the project on Doppler first.
+   You will need to be invited to the project on Doppler first.
 
-    ```bash
-    # This will open a browser window to authenticate you
-    doppler login
+   ```bash
+   # This will open a browser window to authenticate you
+   doppler login
 
-    # This will link your local folder to the remote Doppler project
-    doppler setup
-    ```
+   # This will link your local folder to the remote Doppler project
+   doppler setup
+   ```
 
-    Follow the interactive prompts to select the `owl-next-app` project and the `dev` configuration.
+   Follow the interactive prompts to select the `owl-next-app` project and the `dev` configuration.
 
 4. **Run the development server:**
-    To run the app, you must use the `npm run dev` command, that will execute `doppler run -- next dev --turbopack` which injects the secrets into the application environment.
+   To run the app, you must use the `npm run dev` command, that will execute `doppler run -- next dev --turbopack` which injects the secrets into the application environment.
 
-    ```bash
-    npm run dev
-    # or
-    # yarn dev
-    ```
+   ```bash
+   npm run dev
+   # or
+   # yarn dev
+   ```
 
 5. **Open the application:**
-    Open [http://localhost:3000](http://localhost:3000) with your browser to see the result. The page will auto-update as you edit the source files.
+   Open [http://localhost:3000](http://localhost:3000) with your browser to see the result. The page will auto-update as you edit the source files.
 
 ---
 
@@ -68,53 +68,53 @@ Cette section vous guidera pour mettre en place l'environnement de développemen
 
 Avant de commencer, assurez-vous d'avoir installé les outils suivants sur votre machine :
 
-* [Node.js](https://nodejs.org) (v20 ou supérieure recommandée)
-* [npm](https://www.npmjs.com) ou [yarn](https://yarnpkg.com)
-* L'interface de commande (CLI) de [Doppler](https://docs.doppler.com/reference/install-cli)
+- [Node.js](https://nodejs.org) (v20 ou supérieure recommandée)
+- [npm](https://www.npmjs.com) ou [yarn](https://yarnpkg.com)
+- L'interface de commande (CLI) de [Doppler](https://docs.doppler.com/reference/install-cli)
 
 ### Installation
 
 1. **Cloner le dépôt :**
 
-    ```bash
-    git clone https://github.com/your-repo/owl-next-app.git
-    cd owl-next-app
-    ```
+   ```bash
+   git clone https://github.com/your-repo/owl-next-app.git
+   cd owl-next-app
+   ```
 
 2. **Installer les dépendances du projet :**
 
-    ```bash
-    npm install
-    # ou
-    # yarn install
-    ```
+   ```bash
+   npm install
+   # ou
+   # yarn install
+   ```
 
 3. **Se connecter à Doppler pour récupérer les variables d'environnement :**
-    Vous devez d'abord avoir été invité sur le projet Doppler.
+   Vous devez d'abord avoir été invité sur le projet Doppler.
 
-    > Demander les informations de login à Clément (c.vier@students.ephec.be)
+   > Demander les informations de login à Clément (c.vier@students.ephec.be)
 
-    ```bash
-    # Ceci ouvrira une fenêtre de navigateur pour vous authentifier
-    doppler login
+   ```bash
+   # Ceci ouvrira une fenêtre de navigateur pour vous authentifier
+   doppler login
 
-    # Ceci liera votre dossier local au projet distant sur Doppler
-    doppler setup
-    ```
+   # Ceci liera votre dossier local au projet distant sur Doppler
+   doppler setup
+   ```
 
-    Suivez les instructions interactives pour sélectionner le projet `owl-next-app` et la configuration `dev`.
+   Suivez les instructions interactives pour sélectionner le projet `owl-next-app` et la configuration `dev`.
 
 4. **Lancer le serveur de développement :**
-    Pour lancer l'application, vous devez utiliser la commande `npm run dev`, cela va exécuter `doppler run -- next dev --turbopack` qui injecte les secrets dans l'environnement de l'application.
+   Pour lancer l'application, vous devez utiliser la commande `npm run dev`, cela va exécuter `doppler run -- next dev --turbopack` qui injecte les secrets dans l'environnement de l'application.
 
-    ```bash
-    npm run dev
-    # ou
-    # yarn dev
-    ```
+   ```bash
+   npm run dev
+   # ou
+   # yarn dev
+   ```
 
 5. **Ouvrir l'application :**
-    Ouvrez [http://localhost:3000](http://localhost:3000) dans votre navigateur pour voir le résultat. La page se mettra à jour automatiquement à chaque modification des fichiers source.
+   Ouvrez [http://localhost:3000](http://localhost:3000) dans votre navigateur pour voir le résultat. La page se mettra à jour automatiquement à chaque modification des fichiers source.
 
 ---
 
@@ -122,8 +122,8 @@ Avant de commencer, assurez-vous d'avoir installé les outils suivants sur votre
 
 To learn more about Next.js, take a look at the following resources:
 
-* [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-* [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
