@@ -7,9 +7,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="flex h-full">
       <DashboardSidebar />
       {/* La zone de contenu principale est maintenant la seule partie qui peut défiler */}
-      <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-        {children}
-      </main>
+      <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">{children}</main>
     </div>
   );
 }

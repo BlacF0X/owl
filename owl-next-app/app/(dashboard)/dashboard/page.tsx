@@ -3,10 +3,34 @@ import { redirect } from 'next/navigation';
 
 // Données fictives (comme précédemment)
 const mockSensors = [
-  { id: 'salon-window', name: 'Fenêtre du salon', type: 'window', state: 'Ouvert', openSince: new Date(Date.now() - 1000 * 60 * 85) },
-  { id: 'chambre-window', name: 'Fenêtre de la chambre', type: 'window', state: 'Fermé', openSince: null },
-  { id: 'cuisine-window', name: 'Fenêtre de la cuisine', type: 'window', state: 'Ouvert', openSince: new Date(Date.now() - 1000 * 60 * 20) },
-  { id: 'bureau-co2', name: "Qualité de l'air (Bureau)", type: 'co2', state: 'Bonne', value: '450 ppm' },
+  {
+    id: 'salon-window',
+    name: 'Fenêtre du salon',
+    type: 'window',
+    state: 'Ouvert',
+    openSince: new Date(Date.now() - 1000 * 60 * 85),
+  },
+  {
+    id: 'chambre-window',
+    name: 'Fenêtre de la chambre',
+    type: 'window',
+    state: 'Fermé',
+    openSince: null,
+  },
+  {
+    id: 'cuisine-window',
+    name: 'Fenêtre de la cuisine',
+    type: 'window',
+    state: 'Ouvert',
+    openSince: new Date(Date.now() - 1000 * 60 * 20),
+  },
+  {
+    id: 'bureau-co2',
+    name: "Qualité de l'air (Bureau)",
+    type: 'co2',
+    state: 'Bonne',
+    value: '450 ppm',
+  },
 ];
 
 // Fonction utilitaire (comme précédemment)
@@ -22,7 +46,6 @@ const calculateDuration = (since: Date | null): string => {
   return duration.trim();
 };
 
-
 export default async function DashboardPage() {
   const user = await currentUser();
   if (!user) {
@@ -30,8 +53,8 @@ export default async function DashboardPage() {
   }
 
   const windowSensors = mockSensors.filter((s) => s.type === 'window');
-  const openWindowsCount = windowSensors.filter(s => s.state === 'Ouvert').length;
-  const co2Sensor = mockSensors.find(s => s.type === 'co2');
+  const openWindowsCount = windowSensors.filter((s) => s.state === 'Ouvert').length;
+  const co2Sensor = mockSensors.find((s) => s.type === 'co2');
 
   return (
     <div>
@@ -69,19 +92,40 @@ export default async function DashboardPage() {
               <table className="min-w-full divide-y divide-slate-200">
                 <thead>
                   <tr>
-                    <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-slate-900">Identifiant</th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-slate-900">État</th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-slate-900">Durée d'ouverture</th>
+                    <th
+                      scope="col"
+                      className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-slate-900"
+                    >
+                      Identifiant
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-3 py-3.5 text-left text-sm font-semibold text-slate-900"
+                    >
+                      État
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-3 py-3.5 text-left text-sm font-semibold text-slate-900"
+                    >
+                      Durée d'ouverture
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {windowSensors.map((sensor) => (
                     <tr key={sensor.id}>
-                      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-slate-900">{sensor.name}</td>
+                      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-slate-900">
+                        {sensor.name}
+                      </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm">
-                        <span className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-                          sensor.state === 'Ouvert' ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800'
-                        }`}>
+                        <span
+                          className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
+                            sensor.state === 'Ouvert'
+                              ? 'bg-orange-100 text-orange-800'
+                              : 'bg-green-100 text-green-800'
+                          }`}
+                        >
                           {sensor.state}
                         </span>
                       </td>

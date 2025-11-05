@@ -10,7 +10,7 @@ const navLinks = [
   // Utilisez les composants d'icônes directement
   { name: 'Général', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Fenêtres', href: '#', icon: DoorOpen },
-  { name: 'Qualité de l\'air', href: '#', icon: Wind },
+  { name: "Qualité de l'air", href: '#', icon: Wind },
 ];
 
 const DashboardSidebar = () => {
