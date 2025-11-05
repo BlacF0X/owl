@@ -16,7 +16,7 @@ const eslintConfig = [
   },
   {
     rules: {
-      'react/no-unescaped-entities': 'warn',
+      'react/no-unescaped-entities': 'off',
     },
   },
 ];

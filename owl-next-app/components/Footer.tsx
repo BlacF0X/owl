@@ -1,25 +1,26 @@
 import React from 'react';
-import styles from './Footer.module.css';
 
 const Footer: React.FC = () => {
   return (
-    <section className={styles.stats} id="stats">
-      <h2>À propos de nous</h2>
-      <div className="stats-grid">
-        <div className={styles.stat}>
-          <h3>📧</h3>
-          <p>OwlProject@gmail.com</p>
-        </div>
-        <div className={styles.stat}>
-          <h3>📞</h3>
-          <p>+32 400/12.34.56</p>
-        </div>
-        <div className={styles.stat}>
-          <h3>📍</h3>
-          <p>Louvain-la-Neuve, Belgique</p>
+    <footer className="bg-slate-900 py-16 text-center text-white sm:py-20" id="stats">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <h2 className="text-3xl font-bold">À propos de nous</h2>
+        <div className="mt-10 flex flex-wrap justify-center gap-x-12 gap-y-8">
+          <div className="flex flex-col items-center">
+            <h3 className="text-4xl">📧</h3>
+            <p className="mt-2 text-slate-300">OwlProject@gmail.com</p>
+          </div>
+          <div className="flex flex-col items-center">
+            <h3 className="text-4xl">📞</h3>
+            <p className="mt-2 text-slate-300">+32 400/12.34.56</p>
+          </div>
+          <div className="flex flex-col items-center">
+            <h3 className="text-4xl">📍</h3>
+            <p className="mt-2 text-slate-300">Louvain-la-Neuve, Belgique</p>
+          </div>
         </div>
       </div>
-    </section>
+    </footer>
   );
 };
 
