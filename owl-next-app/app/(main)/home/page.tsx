@@ -32,9 +32,6 @@ const Home: React.FC = () => {
       {/* Features Section */}
       <section className="bg-slate-50 py-16 text-center sm:py-20" id="features">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-          
-          
-
           <h2 className="text-3xl font-bold text-slate-900">Composants clés</h2>
 
           {/* Features Grid */}

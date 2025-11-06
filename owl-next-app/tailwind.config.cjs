@@ -14,10 +14,10 @@ module.exports = {
         'preserve-3d': 'preserve-3d',
       },
       perspective: {
-        '1000': '1000px',
+        1000: '1000px',
       },
       backfaceVisibility: {
-        'hidden': 'hidden'
+        hidden: 'hidden',
       },
     },
   },
@@ -33,7 +33,7 @@ module.exports = {
         '.backface-hidden': {
           backfaceVisibility: 'hidden',
         },
-      })
+      });
     }),
   ],
 };
