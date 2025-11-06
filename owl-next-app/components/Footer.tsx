@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 
 const Footer: React.FC = () => {
   return (
@@ -15,8 +16,13 @@ const Footer: React.FC = () => {
             <p className="mt-2 text-slate-300">+32 400/12.34.56</p>
           </div>
           <div className="flex flex-col items-center">
-            <h3 className="text-4xl">📍</h3>
-            <p className="mt-2 text-slate-300">Louvain-la-Neuve, Belgique</p>
+            <h3 className="text-4xl">👥</h3>
+            <Link
+              href="/home/team"
+              className="mt-2 text-slate-300 hover:text-white transition-colors"
+            >
+              Notre équipe
+            </Link>
           </div>
         </div>
       </div>
