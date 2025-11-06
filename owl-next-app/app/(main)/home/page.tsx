@@ -32,36 +32,8 @@ const Home: React.FC = () => {
       {/* Features Section */}
       <section className="bg-slate-50 py-16 text-center sm:py-20" id="features">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-          {/* Team Section */}
-          <div className="mb-16">
-            <p className="text-lg font-medium text-slate-800">
-              Une équipe de six développeurs motivés !
-            </p>
-            <div className="mt-8 flex flex-wrap justify-center gap-x-12 gap-y-4 sm:gap-x-24">
-              <ul className="space-y-2 text-left">
-                <li>
-                  <strong>Arno Stärkel</strong> - développeur backend
-                </li>
-                <li>
-                  <strong>Clément Vier</strong> - développeur fullstack
-                </li>
-                <li>
-                  <strong>Corentin Mertens</strong> - développeur électronique
-                </li>
-              </ul>
-              <ul className="space-y-2 text-left">
-                <li>
-                  <strong>Liam Gérard</strong> - développeur frontend
-                </li>
-                <li>
-                  <strong>Lucas Bretenstein</strong> - développeur backend
-                </li>
-                <li>
-                  <strong>Martin Stocq</strong> - développeur frontend
-                </li>
-              </ul>
-            </div>
-          </div>
+          
+          
 
           <h2 className="text-3xl font-bold text-slate-900">Composants clés</h2>
 
