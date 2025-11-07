@@ -1,29 +1,44 @@
 import React from 'react';
 import Link from 'next/link';
+import { Mail, Users } from 'lucide-react';
 
 const Footer: React.FC = () => {
   return (
-    <footer className="bg-slate-900 py-16 text-center text-white sm:py-20" id="stats">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <h2 className="text-3xl font-bold">À propos de nous</h2>
-        <div className="mt-10 flex flex-wrap justify-center gap-x-12 gap-y-8">
-          <div className="flex flex-col items-center">
-            <h3 className="text-4xl">📧</h3>
-            <p className="mt-2 text-slate-300">OwlProject@gmail.com</p>
-          </div>
-          <div className="flex flex-col items-center">
-            <h3 className="text-4xl">📞</h3>
-            <p className="mt-2 text-slate-300">+32 400/12.34.56</p>
-          </div>
-          <div className="flex flex-col items-center">
-            <h3 className="text-4xl">👥</h3>
-            <Link
-              href="/home/team"
-              className="mt-2 text-slate-300 hover:text-white transition-colors"
-            >
-              Notre équipe
-            </Link>
-          </div>
+    <footer className="bg-slate-900 text-white" id="contact">
+      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
+        <div className="text-center">
+          <h2 className="text-3xl font-bold">À propos de nous</h2>
+          <p className="mx-auto mt-4 max-w-2xl text-slate-300">
+            Une équipe passionnée, dédiée à vous aider à mieux comprendre votre environnement.
+          </p>
+        </div>
+
+        {/* Conteneur pour les liens de contact */}
+        <div className="mt-10 flex flex-col items-center justify-center gap-8 sm:flex-row sm:gap-12">
+          {/* Lien Mailto pour l'email */}
+          <a
+            href="mailto:team.owl.project@proton.me"
+            className="group flex items-center gap-3 text-slate-300 transition-colors hover:text-white"
+          >
+            <Mail className="h-6 w-6 text-slate-400 transition-colors group-hover:text-white" />
+            <span>team.owl.project@proton.me</span>
+          </a>
+
+          {/* Lien vers la page de l'équipe */}
+          <Link
+            href="/home/team"
+            className="group flex items-center gap-3 text-slate-300 transition-colors hover:text-white"
+          >
+            <Users className="h-6 w-6 text-slate-400 transition-colors group-hover:text-white" />
+            <span>Notre équipe</span>
+          </Link>
+        </div>
+
+        {/* Copyright en bas */}
+        <div className="mt-12 border-t border-slate-800 pt-8 text-center">
+          <p className="text-sm text-slate-400">
+            &copy; {new Date().getFullYear()} Project OwL. Tous droits réservés.
+          </p>
         </div>
       </div>
     </footer>
