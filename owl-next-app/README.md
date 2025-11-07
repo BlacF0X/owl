@@ -34,7 +34,8 @@ Before you begin, ensure you have the following installed on your machine:
    ```
 
 3. **Connect to Doppler to fetch environment variables:**
-   You will need to be invited to the project on Doppler first.
+
+   > Ask Clément for login details (c.vier@students.ephec.be)
 
    ```bash
    # This will open a browser window to authenticate you
@@ -90,7 +91,6 @@ Avant de commencer, assurez-vous d'avoir installé les outils suivants sur votre
    ```
 
 3. **Se connecter à Doppler pour récupérer les variables d'environnement :**
-   Vous devez d'abord avoir été invité sur le projet Doppler.
 
    > Demander les informations de login à Clément (c.vier@students.ephec.be)
 
