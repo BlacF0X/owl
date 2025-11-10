@@ -101,10 +101,10 @@ CREATE INDEX idx_sensorreadings_timestamp ON SensorReadings(timestamp);
 -- 4. Insertion de données de base (optionnel)
 -- =================================================================
 INSERT INTO SensorTypes (type_key, name, unit, description) VALUES
-('window',      'Fenêtre',          NULL,   'Détecte si une fenêtre est ouverte ou fermée.'),
-('temperature', 'Température',      '°C',   'Mesure la température ambiante.'),
-('humidity',    'Humidité',         '%',    "Mesure le taux d'humidité relative de l'air."),
-('air_quality', "Qualité de l'air", 'ppm',  'Mesure la concentration de CO2 en parties par million.');
+('window',      'Fenêtre',              '-',    'Détecte si une fenêtre est ouverte ou fermée.'),
+('temperature', 'Température',          '°C',   'Mesure la température ambiante.'),
+('humidity',    'Humidité',             '%',    'Mesure le taux d''humidité relative de l''air.'),
+('air_quality', 'Qualité de l''air',    'ppm',  'Mesure la concentration de CO2 en parties par million.');
 
 -- =================================================================
 -- Fin du script
