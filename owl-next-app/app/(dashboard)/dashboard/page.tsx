@@ -30,6 +30,7 @@ const mockSensors = [
     type: 'co2',
     state: 'Bonne',
     value: '450 ppm',
+    openSince: new Date(Date.now() - 1000 * 60 * 50),
   },
 ];
 
