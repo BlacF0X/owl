@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "doppler run -- next dev --turbopack",
-    "build": "doppler run -- next build --turbopack",
+    "dev-build": "doppler run -- next build --turbopack",
+    "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
     "format": "prettier --write .",
