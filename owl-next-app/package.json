@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "doppler run -- next dev --turbopack",
+    "dev-build": "doppler run -- next build --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
@@ -13,6 +14,7 @@
   "dependencies": {
     "@clerk/localizations": "^3.26.2",
     "@clerk/nextjs": "^6.33.7",
+    "lucide-react": "^0.552.0",
     "next": "15.5.6",
     "react": "19.1.0",
     "react-dom": "19.1.0"
@@ -25,10 +27,13 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "autoprefixer": "^10.4.21",
     "eslint": "^9",
     "eslint-config-next": "15.5.6",
     "eslint-config-prettier": "^10.1.8",
+    "postcss": "^8.5.6",
     "prettier": "^3.6.2",
+    "tailwindcss": "^3.4.18",
     "typescript": "^5"
   }
 }
