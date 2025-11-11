@@ -18,6 +18,7 @@
     "express": "^4.19.2",
     "pg": "^8.16.3",
     "reflect-metadata": "^0.2.2",
+    "svix": "^1.81.0",
     "typeorm": "^0.3.27",
     "typescript": "^5.5.3"
   },
