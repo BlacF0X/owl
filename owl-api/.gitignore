@@ -1,29 +1,63 @@
-# dev
-.yarn/
-!.yarn/releases
-.vscode/*
-!.vscode/launch.json
-!.vscode/*.code-snippets
-.idea/workspace.xml
-.idea/usage.statistics.xml
-.idea/shelf
+# =================================================================
+# Fichier .gitignore pour un projet Node.js / TypeScript
+# =================================================================
 
-# deps
-node_modules/
-
-# env
-.env
-.env.production
-
-# logs
-logs/
+# Fichiers de log
+# -----------------------------------------------------------------
+logs
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-lerna-debug.log*
 
-# misc
+# Fichiers d'exécution et de diagnostic
+# -----------------------------------------------------------------
+pid*
+*.pid
+*.seed
+*.pid.lock
+
+# Dépendances du projet
+# Il ne faut jamais versionner ce dossier. Il est recréé via 'npm install'.
+# -----------------------------------------------------------------
+node_modules/
+
+# Fichiers de compilation TypeScript
+# Le code JavaScript généré ne doit pas être versionné.
+# -----------------------------------------------------------------
+dist/
+*.tsbuildinfo
+
+# Fichiers d'environnement
+# TRÈS IMPORTANT : Contient des secrets (clés d'API, mots de passe).
+# Ne JAMAIS versionner ce fichier.
+# -----------------------------------------------------------------
+.env
+.env.local
+.env.*.local
+
+# Fichiers de configuration des éditeurs de code et IDE
+# Permet de garder le projet agnostique de l'environnement de développement.
+# -----------------------------------------------------------------
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Fichiers système (macOS, Windows)
+# -----------------------------------------------------------------
 .DS_Store
-.vercel
+Thumbs.db
+
+# Fichiers de cache et temporaires
+# -----------------------------------------------------------------
+.npm
+.cache

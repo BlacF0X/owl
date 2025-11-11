@@ -1,8 +1,21 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "NodeNext",
-    "skipLibCheck": true,
+    "target": "es2022",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "lib": ["es2022"],
+    
+    /* Options pour les décorateurs */
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    
+    "esModuleInterop": true,
+    "rootDir": "src",
+    "outDir": "dist",
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true
   },
+  "include": ["src/**/*"],
   "exclude": ["node_modules"]
 }
