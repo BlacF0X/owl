@@ -23,7 +23,6 @@ await AppDataSource.initialize()
 const app = express();
 
 app.use(cors());
-app.use(express.json());
 
 // Routes principales (non-API)
 app.get('/', (req, res) => res.send('API OwL online.'));
