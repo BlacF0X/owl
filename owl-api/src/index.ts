@@ -6,6 +6,10 @@ app.get('/', (_req, res) => {
   res.send('Hello Express!')
 })
 
+app.get('/vercel', (_req, res) => {
+  res.send(process.env.HELLO_TEST)
+})
+
 app.get('/api/users/:id', (_req, res) => {
   res.json({ id: _req.params.id })
 })
