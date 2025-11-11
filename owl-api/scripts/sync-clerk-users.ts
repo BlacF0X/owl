@@ -46,10 +46,14 @@ const syncExistingUsers = async () => {
 
       // 3. Boucle sur chaque utilisateur du lot et "upsert" dans la BDD
       for (const clerkUser of clerkUsers) {
-        const email = clerkUser.emailAddresses[0]?.emailAddress;
+        const primaryEmailObject = clerkUser.emailAddresses.find(
+            (emailObj) => emailObj.id === clerkUser.primaryEmailAddressId
+        );
+        const email = primaryEmailObject?.emailAddress;
+
         if (!email) {
-          console.warn(`⚠️ Utilisateur Clerk ${clerkUser.id} ignoré (pas d'adresse email).`);
-          continue;
+            console.warn(`⚠️ Utilisateur Clerk ${clerkUser.id} ignoré (pas d'adresse email principale trouvée).`);
+            continue;
         }
         
         let dbUser = await userRepository.findOneBy({ clerk_user_id: clerkUser.id });
