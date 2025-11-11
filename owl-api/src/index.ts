@@ -10,39 +10,38 @@ import { AppDataSource } from './config/data-source.js';
 import apiRouter from './api/routes/index.js';
 
 // =================================================================
-// Initialisation
+// Initialisation Globale
 // =================================================================
 dotenv.config();
 
-AppDataSource.initialize()
-  .then(() => {
-    console.log('✅ Source de données initialisée avec succès !');
+// On initialise la connexion à la BDD une seule fois au démarrage
+// L'utilisation de `await` au premier niveau est possible avec les modules ES modernes
+await AppDataSource.initialize()
+  .then(() => console.log('✅ Source de données initialisée !'))
+  .catch((err) => console.error('❌ Erreur d\'initialisation de la source de données :', err));
 
-    const app = express();
-    const PORT = process.env.PORT || 8080;
 
-    // --- Middlewares Globaux ---
-    app.use(cors());
-    app.use(express.json()); // Middleware pour parser le JSON pour TOUTES les autres routes
+// =================================================================
+// Configuration de l'application Express
+// =================================================================
+const app = express();
 
-    // =================================================================
-    // Routes
-    // =================================================================
-    app.get('/', (req: Request, res: Response) => {
-      res.send('🦉 API OwL est en ligne !');
-    });
+// Middlewares Globaux
+app.use(cors());
+// Le middleware express.json() est déjà dans votre index.ts principal, 
+// mais on le laisse ici pour être complet. Si votre route de webhook est bien avant, c'est parfait.
+app.use(express.json());
 
-    // On branche notre routeur d'API sur le préfixe '/api'
-    app.use('/api', apiRouter);
+// Routes
+app.get('/', (req: Request, res: Response) => {
+  res.send('🦉 API OwL est en ligne !');
+});
+app.use('/api', apiRouter);
 
-    // =================================================================
-    // Démarrage du Serveur
-    // =================================================================
-    app.listen(PORT, () => {
-      console.log(`🦉 API démarrée et à l'écoute sur http://localhost:${PORT}`);
-    });
 
-  })
-  .catch((err) => {
-    console.error('❌ Erreur lors de l\'initialisation de la source de données :', err);
-  });
+// =================================================================
+// EXPORT DE L'APP (la partie la plus importante pour Vercel)
+// =================================================================
+// On n'appelle PAS app.listen(). On exporte l'instance `app`.
+// Vercel utilisera cet export pour gérer les requêtes.
+export default app;
