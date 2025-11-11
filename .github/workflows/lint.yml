@@ -1,13 +1,14 @@
-name: CI - Code Quality
+name: CI - Code Quality - Next app
 
 on:
   push:
+    paths:
+      - 'owl-next-app/**'
+      
   pull_request:
     branches: [ main, develop ]
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
-  cancel-in-progress: true
+    paths:
+      - 'owl-next-app/**'
 
 jobs:
   quality-checks:
