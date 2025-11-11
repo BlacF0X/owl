@@ -1,21 +1,48 @@
-import express from 'express'
+// =================================================================
+// Imports
+// =================================================================
+import 'reflect-metadata';
+import express from 'express';
+import type { Request, Response } from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import { AppDataSource } from './config/data-source.js';
+import apiRouter from './api/routes/index.js';
 
-const app = express()
+// =================================================================
+// Initialisation
+// =================================================================
+dotenv.config();
 
-app.get('/', (_req, res) => {
-  res.send('Hello Express!')
-})
+AppDataSource.initialize()
+  .then(() => {
+    console.log('✅ Source de données initialisée avec succès !');
 
-app.get('/vercel', (_req, res) => {
-  res.send(process.env.HELLO_TEST)
-})
+    const app = express();
+    const PORT = process.env.PORT || 8080;
 
-app.get('/api/users/:id', (_req, res) => {
-  res.json({ id: _req.params.id })
-})
+    // --- Middlewares Globaux ---
+    app.use(cors());
+    app.use(express.json()); // Middleware pour parser le JSON pour TOUTES les autres routes
 
-app.get('/api/posts/:postId/comments/:commentId', (_req, res) => {
-  res.json({ postId: _req.params.postId, commentId: _req.params.commentId })
-})
+    // =================================================================
+    // Routes
+    // =================================================================
+    app.get('/', (req: Request, res: Response) => {
+      res.send('🦉 API OwL est en ligne !');
+    });
 
-export default app
+    // On branche notre routeur d'API sur le préfixe '/api'
+    app.use('/api', apiRouter);
+
+    // =================================================================
+    // Démarrage du Serveur
+    // =================================================================
+    app.listen(PORT, () => {
+      console.log(`🦉 API démarrée et à l'écoute sur http://localhost:${PORT}`);
+    });
+
+  })
+  .catch((err) => {
+    console.error('❌ Erreur lors de l\'initialisation de la source de données :', err);
+  });
