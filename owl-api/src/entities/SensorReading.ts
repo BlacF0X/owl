@@ -16,7 +16,7 @@ export class SensorReading {
   value_num!: number | null;
 
   // Relation : Plusieurs lectures appartiennent à un Sensor
-  @ManyToOne(() => Sensor, sensor => sensor.readings, { onDelete: 'CASCADE' })
+  @ManyToOne('Sensor', (sensor: Sensor) => sensor.readings, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'sensor_id' })
   sensor!: Sensor;
 }

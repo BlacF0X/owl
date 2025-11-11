@@ -24,16 +24,16 @@ export class Sensor {
   created_at!: Date;
 
   // Relation : Plusieurs Sensors appartiennent à un Hub
-  @ManyToOne(() => Hub, hub => hub.sensors, { onDelete: 'CASCADE' })
+  @ManyToOne('Hub', (hub: Hub) => hub.sensors, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'hub_id' })
   hub!: Hub;
 
   // Relation : Plusieurs Sensors sont d'un certain SensorType
-  @ManyToOne(() => SensorType, sensorType => sensorType.sensors)
+  @ManyToOne('SensorType', (sensorType: SensorType) => sensorType.sensors)
   @JoinColumn({ name: 'sensor_type_id' })
   sensorType!: SensorType;
 
   // Relation : Un Sensor peut avoir plusieurs SensorReadings
-  @OneToMany(() => SensorReading, reading => reading.sensor)
+  @OneToMany('SensorReading', (reading: SensorReading) => reading.sensor)
   readings!: SensorReading[];
 }

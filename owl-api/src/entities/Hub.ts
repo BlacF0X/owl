@@ -28,11 +28,11 @@ export class Hub {
   created_at!: Date;
 
   // Relation : Plusieurs Hubs appartiennent à un User
-  @ManyToOne(() => User, user => user.hubs, { onDelete: 'CASCADE' })
+  @ManyToOne('User', (user: User) => user.hubs, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' }) // Spécifie le nom de la colonne de la clé étrangère
   user!: User;
 
   // Relation : Un Hub peut avoir plusieurs Sensors
-  @OneToMany(() => Sensor, sensor => sensor.hub)
+  @OneToMany('Sensor', (sensor: Sensor) => sensor.hub)
   sensors!: Sensor[];
 }
