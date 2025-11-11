@@ -44,13 +44,16 @@ export const handleClerkWebhook = async (req: Request, res: Response) => {
     switch (type) {
       case 'user.created':
       case 'user.updated': {
+        const { id, first_name, email_addresses, primary_email_address_id, created_at } = data;
 
-        // On destructure toutes les informations nécessaires, y compris created_at
-        const { id, first_name, email_addresses, created_at } = data;
-        const email = email_addresses[0]?.email_address;
-
+        // Logique robuste pour trouver l'email principal
+        const primaryEmail = email_addresses.find((emailObj: any) => emailObj.id === primary_email_address_id);
+        const email = primaryEmail?.email_address;
+        
+        // Si, pour une raison quelconque, aucun email principal n'est trouvé, on arrête.
         if (!email) {
-          return res.status(400).json({ message: 'Adresse email manquante dans le webhook.' });
+          console.error(`Email principal non trouvé pour l'utilisateur ${id}. Données reçues:`, email_addresses);
+          return res.status(400).json({ message: `Email principal non trouvé pour l'utilisateur ${id}.` });
         }
 
         // On cherche l'utilisateur dans notre base de données
