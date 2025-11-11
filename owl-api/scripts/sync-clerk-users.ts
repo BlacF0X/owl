@@ -1,3 +1,5 @@
+// doppler run -- npx tsx scripts/sync-clerk-users.ts
+
 import 'reflect-metadata';
 import dotenv from 'dotenv';
 import { Clerk } from '@clerk/clerk-sdk-node';
