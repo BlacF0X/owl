@@ -25,6 +25,6 @@ export class SensorType {
   max_threshold!: number | null;
 
   // Relation : Un SensorType peut avoir plusieurs Sensors
-  @OneToMany(() => Sensor, sensor => sensor.sensorType)
+  @OneToMany('Sensor', (sensor: Sensor) => sensor.sensorType)
   sensors!: Sensor[];
 }

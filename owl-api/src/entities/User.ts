@@ -16,6 +16,6 @@ export class User {
   created_at!: Date;
 
   // Relation : Un User peut avoir plusieurs Hubs
-  @OneToMany(() => Hub, hub => hub.user)
+  @OneToMany('Hub', (hub: Hub) => hub.user)
   hubs!: Hub[];
 }
