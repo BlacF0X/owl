@@ -23,6 +23,7 @@
     "typescript": "^5.5.3"
   },
   "devDependencies": {
+    "@clerk/clerk-sdk-node": "^4.13.23",
     "tsx": "^4.20.6"
   }
 }
