@@ -10,6 +10,9 @@ export const AppDataSource = new DataSource({
   ssl: {
     rejectUnauthorized: false, // Nécessaire pour les connexions à des services comme Supabase/Heroku
   },
+  extra: {
+    family: 4
+  },
   // IMPORTANT : Mettre à `false` en production !
   // `true` synchronise automatiquement votre schéma de BDD avec vos entités.
   // Idéal pour le développement, mais risqué en production (peut effacer des données).
