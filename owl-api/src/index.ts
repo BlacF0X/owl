@@ -3,48 +3,38 @@
 // =================================================================
 import 'reflect-metadata'; 
 import express from 'express';
-import type { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { AppDataSource } from './config/data-source.js';
-import { SensorType } from './entities/SensorType.js';
+import apiRouter from './api/routes/index.js';
 
 // =================================================================
 // Initialisation Globale
 // =================================================================
 dotenv.config();
 
-// La connexion à la BDD est initialisée au démarrage, que ce soit en local ou sur Vercel
 await AppDataSource.initialize()
   .then(() => console.log('✅ Source de données initialisée avec succès !'))
   .catch((err) => console.error('❌ Erreur lors de l\'initialisation de la source de données :', err));
 
 // =================================================================
-// Configuration de l'application Express (identique pour les deux envs)
+// Configuration de l'application Express
 // =================================================================
 const app = express();
+
 app.use(cors());
 app.use(express.json());
 
-// Routes
-app.get('/', (req, res) => res.send('🦉 API OwL est en ligne !'));
+// Routes principales (non-API)
+app.get('/', (req, res) => res.send('API OwL online.'));
 
-app.get('/api/db-test', async (req, res) => {
-  try {
-    const sensorTypeRepository = AppDataSource.getRepository(SensorType);
-    const count = await sensorTypeRepository.count();
-    res.status(200).json({ message: 'Connexion à Supabase réussie !', sensorTypesInDatabase: count });
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    res.status(500).json({ message: 'Échec de la connexion à la base de données.', error: errorMessage });
-  }
-});
+// On branche notre routeur d'API sur le préfixe '/api'
+// Toutes les routes définies dans apiRouter commenceront par /api
+app.use('/api', apiRouter);
 
 // =================================================================
-// DÉMARRAGE CONDITIONNEL DU SERVEUR
+// Démarrage Conditionnel & Export
 // =================================================================
-
-// Ce bloc ne s'exécute QUE si on n'est PAS sur Vercel (donc en local)
 if (process.env.VERCEL !== '1') {
   const PORT = process.env.PORT || 8080;
   app.listen(PORT, () => {
@@ -52,8 +42,4 @@ if (process.env.VERCEL !== '1') {
   });
 }
 
-// =================================================================
-// EXPORT POUR VERCEL
-// =================================================================
-// Cet export est utilisé par Vercel. En local, il est simplement ignoré.
 export default app;
