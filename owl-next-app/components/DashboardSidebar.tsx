@@ -3,14 +3,15 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import React from 'react';
-// Importez les icônes de lucide-react
-import { LayoutDashboard, DoorOpen, Wind } from 'lucide-react';
+// Assurez-vous que toutes les icônes utilisées sont importées ici
+import { LayoutDashboard, DoorOpen, Wind, CloudSun } from 'lucide-react';
 
+// C'est la seule liste de liens que nous allons utiliser
 const navLinks = [
-  // Utilisez les composants d'icônes directement
   { name: 'Général', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Fenêtres', href: '#', icon: DoorOpen },
-  { name: "Qualité de l'air", href: '#', icon: Wind },
+  { name: 'Capteurs de fenêtre', href: '/dashboard/window-sensors', icon: DoorOpen },
+  { name: "Qualité de l'air", href: '#', icon: Wind }, // Le lien est '#' car la page n'existe pas encore
+  { name: 'Capteurs de CO2', href: '/dashboard/co2-sensors', icon: CloudSun },
 ];
 
 const DashboardSidebar = () => {
@@ -32,7 +33,6 @@ const DashboardSidebar = () => {
                       : 'text-slate-700 hover:bg-slate-100'
                   }`}
                 >
-                  {/* L'icône est maintenant plus simple à appeler */}
                   <link.icon className="h-5 w-5" />
                   <span>{link.name}</span>
                 </Link>
