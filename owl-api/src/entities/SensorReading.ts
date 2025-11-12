@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { Sensor } from './Sensor.js';
 
 @Entity('sensorreadings')
@@ -16,7 +22,9 @@ export class SensorReading {
   value_num!: number | null;
 
   // Relation : Plusieurs lectures appartiennent à un Sensor
-  @ManyToOne('Sensor', (sensor: Sensor) => sensor.readings, { onDelete: 'CASCADE' })
+  @ManyToOne('Sensor', (sensor: Sensor) => sensor.readings, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'sensor_id' })
   sensor!: Sensor;
 }

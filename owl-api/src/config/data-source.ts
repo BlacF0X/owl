@@ -19,17 +19,11 @@ export const AppDataSource = new DataSource({
     rejectUnauthorized: false,
   },
   extra: {
-    family: 4 // Pour les problèmes de connexion en local (IPv6)
+    family: 4, // Pour les problèmes de connexion en local (IPv6)
   },
   synchronize: !isProduction,
   logging: !isProduction,
-  entities: [
-    Hub,
-    Sensor,
-    SensorReading,
-    SensorType,
-    User
-  ],
+  entities: [Hub, Sensor, SensorReading, SensorType, User],
 
   migrations: [],
   subscribers: [],

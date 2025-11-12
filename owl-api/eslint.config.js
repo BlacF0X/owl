@@ -8,10 +8,7 @@ import prettierConfig from 'eslint-config-prettier';
 export default [
   // Fichiers à ignorer globalement
   {
-    ignores: [
-      'dist/', 
-      'node_modules/',
-    ],
+    ignores: ['dist/', 'node_modules/'],
   },
 
   // Configuration de base d'ESLint
@@ -21,5 +18,5 @@ export default [
   ...tseslint.configs.recommended,
 
   // Configuration pour désactiver les règles conflictuelles avec Prettier
-  prettierConfig
+  prettierConfig,
 ];
