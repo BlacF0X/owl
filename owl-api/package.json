@@ -7,7 +7,10 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "dev": "doppler run -- tsx watch src/index.ts"
+    "dev": "doppler run -- tsx watch src/index.ts",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "@types/cors": "^2.8.17",
@@ -24,6 +27,10 @@
   },
   "devDependencies": {
     "@clerk/clerk-sdk-node": "^4.13.23",
-    "tsx": "^4.20.6"
+    "eslint": "^9.39.1",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.6.2",
+    "tsx": "^4.20.6",
+    "typescript-eslint": "^8.46.4"
   }
 }
