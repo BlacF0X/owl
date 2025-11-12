@@ -34,13 +34,16 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-          cache-dependency-path: package-lock.json
+          cache-dependency-path: owl-api/package-lock.json
 
       - name: Install dependencies
+        working-directory: ./owl-api
         run: npm ci
 
       - name: Run ESLint check
+        working-directory: ./owl-api
         run: npm run lint
 
       - name: Run Prettier check
+        working-directory: ./owl-api
         run: npm run format:check

@@ -4,11 +4,13 @@ on:
   push:
     paths:
       - 'owl-next-app/**'
+      - '.github/workflows/next-quality-checks.yml'
       
   pull_request:
     branches: [ main, develop ]
     paths:
       - 'owl-next-app/**'
+      - '.github/workflows/next-quality-checks.yml'
 
 jobs:
   quality-checks:
