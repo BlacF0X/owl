@@ -16,7 +16,7 @@ const Home: React.FC = () => {
           priority
           quality={75}
           className="object-cover -z-10"
-          placeholder='blur'
+          placeholder="blur"
         />
         {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-black/40"></div>
