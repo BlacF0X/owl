@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { getDbConnectionTest } from '../controllers/test.controller.js';
 
-
 const router = Router();
 
 // Définit la route GET /db-test et lui attache le contrôleur

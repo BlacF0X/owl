@@ -1,0 +1,49 @@
+name: CI - Code Quality - API
+
+on:
+  push:
+    paths:
+      - 'src/**'
+      - 'scripts/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.json'
+      - '.github/workflows/api-quality-checks.yml'
+      
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'src/**'
+      - 'scripts/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.json'
+      - '.github/workflows/api-quality-checks.yml'
+
+jobs:
+  quality-checks:
+    name: Run Linters and Formatters
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: owl-api/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./owl-api
+        run: npm ci
+
+      - name: Run ESLint check
+        working-directory: ./owl-api
+        run: npm run lint
+
+      - name: Run Prettier check
+        working-directory: ./owl-api
+        run: npm run format:check

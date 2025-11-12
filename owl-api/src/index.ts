@@ -1,7 +1,7 @@
 // =================================================================
 // Imports
 // =================================================================
-import 'reflect-metadata'; 
+import 'reflect-metadata';
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -18,8 +18,15 @@ dotenv.config();
 if (!AppDataSource.isInitialized) {
   // Le code à l'intérieur de ce `if` ne s'exécutera que lors d'un "cold start".
   await AppDataSource.initialize()
-    .then(() => console.log('✅ Source de données initialisée pour cette instance.'))
-    .catch((err) => console.error('❌ Erreur lors de l\'initialisation de la source de données :', err));
+    .then(() =>
+      console.log('✅ Source de données initialisée pour cette instance.')
+    )
+    .catch((err) =>
+      console.error(
+        "❌ Erreur lors de l'initialisation de la source de données :",
+        err
+      )
+    );
 }
 
 // =================================================================
@@ -42,7 +49,9 @@ app.use('/api', apiRouter);
 if (process.env.VERCEL !== '1') {
   const PORT = process.env.PORT || 8080;
   app.listen(PORT, () => {
-    console.log(`🦉 API démarrée (local) et à l'écoute sur http://localhost:${PORT}`);
+    console.log(
+      `🦉 API démarrée (local) et à l'écoute sur http://localhost:${PORT}`
+    );
   });
 }
 

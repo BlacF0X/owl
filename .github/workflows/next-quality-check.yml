@@ -4,11 +4,13 @@ on:
   push:
     paths:
       - 'owl-next-app/**'
+      - '.github/workflows/next-quality-checks.yml'
       
   pull_request:
     branches: [ main, develop ]
     paths:
       - 'owl-next-app/**'
+      - '.github/workflows/next-quality-checks.yml'
 
 jobs:
   quality-checks:
@@ -17,10 +19,10 @@ jobs:
 
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '20'
           cache: 'npm'

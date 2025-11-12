@@ -1,6 +1,7 @@
 import React from 'react';
 import Image from 'next/image';
 import owl from '@/public/owl.png';
+import heroBackground from '@/public/hero-background.jpg';
 
 const Home: React.FC = () => {
   return (
@@ -8,13 +9,15 @@ const Home: React.FC = () => {
       {/* Hero Section */}
       <section className="relative bg-cover bg-center text-white">
         {/* Background Image */}
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{
-            backgroundImage:
-              "url('https://prod-saint-gobain-fr.content.saint-gobain.io/sites/saint-gobain.fr/files/2024-07/fenetre-double-vitrage-alu-pvc-que-choisir-la-maison-saint-gobain-01.jpg')",
-          }}
-        ></div>
+        <Image
+          src={heroBackground}
+          alt="Intérieur d'une maison moderne avec des fenêtres bien éclairées."
+          fill
+          priority
+          quality={75}
+          className="object-cover -z-10"
+          placeholder="blur"
+        />
         {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-black/40"></div>
         {/* Content */}
