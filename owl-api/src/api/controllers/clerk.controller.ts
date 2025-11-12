@@ -91,11 +91,9 @@ export const handleClerkWebhook = async (req: Request, res: Response) => {
             `Email principal non trouvé pour l'utilisateur ${id}. Données reçues:`,
             email_addresses
           );
-          return res
-            .status(400)
-            .json({
-              message: `Email principal non trouvé pour l'utilisateur ${id}.`,
-            });
+          return res.status(400).json({
+            message: `Email principal non trouvé pour l'utilisateur ${id}.`,
+          });
         }
 
         // On cherche l'utilisateur dans notre base de données
