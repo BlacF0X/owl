@@ -1,0 +1,38 @@
+### =================================================================
+### Variables d'environnement
+### Changez ces valeurs selon vos besoins
+### =================================================================
+@baseUrl = http://localhost:8080
+@authToken = {{authToken}}
+
+###
+### =================================================================
+### Endpoints Publics (pas besoin d'authentification)
+### =================================================================
+
+# @name TestRacine
+# Teste si l'API est en ligne
+GET {{baseUrl}}/
+
+###
+
+# @name TestConnexionDB
+# Teste si la connexion à la base de données fonctionne
+GET {{baseUrl}}/api/db-test
+
+###
+### =================================================================
+### Endpoints Protégés (nécessite un token d'authentification)
+### =================================================================
+
+# @name GetTousLesCapteurs
+# Récupère tous les capteurs pour l'utilisateur authentifié
+GET {{baseUrl}}/api/sensors
+Authorization: Bearer {{authToken}}
+
+###
+
+# @name GetCapteursFenetre
+# Récupère uniquement les capteurs de type "fenêtre"
+GET {{baseUrl}}/api/sensors/windows
+Authorization: Bearer {{authToken}}
