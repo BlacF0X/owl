@@ -3,9 +3,9 @@ import React from 'react';
 const TemperaturesDataPage = () => {
   // Exemple de données de capteurs de température
   const temperatureSensors = [
-    { id: 1, name: "Capteur Salle 1", value: 22.5, unit: "°C" },
-    { id: 2, name: "Capteur Extérieur", value: 18.0, unit: "°C" },
-    { id: 3, name: "Capteur Cuisine", value: 25.0, unit: "°C" },
+    { id: 1, name: 'Capteur Salle 1', value: 22.5, unit: '°C' },
+    { id: 2, name: 'Capteur Extérieur', value: 18.0, unit: '°C' },
+    { id: 3, name: 'Capteur Cuisine', value: 25.0, unit: '°C' },
   ];
 
   return (
