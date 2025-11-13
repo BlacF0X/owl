@@ -68,17 +68,6 @@ export default async function DashboardPage() {
   const openWindowsCount = windowSensors.filter((s) => s.displayValue === 'Ouvert').length;
   const co2Sensor = sensors.find((s) => s.type.type_key === 'air_quality');
 
-  // Affichage d'un message d'erreur clair si l'appel API échoue
-  if (apiError) {
-    return (
-      <div className="rounded-lg bg-red-100 p-6 text-center text-red-800">
-        <h2 className="text-xl font-bold">Erreur de chargement des données</h2>
-        <p className="mt-2">Impossible de récupérer les informations des capteurs.</p>
-        <p className="mt-4 text-sm font-mono">{apiError}</p>
-      </div>
-    );
-  }
-
   return (
     <div>
       {/* En-tête de la page */}
