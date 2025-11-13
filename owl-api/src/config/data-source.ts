@@ -21,7 +21,7 @@ export const AppDataSource = new DataSource({
   extra: {
     family: 4, // Pour les problèmes de connexion en local (IPv6)
   },
-  synchronize: !isProduction,
+  synchronize: false,
   logging: !isProduction,
   entities: [Hub, Sensor, SensorReading, SensorType, User],
 
