@@ -10,7 +10,7 @@ import { LayoutDashboard, DoorOpen, Wind, CloudSun, Thermometer } from 'lucide-r
 const navLinks = [
   { name: 'Général', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Capteurs de fenêtre', href: '/dashboard/window-sensors', icon: DoorOpen },
-  { name: 'Température', href: '#', icon: Thermometer },
+  { name: 'Température', href: '/dashboard/temperatures-datas', icon: Thermometer },
   { name: "Qualité de l'air", href: '#', icon: Wind }, // Le lien est '#' car la page n'existe pas encore
   { name: 'Capteurs de CO2', href: '/dashboard/co2-sensors', icon: CloudSun },
 ];
