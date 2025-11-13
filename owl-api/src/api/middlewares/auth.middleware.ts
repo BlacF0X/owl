@@ -21,6 +21,22 @@ export const clerkAuthMiddleware = async (
   res: Response,
   next: NextFunction
 ) => {
+  console.log('--- Démarrage du middleware d’authentification ---');
+  
+  if (!process.env.CLERK_SECRET_KEY) {
+    console.error('❌ ERREUR FATALE : CLERK_SECRET_KEY n’est pas défini !');
+  } else {
+    console.log('✅ CLERK_SECRET_KEY est présent.');
+  }
+
+  const authorizationHeader = req.headers.authorization;
+  if (!authorizationHeader) {
+    console.warn('⚠️ Aucun en-tête "Authorization" trouvé.');
+    return res.status(401).json({ message: 'Aucun token d’authentification fourni.' });
+  } else {
+    console.log('✅ En-tête "Authorization" trouvé.');
+  }
+  
   try {
     const authorizationHeader = req.headers.authorization;
     if (!authorizationHeader) {
