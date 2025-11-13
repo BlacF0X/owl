@@ -28,17 +28,21 @@ export default async function DashboardPage() {
     user = await currentUser();
     const authData = await auth();
     getToken = authData.getToken;
-
   } catch (error) {
-    console.error("Clerk authentication error:", error);
+    console.error('Clerk authentication error:', error);
     // Si l'erreur est une erreur d'API Clerk (session expirée),
     // on peut afficher un message personnalisé.
     return (
       <div className="flex h-screen w-full items-center justify-center bg-slate-100">
         <div className="rounded-lg bg-white p-8 text-center shadow-lg">
           <h2 className="text-xl font-bold text-slate-800">Votre session a expiré</h2>
-          <p className="mt-2 text-slate-600">Pour des raisons de sécurité, veuillez vous reconnecter.</p>
-          <Link href="/connexion" className="mt-6 inline-block rounded-lg bg-slate-900 px-5 py-2 text-sm font-bold text-white transition-colors hover:bg-slate-700">
+          <p className="mt-2 text-slate-600">
+            Pour des raisons de sécurité, veuillez vous reconnecter.
+          </p>
+          <Link
+            href="/connexion"
+            className="mt-6 inline-block rounded-lg bg-slate-900 px-5 py-2 text-sm font-bold text-white transition-colors hover:bg-slate-700"
+          >
             Se reconnecter
           </Link>
         </div>
@@ -52,7 +56,7 @@ export default async function DashboardPage() {
 
   // Initialisation des variables pour les données réelles et les erreurs
   let sensors: Sensor[] = [];
-  let apiError: string | null = null;
+  // let apiError: string | null = null;
 
   try {
     const token = await getToken();
@@ -60,7 +64,7 @@ export default async function DashboardPage() {
     sensors = await fetchFromApi<Sensor[]>('/api/sensors', token);
   } catch (error) {
     console.error('Failed to fetch sensor data:', error);
-    apiError = (error as Error).message;
+    // apiError = (error as Error).message;
   }
 
   // Toutes les constantes suivantes sont maintenant calculées à partir des données de l'API
@@ -79,10 +83,9 @@ export default async function DashboardPage() {
             </h1>
             <p className="mt-1 text-slate-600">Voici le résumé de l'état de vos capteurs.</p>
           </div>
-          
+
           {/* 2. Affichez le composant UNIQUEMENT en développement */}
           {process.env.NODE_ENV === 'development' && <ApiStatusIndicator />}
-
         </div>
       </header>
 
@@ -94,7 +97,9 @@ export default async function DashboardPage() {
         </div>
         <div className="rounded-lg bg-white p-5 shadow">
           <p className="text-sm font-medium text-slate-500">Qualité de l'air</p>
-          <p className="mt-2 text-3xl font-bold text-slate-900">{co2Sensor?.displayValue || 'N/A'}</p>
+          <p className="mt-2 text-3xl font-bold text-slate-900">
+            {co2Sensor?.displayValue || 'N/A'}
+          </p>
           <span className="text-xs text-slate-500">{co2Sensor ? co2Sensor.type.unit : ''}</span>
         </div>
         <div className="rounded-lg bg-white p-5 shadow">
@@ -112,9 +117,24 @@ export default async function DashboardPage() {
               <table className="min-w-full divide-y divide-slate-200">
                 <thead>
                   <tr>
-                    <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-slate-900">Identifiant</th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-slate-900">État</th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-slate-900">Durée d'ouverture</th>
+                    <th
+                      scope="col"
+                      className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-slate-900"
+                    >
+                      Identifiant
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-3 py-3.5 text-left text-sm font-semibold text-slate-900"
+                    >
+                      État
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-3 py-3.5 text-left text-sm font-semibold text-slate-900"
+                    >
+                      Durée d'ouverture
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -136,7 +156,9 @@ export default async function DashboardPage() {
                           </span>
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-slate-500">
-                          {sensor.displayValue === 'Ouvert' ? calculateDuration(sensor.state_changed_at) : '-'}
+                          {sensor.displayValue === 'Ouvert'
+                            ? calculateDuration(sensor.state_changed_at)
+                            : '-'}
                         </td>
                       </tr>
                     ))

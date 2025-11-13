@@ -4,6 +4,7 @@ import { Clerk } from '@clerk/clerk-sdk-node';
 
 // Étendre le type Request d'Express pour y attacher les informations d'authentification
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
       auth?: {
@@ -23,7 +24,9 @@ export const clerkAuthMiddleware = async (
   try {
     const authorizationHeader = req.headers.authorization;
     if (!authorizationHeader) {
-      return res.status(401).json({ message: 'Aucun token d’authentification fourni.' });
+      return res
+        .status(401)
+        .json({ message: 'Aucun token d’authentification fourni.' });
     }
 
     const token = authorizationHeader.split(' ')[1];

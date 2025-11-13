@@ -31,7 +31,7 @@ export const getSensorsForUser = async (req: Request, res: Response) => {
     // 3. Transformer les données pour qu'elles correspondent au format attendu par le frontend
     const formattedSensors = sensorsFromDb.map((sensor) => {
       let displayValue = '-';
-      
+
       // Logique de transformation pour créer le `displayValue`
       if (sensor.sensorType.type_key === 'window') {
         displayValue = sensor.current_state_bool ? 'Ouvert' : 'Fermé';

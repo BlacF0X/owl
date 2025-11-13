@@ -43,14 +43,20 @@ const ApiStatusIndicator = () => {
     switch (status) {
       case 'online':
         return (
-          <div className="flex items-center gap-2 text-sm text-green-600" title={`API connectée sur ${process.env.NEXT_PUBLIC_API_URL}`}>
+          <div
+            className="flex items-center gap-2 text-sm text-green-600"
+            title={`API connectée sur ${process.env.NEXT_PUBLIC_API_URL}`}
+          >
             <Circle className="h-3 w-3 fill-current text-green-500" />
             <span>API Connectée</span>
           </div>
         );
       case 'offline':
         return (
-          <div className="flex items-center gap-2 text-sm text-red-600" title={`Impossible de joindre l'API sur ${process.env.NEXT_PUBLIC_API_URL}`}>
+          <div
+            className="flex items-center gap-2 text-sm text-red-600"
+            title={`Impossible de joindre l'API sur ${process.env.NEXT_PUBLIC_API_URL}`}
+          >
             <Circle className="h-3 w-3 fill-current text-red-500" />
             <span>API Inaccessible</span>
           </div>
