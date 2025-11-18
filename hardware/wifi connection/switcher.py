@@ -1,5 +1,5 @@
-import connection
-import emission
+import scan
+import emit
 
 wifi_1 = ('testssid','testpwd')
 wifi_2 = ('testssid','testpwd')
