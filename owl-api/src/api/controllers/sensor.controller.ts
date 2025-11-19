@@ -113,7 +113,10 @@ export const getWindowSensorsForUser = async (req: Request, res: Response) => {
     // 4. Renvoyer la réponse
     res.status(200).json(formattedSensors);
   } catch (error) {
-    console.error('Erreur lors de la récupération des capteurs de fenêtre :', error);
+    console.error(
+      'Erreur lors de la récupération des capteurs de fenêtre :',
+      error
+    );
     res.status(500).json({ message: 'Erreur interne du serveur.' });
   }
 };

@@ -1,5 +1,8 @@
 import { Router } from 'express';
-import { getSensorsForUser, getWindowSensorsForUser } from '../controllers/sensor.controller.js';
+import {
+  getSensorsForUser,
+  getWindowSensorsForUser,
+} from '../controllers/sensor.controller.js';
 import { clerkAuthMiddleware } from '../middlewares/auth.middleware.js';
 
 const router = Router();
