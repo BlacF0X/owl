@@ -3,7 +3,8 @@
 ### Changez ces valeurs selon vos besoins
 ### =================================================================
 @baseUrl = http://localhost:8080
-@authToken = {{authToken}}
+@authToken = eyJhbGciOiJSUzI1NiIsImNhdCI6ImNsX0I3ZDRQRDIyMkFBQSIsImtpZCI6Imluc18zNDVyYTNtWUREektYNXFrTE9EQ0xKRUhjbUwiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJodHRwOi8vbG9jYWxob3N0OjMwMDAiLCJleHAiOjE3OTUxMDc1NjQsImlhdCI6MTc2MzU3MTU2NCwiaXNzIjoiaHR0cHM6Ly9zdGlycmluZy1oeWVuYS04OS5jbGVyay5hY2NvdW50cy5kZXYiLCJqdGkiOiIwYTZhNjhlYzYwNzA0YjMwMzU2OCIsIm5iZiI6MTc2MzU3MTU1OSwic3ViIjoidXNlcl8zNVB3NEFsVEVvZ3dxajRvOW1FZUxrZUMyWGUifQ.GXuPdqHopR67Nlb4phRefkyyq1pg4YLSgkocBSwGAisOPdv2yEjWKXLaK7I4MkiiUVXqN-lX2pM-ccOu9jaN4S2P4MQXMnlXHuzDtQZXDPzFLK6ltG6mAQ8cDAL1J_W6Ul2m9DSSblRIjzcL14QTYaTUgwMRbEWbRDA7Cvtiibg6wokBaiABpYIfLnkhkgX6JCNsL9z-RNvZYAnI8Z-sfzwp6gtUErj-9ctTFErwOxLEXssKlWgRBs5sohSC6mNRfuv3k9q-L3ai2-ipE24Rrp4K8dBUESYxsrwxRqsjDGV-9PxMb3kIXkkW6VyhcRzndJtP5r0g0WGbJ4QRM1CO7g
+
 
 ###
 ### =================================================================
