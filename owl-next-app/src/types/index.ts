@@ -11,7 +11,7 @@ export interface HubInfo {
 
 export interface Sensor {
   sensor_id: string;
-  hub: HubInfo; 
+  hub: HubInfo;
   name: string;
   displayValue: string;
   state_changed_at: string | null;

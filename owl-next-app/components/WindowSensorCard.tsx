@@ -1,5 +1,5 @@
 import { Sensor } from '@/src/types';
-import { DoorOpen, DoorClosed, Clock, Server } from 'lucide-react';
+import { DoorOpen, DoorClosed, Clock } from 'lucide-react';
 
 // ... (Les fonctions utilitaires formatDateTime et calculateDuration ne changent pas)
 const formatDateTime = (dateString: string | null) => {
@@ -20,14 +20,15 @@ const calculateDuration = (since: string | null): string => {
   return duration.trim();
 };
 
-
 const WindowSensorCard: React.FC<{ sensor: Sensor }> = ({ sensor }) => {
   const isOpen = sensor.displayValue === 'Ouvert';
   const statusColor = isOpen ? 'text-orange-600' : 'text-green-600';
   const borderColor = isOpen ? 'border-orange-400' : 'border-green-400';
 
   return (
-    <div className={`rounded-lg bg-white p-6 shadow-sm border-l-4 ${borderColor} flex flex-col justify-between`}>
+    <div
+      className={`rounded-lg bg-white p-6 shadow-sm border-l-4 ${borderColor} flex flex-col justify-between`}
+    >
       <div>
         {/* En-tête de la carte */}
         <div className="flex items-start justify-between mb-4">
@@ -41,10 +42,8 @@ const WindowSensorCard: React.FC<{ sensor: Sensor }> = ({ sensor }) => {
 
         {/* --- NOUVELLE SECTION DE STATUT AMÉLIORÉE --- */}
         <div className="mt-4 text-center">
-          <p className={`text-3xl font-extrabold ${statusColor}`}>
-            {sensor.displayValue}
-          </p>
-          
+          <p className={`text-3xl font-extrabold ${statusColor}`}>{sensor.displayValue}</p>
+
           {/* La durée est maintenant beaucoup plus visible */}
           {isOpen && sensor.state_changed_at && (
             <>
@@ -56,7 +55,7 @@ const WindowSensorCard: React.FC<{ sensor: Sensor }> = ({ sensor }) => {
           )}
         </div>
       </div>
-      
+
       {/* Informations supplémentaires en bas de la carte */}
       <div className="mt-6 space-y-3 border-t pt-4 text-slate-600">
         <div className="flex items-center gap-3 text-sm">
