@@ -9,7 +9,12 @@ type TemperatureCircleProps = {
   max: number;
 };
 
-const TemperatureCircle: React.FC<TemperatureCircleProps> = ({ sensorName, temperature, min, max }) => {
+const TemperatureCircle: React.FC<TemperatureCircleProps> = ({
+  sensorName,
+  temperature,
+  min,
+  max,
+}) => {
   const radius = 32;
   const strokeWidth = 8;
   const circumference = 2 * Math.PI * radius;
@@ -24,6 +29,8 @@ const TemperatureCircle: React.FC<TemperatureCircleProps> = ({ sensorName, tempe
 
   return (
     <div className="flex flex-col items-center w-full">
+      {/* Affiche le nom du capteur au-dessus de la jauge */}
+      <div className="mb-2 text-lg font-semibold text-slate-700">{sensorName}</div>
       <svg width={100} height={100} viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
         <circle cx="50" cy="50" r={radius} stroke="#e5e7eb" strokeWidth={strokeWidth} fill="none" />
         <circle
