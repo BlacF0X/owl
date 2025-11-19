@@ -1,4 +1,14 @@
 ### =================================================================
+### A LIRE AVANT UTILISATION
+### =================================================================
+### Pour utiliser ce fichier de test de l'api, il faut avant tout
+### installer l'extension vscode 'REST client'.
+### Ensuite, il faudra ajouter la variable 'CLERK_TEST_TOKEN' dans le
+### fichier '.env' à la racine du projet. Vous pouvez vous baser sur
+### le fichier '.env.example'. Il faudra pour finir se connecter sur
+### Doppler (via ce lien https://dashboard.doppler.com/workplace/594510d31ae1dcfd7568/projects/owl-api/configs/dev)
+### avec le compte 'team.owl.project@proton.me' avec son mdp.
+### =================================================================
 ### Variables d'environnement
 ### Changez ces valeurs selon vos besoins
 ### =================================================================
@@ -6,7 +16,6 @@
 @authToken = {{$dotenv CLERK_TEST_TOKEN}}
 
 
-###
 ### =================================================================
 ### Endpoints Publics (pas besoin d'authentification)
 ### =================================================================
@@ -21,7 +30,7 @@ GET {{baseUrl}}/
 # Teste si la connexion à la base de données fonctionne
 GET {{baseUrl}}/api/db-test
 
-###
+
 ### =================================================================
 ### Endpoints Protégés (nécessite un token d'authentification)
 ### =================================================================
