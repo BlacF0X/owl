@@ -28,7 +28,7 @@ GET {{baseUrl}}/
 
 # @name TestConnexionDB
 # Teste si la connexion à la base de données fonctionne
-GET {{baseUrl}}/api/db-test
+GET {{baseUrl}}/api/test/db
 
 
 ### =================================================================
