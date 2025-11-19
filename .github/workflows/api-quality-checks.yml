@@ -1,11 +1,6 @@
 name: CI - Code Quality - API
 
 on:
-  push:
-    paths:
-      - 'owl-api/**'
-      - '.github/workflows/api-quality-checks.yml'
-      
   pull_request:
     branches: [ main, develop ]
     paths:
