@@ -1,5 +1,8 @@
 import { Router } from 'express';
-import { getSensorsForUser, getSensorReadings } from '../controllers/sensor.controller.js';
+import {
+  getSensorsForUser,
+  getSensorReadings,
+} from '../controllers/sensor.controller.js';
 import { clerkAuthMiddleware } from '../middlewares/auth.middleware.js';
 import windowsRouter from './windows.routes.js';
 

@@ -88,14 +88,20 @@ export const getSensorReadings = async (req: Request, res: Response) => {
     const readingRepository = AppDataSource.getRepository(SensorReading);
 
     if (isDevelopment) {
-      const result = await readingRepository.query('SELECT MAX(timestamp) as "maxTimestamp" FROM sensorreadings');
+      const result = await readingRepository.query(
+        'SELECT MAX(timestamp) as "maxTimestamp" FROM sensorreadings'
+      );
       const maxTimestamp = result[0]?.maxTimestamp;
-      
+
       if (maxTimestamp) {
         referenceDate = new Date(maxTimestamp);
-        console.log(`[DEV MODE] Date de référence statique trouvée : ${referenceDate.toISOString()}`);
+        console.log(
+          `[DEV MODE] Date de référence statique trouvée : ${referenceDate.toISOString()}`
+        );
       } else {
-        console.log('[DEV MODE] Aucune lecture trouvée, utilisation de la date actuelle.');
+        console.log(
+          '[DEV MODE] Aucune lecture trouvée, utilisation de la date actuelle.'
+        );
       }
     }
 
@@ -125,7 +131,10 @@ export const getSensorReadings = async (req: Request, res: Response) => {
 
     res.status(200).json(readings);
   } catch (error) {
-    console.error("Erreur lors de la récupération de l'historique des lectures :", error);
+    console.error(
+      "Erreur lors de la récupération de l'historique des lectures :",
+      error
+    );
     res.status(500).json({ message: 'Erreur interne du serveur.' });
   }
 };
