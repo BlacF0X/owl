@@ -53,7 +53,7 @@ export default async function WindowSensorsPage() {
 
   // --- LOGIQUE DE RÉSUMÉ AMÉLIORÉE ---
   const totalSensors = windowSensors.length;
-  const openSensors = windowSensors.filter(sensor => sensor.displayValue === 'Ouvert');
+  const openSensors = windowSensors.filter((sensor) => sensor.displayValue === 'Ouvert');
   const openSensorsCount = openSensors.length;
 
   // 1. Définir le seuil en minutes
@@ -61,11 +61,11 @@ export default async function WindowSensorsPage() {
   const thresholdInMs = LONG_PERIOD_THRESHOLD_MINUTES * 60 * 1000;
 
   // 2. Filtrer les fenêtres ouvertes depuis longtemps
-  const longOpenSensors = openSensors.filter(sensor => {
+  const longOpenSensors = openSensors.filter((sensor) => {
     if (!sensor.state_changed_at) return false;
     const openDate = new Date(sensor.state_changed_at).getTime();
     const now = new Date().getTime();
-    return (now - openDate) > thresholdInMs;
+    return now - openDate > thresholdInMs;
   });
   const longOpenSensorsCount = longOpenSensors.length;
 
@@ -99,9 +99,13 @@ export default async function WindowSensorsPage() {
         <div>
           <h2 className="text-xl font-bold text-slate-800">Résumé Actuel</h2>
           <p className="text-slate-600">
-            <span className={`font-bold ${openSensorsCount > 0 ? 'text-orange-600' : 'text-green-600'}`}>
+            <span
+              className={`font-bold ${openSensorsCount > 0 ? 'text-orange-600' : 'text-green-600'}`}
+            >
               {openSensorsCount}
-            </span> sur <span className="font-bold">{totalSensors}</span> capteurs de fenêtre sont actuellement ouverts.
+            </span>{' '}
+            sur <span className="font-bold">{totalSensors}</span> capteurs de fenêtre sont
+            actuellement ouverts.
           </p>
         </div>
 
@@ -111,10 +115,12 @@ export default async function WindowSensorsPage() {
             <AlertTriangle className="h-6 w-6 flex-shrink-0 text-orange-500 mt-0.5" />
             <div className="text-orange-800">
               <p className="font-bold">
-                {longOpenSensorsCount} {longOpenSensorsCount > 1 ? 'fenêtres sont ouvertes' : 'fenêtre est ouverte'} depuis plus d'une heure.
+                {longOpenSensorsCount}{' '}
+                {longOpenSensorsCount > 1 ? 'fenêtres sont ouvertes' : 'fenêtre est ouverte'} depuis
+                plus d'une heure.
               </p>
               <p className="text-sm mt-1">
-                Pensez à fermer : {longOpenSensors.map(s => s.name).join(', ')}.
+                Pensez à fermer : {longOpenSensors.map((s) => s.name).join(', ')}.
               </p>
             </div>
           </div>
