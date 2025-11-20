@@ -38,7 +38,10 @@ export const getWindowSensorsForUser = async (req: Request, res: Response) => {
 
       return {
         sensor_id: sensor.sensor_id,
-        hub_id: sensor.hub.hub_id,
+        hub: {
+            hub_id: sensor.hub.hub_id,
+            name: sensor.hub.name
+        },
         name: sensor.name,
         displayValue: displayValue,
         state_changed_at: sensor.state_changed_at,

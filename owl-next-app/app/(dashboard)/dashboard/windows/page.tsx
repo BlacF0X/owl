@@ -1,79 +1,44 @@
-import { currentUser } from '@clerk/nextjs/server';
+import { currentUser, auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
-// Note: Pas besoin de 'auth' ou 'fetchFromApi' tant qu'on utilise les mocks
+import { fetchFromApi } from '@/src/lib/apiClient';
 import { Sensor } from '@/src/types';
 import WindowSensorCard from '@/components/WindowSensorCard';
 import { AlertTriangle } from 'lucide-react';
 
-// ... (les données fictives mockWindowSensors restent les mêmes)
-const mockWindowSensors: Sensor[] = [
-  {
-    sensor_id: 'win_sensor_001',
-    name: 'Fenêtre du Salon',
-    displayValue: 'Ouvert',
-    state_changed_at: new Date(Date.now() - 1000 * 60 * 100).toISOString(),
-    hub: { hub_id: 'hub_01', name: 'Maison Principale' },
-    type: { type_key: 'window', name: 'Fenêtre', unit: '-' },
-  },
-  {
-    sensor_id: 'win_sensor_002',
-    name: 'Fenêtre de la Chambre',
-    displayValue: 'Fermé',
-    state_changed_at: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
-    hub: { hub_id: 'hub_01', name: 'Maison Principale' },
-    type: { type_key: 'window', name: 'Fenêtre', unit: '-' },
-  },
-  {
-    sensor_id: 'win_sensor_003',
-    name: 'Fenêtre du Bureau',
-    displayValue: 'Ouvert',
-    state_changed_at: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
-    hub: { hub_id: 'hub_02', name: 'Bureau' },
-    type: { type_key: 'window', name: 'Fenêtre', unit: '-' },
-  },
-  {
-    sensor_id: 'win_sensor_004',
-    name: 'Baie Vitrée Jardin',
-    displayValue: 'Fermé',
-    state_changed_at: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
-    hub: { hub_id: 'hub_01', name: 'Maison Principale' },
-    type: { type_key: 'window', name: 'Fenêtre', unit: '-' },
-  },
-  {
-    sensor_id: 'win_sensor_005',
-    name: 'Fenêtre de la Toilette',
-    displayValue: 'Ouvert',
-    state_changed_at: new Date(Date.now() - 1000 * 60 * 10).toISOString(),
-    hub: { hub_id: 'hub_01', name: 'Maison Principale' },
-    type: { type_key: 'window', name: 'Fenêtre', unit: '-' },
-  },
-  {
-    sensor_id: 'win_sensor_006',
-    name: 'Fenêtre de la Cuisine',
-    displayValue: 'Ouvert',
-    state_changed_at: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
-    hub: { hub_id: 'hub_01', name: 'Maison Principale' },
-    type: { type_key: 'window', name: 'Fenêtre', unit: '-' },
-  },
-  {
-    sensor_id: 'win_sensor_005',
-    name: 'Fenêtre de la Toilette',
-    displayValue: 'Ouvert',
-    state_changed_at: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-    hub: { hub_id: 'hub_02', name: 'Bureau' },
-    type: { type_key: 'window', name: 'Fenêtre', unit: '-' },
-  },
-];
-
 export default async function WindowSensorsPage() {
-  const user = await currentUser();
+  let user;
+  let getToken;
+
+  // Gestion robuste de l'authentification Clerk
+  try {
+    user = await currentUser();
+    const authData = await auth();
+    getToken = authData.getToken;
+  } catch (error) {
+    console.error('Clerk authentication error:', error);
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-slate-100">
+         {/* ... votre UI d'erreur de session ... */}
+         <p>Session expirée. Veuillez vous reconnecter.</p>
+      </div>
+    );
+  }
+  
   if (!user) {
     redirect('/connexion');
   }
 
-  // Pour l'instant, nous utilisons les données fictives
-  const windowSensors: Sensor[] = mockWindowSensors;
-  const apiError: string | null = null;
+  let windowSensors: Sensor[] = [];
+  let apiError: string | null = null;
+
+  try {
+    const token = await getToken();
+    // On appelle l'endpoint '/api/sensors/windows'
+    windowSensors = await fetchFromApi<Sensor[]>('/api/sensors/windows', token);
+  } catch (error) {
+    console.error('Failed to fetch window sensor data:', error);
+    apiError = (error as Error).message;
+  }
 
   // --- LOGIQUE DE RÉSUMÉ AMÉLIORÉE ---
   const totalSensors = windowSensors.length;
