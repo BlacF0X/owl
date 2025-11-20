@@ -51,7 +51,9 @@ const WindowSensorCard: React.FC<{ sensor: Sensor }> = ({ sensor }) => {
   }
 
   return (
-    <div className={`rounded-lg bg-white p-6 shadow-sm border-l-4 ${borderColor} flex flex-col justify-between`}>
+    <div
+      className={`rounded-lg bg-white p-6 shadow-sm border-l-4 ${borderColor} flex flex-col justify-between`}
+    >
       <div>
         {/* En-tête de la carte */}
         <div className="flex items-start justify-between mb-4">
@@ -83,16 +85,16 @@ const WindowSensorCard: React.FC<{ sensor: Sensor }> = ({ sensor }) => {
           )}
         </div>
       </div>
-      
+
       {/* Informations supplémentaires */}
       <div className="mt-6 border-t pt-4 text-slate-600">
-         <div className="flex items-center gap-3 text-sm">
-           <Clock className="h-5 w-5 text-slate-400" />
-           <p>
-             Dernier changement :{' '}
-             <span className="font-semibold">{formatDateTime(sensor.state_changed_at)}</span>
-           </p>
-         </div>
+        <div className="flex items-center gap-3 text-sm">
+          <Clock className="h-5 w-5 text-slate-400" />
+          <p>
+            Dernier changement :{' '}
+            <span className="font-semibold">{formatDateTime(sensor.state_changed_at)}</span>
+          </p>
+        </div>
       </div>
     </div>
   );
