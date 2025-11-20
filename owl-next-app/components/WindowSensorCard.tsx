@@ -6,20 +6,28 @@ const formatDateTime = (dateString: string | null) => {
   return new Date(dateString).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
 };
 
-const calculateDuration = (since: string | null): string => {
+const calculateDuration = (since: string | null, referenceDate: Date = new Date()): string => {
   if (!since) return '';
   const sinceDate = new Date(since);
-  const now = new Date();
-  const diffMs = now.getTime() - sinceDate.getTime();
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+  // On utilise referenceDate au lieu de new Date()
+  const diffMs = referenceDate.getTime() - sinceDate.getTime();
+
+  // Sécurité : si la diff est négative (bug de données), on met 0
+  const safeDiffMs = Math.max(0, diffMs);
+
+  const diffHours = Math.floor(safeDiffMs / (1000 * 60 * 60));
+  const diffMins = Math.floor((safeDiffMs % (1000 * 60 * 60)) / (1000 * 60));
   let duration = '';
   if (diffHours > 0) duration += `${diffHours}h `;
   if (diffMins > 0 || diffHours === 0) duration += `${diffMins}min`;
   return duration.trim();
 };
 
-const WindowSensorCard: React.FC<{ sensor: Sensor }> = ({ sensor }) => {
+const WindowSensorCard: React.FC<{ sensor: Sensor; referenceDate?: Date }> = ({
+  sensor,
+  referenceDate = new Date(), // Par défaut, c'est maintenant
+}) => {
   const isOpen = sensor.displayValue === 'Ouvert';
   let statusColor: string;
   let borderColor: string;
@@ -29,7 +37,7 @@ const WindowSensorCard: React.FC<{ sensor: Sensor }> = ({ sensor }) => {
 
   if (isOpen) {
     const durationInMinutes = sensor.state_changed_at
-      ? (new Date().getTime() - new Date(sensor.state_changed_at).getTime()) / 60000
+      ? (referenceDate.getTime() - new Date(sensor.state_changed_at).getTime()) / 60000
       : 0;
 
     if (durationInMinutes > LONG_OPEN_THRESHOLD_MINUTES) {
@@ -71,7 +79,7 @@ const WindowSensorCard: React.FC<{ sensor: Sensor }> = ({ sensor }) => {
             <>
               <p className="mt-1 text-sm text-slate-500">depuis</p>
               <p className={`text-2xl font-bold ${statusColor}`}>
-                {calculateDuration(sensor.state_changed_at)}
+                {calculateDuration(sensor.state_changed_at, referenceDate)}
               </p>
             </>
           ) : (

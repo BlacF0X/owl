@@ -44,7 +44,10 @@ export const getSensorsForUser = async (req: Request, res: Response) => {
       // On construit l'objet final qui correspond au type `Sensor` du frontend
       return {
         sensor_id: sensor.sensor_id,
-        hub_id: sensor.hub.hub_id,
+        hub: {
+          hub_id: sensor.hub.hub_id,
+          name: sensor.hub.name,
+        },
         name: sensor.name,
         displayValue: displayValue,
         state_changed_at: sensor.state_changed_at,

@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { fetchFromApi } from '@/src/lib/apiClient';
 import { Sensor } from '@/src/types';
 import WindowSensorCard from '@/components/WindowSensorCard';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Info } from 'lucide-react';
 
 export default async function WindowSensorsPage() {
   let user;
@@ -18,12 +18,12 @@ export default async function WindowSensorsPage() {
     console.error('Clerk authentication error:', error);
     return (
       <div className="flex h-screen w-full items-center justify-center bg-slate-100">
-         {/* ... votre UI d'erreur de session ... */}
-         <p>Session expirée. Veuillez vous reconnecter.</p>
+        {/* ... votre UI d'erreur de session ... */}
+        <p>Session expirée. Veuillez vous reconnecter.</p>
       </div>
     );
   }
-  
+
   if (!user) {
     redirect('/connexion');
   }
@@ -40,20 +40,40 @@ export default async function WindowSensorsPage() {
     apiError = (error as Error).message;
   }
 
-  // --- LOGIQUE DE RÉSUMÉ AMÉLIORÉE ---
+  let referenceDate = new Date(); // Par défaut : maintenant (Prod)
+  let isDevTime = false;
+
+  if (process.env.NODE_ENV === 'development' && windowSensors.length > 0) {
+    // Trouver la date la plus récente parmi tous les capteurs
+    const timestamps = windowSensors
+      .map((s) => s.state_changed_at)
+      .filter((t): t is string => !!t) // Filtre les null/undefined
+      .map((t) => new Date(t).getTime());
+
+    if (timestamps.length > 0) {
+      const maxTimestamp = Math.max(...timestamps);
+      // Si la dernière donnée est plus récente que "maintenant" (possible si horloge décalée)
+      // ou simplement pour se caler sur la dernière donnée générée.
+      referenceDate = new Date(maxTimestamp);
+      isDevTime = true;
+    }
+  }
+
+  // =================================================================
+  // LOGIQUE DE RÉSUMÉ (Utilisant referenceDate)
+  // =================================================================
   const totalSensors = windowSensors.length;
   const openSensors = windowSensors.filter((sensor) => sensor.displayValue === 'Ouvert');
   const openSensorsCount = openSensors.length;
 
-  // 1. Définir le seuil en minutes
   const LONG_PERIOD_THRESHOLD_MINUTES = 60;
   const thresholdInMs = LONG_PERIOD_THRESHOLD_MINUTES * 60 * 1000;
 
-  // 2. Filtrer les fenêtres ouvertes depuis longtemps
   const longOpenSensors = openSensors.filter((sensor) => {
     if (!sensor.state_changed_at) return false;
     const openDate = new Date(sensor.state_changed_at).getTime();
-    const now = new Date().getTime();
+    // Utilisation de referenceDate ici aussi pour la cohérence
+    const now = referenceDate.getTime();
     return now - openDate > thresholdInMs;
   });
   const longOpenSensorsCount = longOpenSensors.length;
@@ -76,10 +96,21 @@ export default async function WindowSensorsPage() {
   return (
     <div>
       <header className="mb-10">
-        <h1 className="text-3xl font-bold text-slate-900">État des Capteurs de Fenêtre</h1>
-        <p className="mt-1 text-slate-600">
-          Vue détaillée de tous vos capteurs de fenêtre, groupés par boîtier central.
-        </p>
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900">État des Capteurs de Fenêtre</h1>
+            <p className="mt-1 text-slate-600">
+              Vue détaillée de tous vos capteurs de fenêtre, groupés par boîtier central.
+            </p>
+          </div>
+          {/* Petit indicateur visuel en mode DEV */}
+          {isDevTime && (
+            <div className="flex items-center gap-2 text-xs text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-200">
+              <Info className="h-3 w-3" />
+              <span>Temps simulé : {referenceDate.toLocaleTimeString()}</span>
+            </div>
+          )}
+        </div>
       </header>
 
       {/* --- PANNEAU DE RÉSUMÉ MIS À JOUR --- */}
@@ -132,7 +163,11 @@ export default async function WindowSensorsPage() {
               <h2 className="text-2xl font-bold text-slate-800 mb-6 border-b pb-3">{hubName}</h2>
               <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
                 {sensors.map((sensor) => (
-                  <WindowSensorCard key={sensor.sensor_id} sensor={sensor} />
+                  <WindowSensorCard
+                    key={sensor.sensor_id}
+                    sensor={sensor}
+                    referenceDate={referenceDate}
+                  />
                 ))}
               </div>
             </section>
