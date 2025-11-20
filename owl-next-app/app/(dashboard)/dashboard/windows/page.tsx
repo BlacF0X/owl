@@ -39,6 +39,30 @@ const mockWindowSensors: Sensor[] = [
     hub: { hub_id: 'hub_01', name: 'Maison Principale' },
     type: { type_key: 'window', name: 'Fenêtre', unit: '-' },
   },
+  {
+    sensor_id: 'win_sensor_005',
+    name: 'Fenêtre de la Toilette',
+    displayValue: 'Ouvert',
+    state_changed_at: new Date(Date.now() - 1000 * 60 * 10).toISOString(),
+    hub: { hub_id: 'hub_01', name: 'Maison Principale' },
+    type: { type_key: 'window', name: 'Fenêtre', unit: '-' },
+  },
+  {
+    sensor_id: 'win_sensor_006',
+    name: 'Fenêtre de la Cuisine',
+    displayValue: 'Ouvert',
+    state_changed_at: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
+    hub: { hub_id: 'hub_01', name: 'Maison Principale' },
+    type: { type_key: 'window', name: 'Fenêtre', unit: '-' },
+  },
+  {
+    sensor_id: 'win_sensor_005',
+    name: 'Fenêtre de la Toilette',
+    displayValue: 'Ouvert',
+    state_changed_at: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
+    hub: { hub_id: 'hub_02', name: 'Bureau' },
+    type: { type_key: 'window', name: 'Fenêtre', unit: '-' },
+  },
 ];
 
 export default async function WindowSensorsPage() {
