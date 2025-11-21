@@ -10,7 +10,7 @@ apiRouter.use('/webhooks/clerk', clerkWebhookRouter);
 
 // Les autres routeurs qui ont besoin du parser JSON
 apiRouter.use(express.json());
-apiRouter.use(testRouter);
+apiRouter.use('/test', testRouter);
 apiRouter.use('/sensors', sensorRouter);
 
 export default apiRouter;

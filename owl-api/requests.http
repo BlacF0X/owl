@@ -28,7 +28,7 @@ GET {{baseUrl}}/
 
 # @name TestConnexionDB
 # Teste si la connexion à la base de données fonctionne
-GET {{baseUrl}}/api/db-test
+GET {{baseUrl}}/api/test/db
 
 
 ### =================================================================
@@ -45,4 +45,20 @@ Authorization: Bearer {{authToken}}
 # @name GetCapteursFenetre
 # Récupère uniquement les capteurs de type "fenêtre"
 GET {{baseUrl}}/api/sensors/windows
+Authorization: Bearer {{authToken}}
+
+###
+
+@sensorId = 078c04be-6c1c-4950-a429-f95ab2971003
+
+# @name GetLectures24h
+# Récupère les lectures des dernières 24 heures pour un capteur spécifique
+GET {{baseUrl}}/api/sensors/{{sensorId}}/readings?period=24h
+Authorization: Bearer {{authToken}}
+
+###
+
+# @name GetLectures7j
+# Récupère les lectures des 7 derniers jours pour un capteur spécifique
+GET {{baseUrl}}/api/sensors/{{sensorId}}/readings?period=7d
 Authorization: Bearer {{authToken}}
