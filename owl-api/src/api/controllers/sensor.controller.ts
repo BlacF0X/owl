@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import { AppDataSource } from '../../config/data-source.js';
 import { Sensor as SensorEntity } from '../../entities/Sensor.js';
 import { SensorReading } from '../../entities/SensorReading.js';
-import { MoreThanOrEqual, Between } from 'typeorm';
+import { Between } from 'typeorm';
 
 /**
  * @description Récupère tous les capteurs pour l'utilisateur authentifié et les formate.
@@ -68,56 +68,57 @@ export const getSensorsForUser = async (req: Request, res: Response) => {
 };
 
 /**
- * @description Récupère l'historique des lectures pour un capteur spécifique
- * sur une période donnée (24h ou 7j).
- * EN DÉVELOPPEMENT : Simule la date du jour comme étant la date de la dernière lecture.
+ * @description Récupère l'historique des lectures.
+ * Accepte ?period=24h (défaut) ou 7d.
+ * Accepte ?refDate=ISOSTRING (optionnel, DEV seulement) pour simuler "maintenant".
  */
 export const getSensorReadings = async (req: Request, res: Response) => {
   try {
-    // 1. Récupérer les informations de la requête
     const userId = req.auth?.userId;
     const { sensorId } = req.params;
     const period = req.query.period === '7d' ? '7d' : '24h';
+    // Récupération de la date de référence optionnelle
+    const refDateQuery = req.query.refDate as string | undefined;
 
-    if (!userId) {
-      return res.status(401).json({ message: 'ID utilisateur manquant.' });
-    }
-    if (!sensorId) {
-      return res.status(400).json({ message: 'ID du capteur manquant.' });
-    }
+    if (!userId) return res.status(401).json({ message: 'Non autorisé' });
 
     const isDevelopment = process.env.NODE_ENV !== 'production';
-    let referenceDate = new Date();
-    const readingRepository = AppDataSource.getRepository(SensorReading);
 
-    if (isDevelopment) {
+    // Détermination de la date de fin ("maintenant")
+    let endDate = new Date();
+
+    // Logique spécifique DEV : Si une refDate est fournie, on l'utilise
+    if (isDevelopment && refDateQuery) {
+      const parsedDate = new Date(refDateQuery);
+      if (!isNaN(parsedDate.getTime())) {
+        endDate = parsedDate;
+        console.log(
+          `[DEV] Utilisation de la date de référence simulée : ${endDate.toISOString()}`
+        );
+      }
+    } else if (isDevelopment) {
+      // Fallback DEV : Si pas de refDate fournie, on cherche la dernière donnée en base
+      // (C'est votre logique existante intelligente)
+      const readingRepository = AppDataSource.getRepository(SensorReading);
       const result = await readingRepository.query(
         'SELECT MAX(timestamp) as "maxTimestamp" FROM sensorreadings'
       );
-      const maxTimestamp = result[0]?.maxTimestamp;
-
-      if (maxTimestamp) {
-        referenceDate = new Date(maxTimestamp);
-        console.log(
-          `[DEV MODE] Date de référence statique trouvée : ${referenceDate.toISOString()}`
-        );
-      } else {
-        console.log(
-          '[DEV MODE] Aucune lecture trouvée, utilisation de la date actuelle.'
-        );
+      if (result[0]?.maxTimestamp) {
+        endDate = new Date(result[0].maxTimestamp);
+        console.log(`[DEV] Auto-détection date max : ${endDate.toISOString()}`);
       }
     }
 
-    const fromDate = new Date(referenceDate);
+    // Calcul de la date de début en fonction de la date de fin
+    const startDate = new Date(endDate);
     if (period === '7d') {
-      fromDate.setDate(fromDate.getDate() - 7);
+      startDate.setDate(startDate.getDate() - 7);
     } else {
-      fromDate.setDate(fromDate.getDate() - 1);
+      // 24h exactes en arrière
+      startDate.setTime(startDate.getTime() - 24 * 60 * 60 * 1000);
     }
 
-    const timestampFilter = isDevelopment
-      ? Between(fromDate, referenceDate)
-      : MoreThanOrEqual(fromDate);
+    const readingRepository = AppDataSource.getRepository(SensorReading);
 
     const readings = await readingRepository.find({
       where: {
@@ -125,19 +126,18 @@ export const getSensorReadings = async (req: Request, res: Response) => {
           sensor_id: sensorId,
           hub: { user: { clerk_user_id: userId } },
         },
-        timestamp: timestampFilter,
+        // On cherche les lectures ENTRE date_début et date_fin
+        timestamp: Between(startDate, endDate),
       },
       order: {
         timestamp: 'DESC',
       },
+      take: 100, // Sécurité
     });
 
     res.status(200).json(readings);
   } catch (error) {
-    console.error(
-      "Erreur lors de la récupération de l'historique des lectures :",
-      error
-    );
-    res.status(500).json({ message: 'Erreur interne du serveur.' });
+    console.error('Erreur historique:', error);
+    res.status(500).json({ message: 'Erreur serveur' });
   }
 };
