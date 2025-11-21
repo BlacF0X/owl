@@ -17,3 +17,10 @@ export interface Sensor {
   state_changed_at: string | null;
   type: SensorType;
 }
+
+export interface SensorReading {
+  reading_id: string;
+  timestamp: string;
+  value_bool: boolean | null;
+  value_num: number | null;
+}

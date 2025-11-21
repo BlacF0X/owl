@@ -2,7 +2,7 @@ import { currentUser, auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { fetchFromApi } from '@/src/lib/apiClient';
 import { Sensor } from '@/src/types';
-import WindowSensorCard from '@/components/WindowSensorCard';
+import WindowSensorsView from '@/components/WindowSensorsView';
 import { AlertTriangle, Info } from 'lucide-react';
 
 export default async function WindowSensorsPage() {
@@ -40,58 +40,44 @@ export default async function WindowSensorsPage() {
     apiError = (error as Error).message;
   }
 
-  let referenceDate = new Date(); // Par défaut : maintenant (Prod)
+  // --- LOGIQUE DATE DE REF (DEV) ---
+  let referenceDate = new Date();
   let isDevTime = false;
-
   if (process.env.NODE_ENV === 'development' && windowSensors.length > 0) {
-    // Trouver la date la plus récente parmi tous les capteurs
     const timestamps = windowSensors
       .map((s) => s.state_changed_at)
-      .filter((t): t is string => !!t) // Filtre les null/undefined
+      .filter((t): t is string => !!t)
       .map((t) => new Date(t).getTime());
-
     if (timestamps.length > 0) {
-      const maxTimestamp = Math.max(...timestamps);
-      // Si la dernière donnée est plus récente que "maintenant" (possible si horloge décalée)
-      // ou simplement pour se caler sur la dernière donnée générée.
-      referenceDate = new Date(maxTimestamp);
+      referenceDate = new Date(Math.max(...timestamps));
       isDevTime = true;
     }
   }
 
-  // =================================================================
-  // LOGIQUE DE RÉSUMÉ (Utilisant referenceDate)
-  // =================================================================
+  // --- LOGIQUE DE RÉSUMÉ ---
   const totalSensors = windowSensors.length;
   const openSensors = windowSensors.filter((sensor) => sensor.displayValue === 'Ouvert');
   const openSensorsCount = openSensors.length;
-
   const LONG_PERIOD_THRESHOLD_MINUTES = 60;
   const thresholdInMs = LONG_PERIOD_THRESHOLD_MINUTES * 60 * 1000;
-
   const longOpenSensors = openSensors.filter((sensor) => {
     if (!sensor.state_changed_at) return false;
     const openDate = new Date(sensor.state_changed_at).getTime();
-    // Utilisation de referenceDate ici aussi pour la cohérence
     const now = referenceDate.getTime();
     return now - openDate > thresholdInMs;
   });
   const longOpenSensorsCount = longOpenSensors.length;
 
-  // --- GROUPER LES CAPTEURS PAR HUB ---
+  // --- GROUPEMENT PAR HUB ---
   const sensorsByHub = windowSensors.reduce(
     (acc, sensor) => {
       const hubName = sensor.hub.name;
-      // Si le hub n'est pas encore une clé dans notre objet, on l'initialise avec un tableau vide
-      if (!acc[hubName]) {
-        acc[hubName] = [];
-      }
-      // On ajoute le capteur au tableau correspondant à son hub
+      if (!acc[hubName]) acc[hubName] = [];
       acc[hubName].push(sensor);
       return acc;
     },
     {} as Record<string, Sensor[]>
-  ); // L'accumulateur est un objet où les clés sont des strings et les valeurs des tableaux de Sensor
+  );
 
   return (
     <div>
@@ -155,24 +141,12 @@ export default async function WindowSensorsPage() {
         </div>
       )}
 
-      {/* --- NOUVEL AFFICHAGE GROUPÉ --- */}
+      {/* Remplacement de l'affichage manuel par le composant Vue interactif */}
       {!apiError && Object.keys(sensorsByHub).length > 0 && (
-        <div className="space-y-12">
-          {Object.entries(sensorsByHub).map(([hubName, sensors]) => (
-            <section key={hubName}>
-              <h2 className="text-2xl font-bold text-slate-800 mb-6 border-b pb-3">{hubName}</h2>
-              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
-                {sensors.map((sensor) => (
-                  <WindowSensorCard
-                    key={sensor.sensor_id}
-                    sensor={sensor}
-                    referenceDate={referenceDate}
-                  />
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
+        <WindowSensorsView 
+          sensorsByHub={sensorsByHub} 
+          referenceDate={referenceDate} 
+        />
       )}
 
       {/* Gestion du cas "aucun capteur" */}
