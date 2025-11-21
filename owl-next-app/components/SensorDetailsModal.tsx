@@ -12,7 +12,11 @@ interface SensorDetailsModalProps {
   referenceDate?: Date;
 }
 
-export default function SensorDetailsModal({ sensor, onClose, referenceDate }: SensorDetailsModalProps) {
+export default function SensorDetailsModal({
+  sensor,
+  onClose,
+  referenceDate,
+}: SensorDetailsModalProps) {
   const { getToken } = useAuth();
   const [readings, setReadings] = useState<SensorReading[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,10 +27,10 @@ export default function SensorDetailsModal({ sensor, onClose, referenceDate }: S
     const loadHistory = async () => {
       try {
         const token = await getToken();
-        
+
         // Construction de l'URL avec le paramètre refDate si nécessaire
         let url = `/api/sensors/${sensor.sensor_id}/readings?period=24h`;
-        
+
         // En dev, si on a une date de ref, on l'ajoute
         if (process.env.NODE_ENV === 'development' && referenceDate) {
           url += `&refDate=${referenceDate.toISOString()}`;
@@ -78,9 +82,7 @@ export default function SensorDetailsModal({ sensor, onClose, referenceDate }: S
           )}
 
           {error && (
-            <div className="rounded-md bg-red-50 p-4 text-sm text-red-600">
-              Erreur : {error}
-            </div>
+            <div className="rounded-md bg-red-50 p-4 text-sm text-red-600">Erreur : {error}</div>
           )}
 
           {!loading && !error && (
@@ -106,11 +108,16 @@ export default function SensorDetailsModal({ sensor, onClose, referenceDate }: S
                 <h4 className="mb-3 font-semibold text-slate-800">Journal d'activité récent</h4>
                 <div className="max-h-60 overflow-y-auto rounded-md border border-slate-100 pr-2">
                   {readings.length === 0 ? (
-                    <p className="py-4 text-center text-sm text-slate-500">Aucune activité récente.</p>
+                    <p className="py-4 text-center text-sm text-slate-500">
+                      Aucune activité récente.
+                    </p>
                   ) : (
                     <ul className="divide-y divide-slate-100">
                       {readings.map((reading) => (
-                        <li key={reading.reading_id} className="flex items-center justify-between p-3 text-sm">
+                        <li
+                          key={reading.reading_id}
+                          className="flex items-center justify-between p-3 text-sm"
+                        >
                           <span
                             className={`font-medium ${
                               reading.value_bool ? 'text-orange-600' : 'text-green-600'

@@ -23,15 +23,12 @@ export default function WindowSensorsView({ sensorsByHub, referenceDate }: Windo
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
               {sensors.map((sensor) => (
                 // On enveloppe la carte dans une div clickable
-                <div 
-                  key={sensor.sensor_id} 
+                <div
+                  key={sensor.sensor_id}
                   onClick={() => setSelectedSensor(sensor)}
                   className="cursor-pointer transition-transform hover:scale-[1.02] active:scale-[0.98]"
                 >
-                  <WindowSensorCard
-                    sensor={sensor}
-                    referenceDate={referenceDate}
-                  />
+                  <WindowSensorCard sensor={sensor} referenceDate={referenceDate} />
                 </div>
               ))}
             </div>
@@ -41,9 +38,9 @@ export default function WindowSensorsView({ sensorsByHub, referenceDate }: Windo
 
       {/* Affichage conditionnel de la modale */}
       {selectedSensor && (
-        <SensorDetailsModal 
-          sensor={selectedSensor} 
-          onClose={() => setSelectedSensor(null)} 
+        <SensorDetailsModal
+          sensor={selectedSensor}
+          onClose={() => setSelectedSensor(null)}
           referenceDate={referenceDate}
         />
       )}

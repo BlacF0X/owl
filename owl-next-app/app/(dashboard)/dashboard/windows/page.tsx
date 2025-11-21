@@ -143,10 +143,7 @@ export default async function WindowSensorsPage() {
 
       {/* Remplacement de l'affichage manuel par le composant Vue interactif */}
       {!apiError && Object.keys(sensorsByHub).length > 0 && (
-        <WindowSensorsView 
-          sensorsByHub={sensorsByHub} 
-          referenceDate={referenceDate} 
-        />
+        <WindowSensorsView sensorsByHub={sensorsByHub} referenceDate={referenceDate} />
       )}
 
       {/* Gestion du cas "aucun capteur" */}
