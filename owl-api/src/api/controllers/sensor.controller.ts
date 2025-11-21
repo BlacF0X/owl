@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import { AppDataSource } from '../../config/data-source.js';
 import { Sensor as SensorEntity } from '../../entities/Sensor.js';
 import { SensorReading } from '../../entities/SensorReading.js';
-import { MoreThanOrEqual, Between, LessThanOrEqual } from 'typeorm';
+import { Between } from 'typeorm';
 
 /**
  * @description Récupère tous les capteurs pour l'utilisateur authentifié et les formate.
@@ -83,7 +83,7 @@ export const getSensorReadings = async (req: Request, res: Response) => {
     if (!userId) return res.status(401).json({ message: 'Non autorisé' });
 
     const isDevelopment = process.env.NODE_ENV !== 'production';
-    
+
     // Détermination de la date de fin ("maintenant")
     let endDate = new Date();
 
@@ -92,7 +92,9 @@ export const getSensorReadings = async (req: Request, res: Response) => {
       const parsedDate = new Date(refDateQuery);
       if (!isNaN(parsedDate.getTime())) {
         endDate = parsedDate;
-        console.log(`[DEV] Utilisation de la date de référence simulée : ${endDate.toISOString()}`);
+        console.log(
+          `[DEV] Utilisation de la date de référence simulée : ${endDate.toISOString()}`
+        );
       }
     } else if (isDevelopment) {
       // Fallback DEV : Si pas de refDate fournie, on cherche la dernière donnée en base
@@ -113,11 +115,11 @@ export const getSensorReadings = async (req: Request, res: Response) => {
       startDate.setDate(startDate.getDate() - 7);
     } else {
       // 24h exactes en arrière
-      startDate.setTime(startDate.getTime() - (24 * 60 * 60 * 1000));
+      startDate.setTime(startDate.getTime() - 24 * 60 * 60 * 1000);
     }
 
     const readingRepository = AppDataSource.getRepository(SensorReading);
-    
+
     const readings = await readingRepository.find({
       where: {
         sensor: {
