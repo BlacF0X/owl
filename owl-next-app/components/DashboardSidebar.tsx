@@ -4,12 +4,13 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import React from 'react';
 // Assurez-vous que toutes les icônes utilisées sont importées ici
-import { LayoutDashboard, DoorOpen, Wind, CloudSun } from 'lucide-react';
+import { LayoutDashboard, DoorOpen, Wind, CloudSun, Thermometer } from 'lucide-react';
 
 // C'est la seule liste de liens que nous allons utiliser
 const navLinks = [
   { name: 'Général', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Capteurs de fenêtre', href: '/dashboard/window-sensors', icon: DoorOpen },
+  { name: 'Capteurs de fenêtre', href: '/dashboard/windows', icon: DoorOpen },
+  { name: 'Température', href: '/dashboard/temperatures-datas', icon: Thermometer },
   { name: "Qualité de l'air", href: '#', icon: Wind }, // Le lien est '#' car la page n'existe pas encore
   { name: 'Capteurs de CO2', href: '/dashboard/co2-sensors', icon: CloudSun },
 ];
