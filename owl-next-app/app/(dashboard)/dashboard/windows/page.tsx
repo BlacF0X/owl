@@ -3,7 +3,14 @@ import { redirect } from 'next/navigation';
 import { fetchFromApi } from '@/src/lib/apiClient';
 import { Sensor } from '@/src/types';
 import WindowSensorsView from '@/components/WindowSensorsView';
-import { AlertTriangle, Info } from 'lucide-react';
+import ActivityLog from '@/components/ActivityLog';
+import HourlyActivityChart from '@/components/HourlyActivityChart';
+import { AlertTriangle, BarChart3, Info } from 'lucide-react';
+
+interface HourlyStat {
+  hour: number;
+  count: number;
+}
 
 export default async function WindowSensorsPage() {
   let user;
@@ -29,6 +36,7 @@ export default async function WindowSensorsPage() {
   }
 
   let windowSensors: Sensor[] = [];
+  let hourlyStats: HourlyStat[] = [];
   let apiError: string | null = null;
 
   try {
@@ -51,6 +59,21 @@ export default async function WindowSensorsPage() {
     if (timestamps.length > 0) {
       referenceDate = new Date(Math.max(...timestamps));
       isDevTime = true;
+    }
+  }
+
+  // --- RÉCUPÉRATION DES STATS ---
+  if (!apiError) {
+    try {
+      const token = await getToken();
+      let statsUrl = '/api/sensors/windows/stats';
+      if (process.env.NODE_ENV === 'development') {
+        statsUrl += `?refDate=${referenceDate.toISOString()}`;
+      }
+      hourlyStats = await fetchFromApi<HourlyStat[]>(statsUrl, token);
+    } catch (error) {
+      console.error('Erreur stats:', error);
+      // On ne bloque pas la page si les stats échouent, on aura juste un tableau vide
     }
   }
 
@@ -99,38 +122,62 @@ export default async function WindowSensorsPage() {
         </div>
       </header>
 
-      {/* --- PANNEAU DE RÉSUMÉ MIS À JOUR --- */}
-      <div className="mb-10 rounded-lg bg-white p-6 shadow-sm space-y-4">
-        {/* Résumé général (toujours affiché) */}
-        <div>
-          <h2 className="text-xl font-bold text-slate-800">Résumé Actuel</h2>
-          <p className="text-slate-600">
-            <span
-              className={`font-bold ${openSensorsCount > 0 ? 'text-orange-600' : 'text-green-600'}`}
-            >
-              {openSensorsCount}
-            </span>{' '}
-            sur <span className="font-bold">{totalSensors}</span> capteurs de fenêtre sont
-            actuellement ouverts.
-          </p>
+      {/* --- NOUVELLE SECTION DU HAUT (GRILLE 2 COLONNES) --- */}
+      <div className="mb-10 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* COLONNE GAUCHE : RÉSUMÉ (Prend 1/3 ou 2/3 selon préférence, ici 1/3) */}
+        <div className="lg:col-span-1 flex flex-col gap-6">
+          {/* Carte Résumé Simple */}
+          <div className="rounded-lg bg-white p-6 shadow-sm flex flex-col justify-center h-full">
+            <h2 className="text-lg font-bold text-slate-800 mb-2">État Actuel</h2>
+            <p className="text-slate-600 text-lg">
+              <span
+                className={`text-4xl font-extrabold ${openSensorsCount > 0 ? 'text-orange-600' : 'text-green-600'}`}
+              >
+                {openSensorsCount}
+              </span>
+              <span className="text-sm ml-2 font-medium text-slate-400 uppercase">ouverts</span>
+            </p>
+            <p className="text-sm text-slate-500 mt-1">sur {totalSensors} capteurs totaux</p>
+          </div>
+
+          {/* Carte Alerte (Conditionnelle) */}
+          {longOpenSensorsCount > 0 && (
+            <div className="rounded-lg border border-orange-200 bg-orange-50 p-5 shadow-sm">
+              <div className="flex items-center gap-2 mb-2 text-orange-700">
+                <AlertTriangle className="h-5 w-5" />
+                <h3 className="font-bold">Attention requise</h3>
+              </div>
+              <p className="text-orange-800 text-sm mb-2">
+                {longOpenSensorsCount}{' '}
+                {longOpenSensorsCount > 1 ? 'fenêtres ouvertes' : 'fenêtre ouverte'} depuis plus
+                d'1h.
+              </p>
+              <ul className="list-disc list-inside text-xs text-orange-700 font-medium">
+                {longOpenSensors.map((s) => (
+                  <li key={s.sensor_id}>{s.name}</li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
 
-        {/* Alerte conditionnelle (uniquement si des fenêtres sont ouvertes depuis longtemps) */}
-        {longOpenSensorsCount > 0 && (
-          <div className="flex items-start gap-3 rounded-md border border-orange-200 bg-orange-50 p-4">
-            <AlertTriangle className="h-6 w-6 flex-shrink-0 text-orange-500 mt-0.5" />
-            <div className="text-orange-800">
-              <p className="font-bold">
-                {longOpenSensorsCount}{' '}
-                {longOpenSensorsCount > 1 ? 'fenêtres sont ouvertes' : 'fenêtre est ouverte'} depuis
-                plus d'une heure.
-              </p>
-              <p className="text-sm mt-1">
-                Pensez à fermer : {longOpenSensors.map((s) => s.name).join(', ')}.
-              </p>
+        {/* COLONNE DROITE : GRAPHIQUE (Prend 2/3) */}
+        <div className="lg:col-span-2 rounded-lg bg-white p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5 text-slate-500" />
+              <h2 className="text-lg font-bold text-slate-800">Habitudes d'Ouverture</h2>
             </div>
+            <span className="text-xs font-medium text-slate-400 bg-slate-50 px-2 py-1 rounded">
+              7 derniers jours
+            </span>
           </div>
-        )}
+
+          {/* Insertion du graphique */}
+          <div className="h-48 w-full">
+            <HourlyActivityChart data={hourlyStats} />
+          </div>
+        </div>
       </div>
 
       {/* Gestion des erreurs (ne changera pas) */}
@@ -154,6 +201,8 @@ export default async function WindowSensorsPage() {
           </p>
         </div>
       )}
+
+      {!apiError && <ActivityLog initialDate={referenceDate} />}
     </div>
   );
 }
