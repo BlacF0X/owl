@@ -64,3 +64,10 @@ Authorization: Bearer {{authToken}}
 # Récupère les lectures des 7 derniers jours pour un capteur spécifique
 GET {{baseUrl}}/api/sensors/{{sensorId}}/readings?period=7d&refDate={{targetDate}}
 Authorization: Bearer {{authToken}}
+
+###
+
+# @name GetCapteursFenetreHistorique
+# Récupère uniquement les capteurs de type "fenêtre"
+GET {{baseUrl}}/api/sensors/windows/history?date={{targetDate}}
+Authorization: Bearer {{authToken}}
