@@ -59,9 +59,9 @@ export default function ActivityLog({ initialDate = new Date() }: ActivityLogPro
           <Calendar className="h-6 w-6 text-slate-600" />
           <h2 className="text-xl font-bold text-slate-800">Journal d'Activité</h2>
         </div>
-        
+
         <div className="flex items-center gap-2 bg-slate-50 rounded-lg p-1 border border-slate-200">
-          <button 
+          <button
             onClick={() => changeDate(-1)}
             className="p-2 rounded-md hover:bg-white hover:shadow-sm transition-all text-slate-600"
           >
@@ -70,11 +70,11 @@ export default function ActivityLog({ initialDate = new Date() }: ActivityLogPro
           <span className="min-w-[180px] text-center font-medium text-slate-700 capitalize select-none">
             {dateLabel}
           </span>
-          <button 
+          <button
             onClick={() => changeDate(1)}
             className="p-2 rounded-md hover:bg-white hover:shadow-sm transition-all text-slate-600"
             // Désactiver "demain" si on est "aujourd'hui" (optionnel, dépend si on a des données futures)
-            // disabled={currentDate.toDateString() === new Date().toDateString()} 
+            // disabled={currentDate.toDateString() === new Date().toDateString()}
           >
             <ChevronRight className="h-5 w-5" />
           </button>
@@ -92,47 +92,57 @@ export default function ActivityLog({ initialDate = new Date() }: ActivityLogPro
             <p>Aucune activité enregistrée pour cette date.</p>
           </div>
         ) : (
-          <div className="relative border-l-2 border-slate-200 ml-3 space-y-6 py-2">
-            {events.map((event) => (
-              <div key={event.id} className="relative flex items-center pl-6 group">
-                {/* Point sur la timeline */}
-                <div className={`absolute -left-[9px] h-4 w-4 rounded-full border-2 border-white ${
-                  event.state === 'Ouvert' ? 'bg-orange-500' : 'bg-green-500'
-                } shadow-sm`}></div>
+          <div className="max-h-[500px] overflow-y-auto pl-4 pr-2">
+            {/* Le conteneur de la timeline (la ligne verticale) est à l'intérieur */}
+            <div className="relative border-l-2 border-slate-200 space-y-6 py-2 ml-2">
+              {events.map((event) => (
+                <div key={event.id} className="relative flex items-center pl-6 group">
+                  {/* Point sur la timeline (ne sera plus coupé grâce au pl-4 du parent) */}
+                  <div
+                    className={`absolute -left-[9px] h-4 w-4 rounded-full border-2 border-white ${
+                      event.state === 'Ouvert' ? 'bg-orange-500' : 'bg-green-500'
+                    } shadow-sm`}
+                  ></div>
 
-                <div className="flex flex-1 items-center justify-between rounded-lg border border-slate-100 bg-slate-50 p-3 transition-colors hover:border-slate-200 hover:bg-slate-100">
-                  <div className="flex items-center gap-3">
-                    {event.state === 'Ouvert' ? (
-                      <div className="rounded-full bg-orange-100 p-2 text-orange-600">
-                        <DoorOpen className="h-5 w-5" />
+                  {/* ... le reste de la carte (inchangé) ... */}
+                  <div className="flex flex-1 items-center justify-between rounded-lg border border-slate-100 bg-slate-50 p-3 transition-colors hover:border-slate-200 hover:bg-slate-100">
+                    <div className="flex items-center gap-3">
+                      {event.state === 'Ouvert' ? (
+                        <div className="rounded-full bg-orange-100 p-2 text-orange-600">
+                          <DoorOpen className="h-5 w-5" />
+                        </div>
+                      ) : (
+                        <div className="rounded-full bg-green-100 p-2 text-green-600">
+                          <DoorClosed className="h-5 w-5" />
+                        </div>
+                      )}
+                      <div>
+                        <p className="font-semibold text-slate-800">{event.sensorName}</p>
+                        <p className="text-xs text-slate-500">{event.hubName}</p>
                       </div>
-                    ) : (
-                      <div className="rounded-full bg-green-100 p-2 text-green-600">
-                        <DoorClosed className="h-5 w-5" />
-                      </div>
-                    )}
-                    <div>
-                      <p className="font-semibold text-slate-800">{event.sensorName}</p>
-                      <p className="text-xs text-slate-500">{event.hubName}</p>
+                    </div>
+
+                    <div className="text-right">
+                      <span
+                        className={`inline-block px-2 py-1 text-xs font-bold rounded-full mb-1 ${
+                          event.state === 'Ouvert'
+                            ? 'bg-orange-100 text-orange-700'
+                            : 'bg-green-100 text-green-700'
+                        }`}
+                      >
+                        {event.state}
+                      </span>
+                      <p className="text-sm font-mono text-slate-600">
+                        {new Date(event.timestamp).toLocaleTimeString('fr-FR', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </p>
                     </div>
                   </div>
-                  
-                  <div className="text-right">
-                    <span className={`inline-block px-2 py-1 text-xs font-bold rounded-full mb-1 ${
-                      event.state === 'Ouvert' ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'
-                    }`}>
-                      {event.state}
-                    </span>
-                    <p className="text-sm font-mono text-slate-600">
-                      {new Date(event.timestamp).toLocaleTimeString('fr-FR', {
-                        hour: '2-digit', 
-                        minute: '2-digit'
-                      })}
-                    </p>
-                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
       </div>

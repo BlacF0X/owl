@@ -156,9 +156,7 @@ export default async function WindowSensorsPage() {
         </div>
       )}
 
-      {!apiError && (
-        <ActivityLog initialDate={referenceDate} />
-      )}
+      {!apiError && <ActivityLog initialDate={referenceDate} />}
     </div>
   );
 }
