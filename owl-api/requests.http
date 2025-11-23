@@ -71,3 +71,9 @@ Authorization: Bearer {{authToken}}
 # Récupère uniquement les capteurs de type "fenêtre"
 GET {{baseUrl}}/api/sensors/windows/history?date={{targetDate}}
 Authorization: Bearer {{authToken}}
+
+###
+# @name GetStatsHoraires
+# Récupère la distribution des ouvertures par heure
+GET {{baseUrl}}/api/sensors/windows/stats?refDate={{targetDate}}
+Authorization: Bearer {{authToken}}

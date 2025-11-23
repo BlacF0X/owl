@@ -124,3 +124,80 @@ export const getWindowsHistory = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Erreur serveur' });
   }
 };
+
+/**
+ * @description Récupère les statistiques d'ouverture par heure sur les 7 derniers jours.
+ * URL: GET /api/sensors/windows/stats
+ */
+export const getWindowsHourlyStats = async (req: Request, res: Response) => {
+  try {
+    const userId = req.auth?.userId;
+    const refDateQuery = req.query.refDate as string | undefined;
+
+    if (!userId) return res.status(401).json({ message: 'Non autorisé' });
+
+    const readingRepository = AppDataSource.getRepository(SensorReading);
+
+    // Déterminer la date de fin ("maintenant" ou simulée)
+    let endDate = new Date();
+    const isDevelopment = process.env.NODE_ENV !== 'production';
+
+    if (isDevelopment && refDateQuery) {
+      const parsedDate = new Date(refDateQuery);
+      if (!isNaN(parsedDate.getTime())) {
+        endDate = parsedDate;
+        console.log(`[STATS DEV] Date référence : ${endDate.toISOString()}`);
+      }
+    }
+
+    // Calcul de la date de début (il y a 7 jours)
+    const sevenDaysAgo = new Date(endDate);
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    // --- REQUÊTE D'AGRÉGATION ---
+    // On veut : L'heure (0-23) et le nombre d'événements "Ouvert" (true)
+    const rawStats = await readingRepository
+      .createQueryBuilder('reading')
+      // Jointure pour filtrer par utilisateur et type de capteur
+      .leftJoin('reading.sensor', 'sensor')
+      .leftJoin('sensor.hub', 'hub')
+      .leftJoin('hub.user', 'user')
+      .leftJoin('sensor.sensorType', 'type')
+      .where('user.clerk_user_id = :userId', { userId })
+      .andWhere("type.type_key = 'window'")
+      // On ne regarde que les 7 derniers jours
+      .andWhere('reading.timestamp >= :startDate', { startDate: sevenDaysAgo })
+      .andWhere('reading.timestamp <= :endDate', { endDate: endDate })
+      // On ne compte que les ouvertures (value_bool = true)
+      .andWhere('reading.value_bool = :isOpen', { isOpen: true })
+      // On extrait l'heure du timestamp (spécifique à PostgreSQL)
+      .select('EXTRACT(HOUR FROM reading.timestamp)', 'hour')
+      .addSelect('COUNT(*)', 'count')
+      .groupBy('hour')
+      .orderBy('hour', 'ASC')
+      .getRawMany();
+    // getRawMany est important car le résultat n'est pas une entité SensorReading standard
+
+    // --- FORMATAGE ---
+    // TypeORM renvoie 'hour' comme string parfois, on s'assure que ce sont des nombres
+    const formattedStats = rawStats.map((stat) => ({
+      hour: parseInt(stat.hour, 10),
+      count: parseInt(stat.count, 10),
+    }));
+
+    // --- NORMALISATION (Optionnel mais recommandé côté Back) ---
+    // On s'assure d'avoir un tableau complet de 0 à 23h, même s'il y a des trous
+    const completeStats = Array.from({ length: 24 }, (_, i) => {
+      const found = formattedStats.find((s) => s.hour === i);
+      return {
+        hour: i,
+        count: found ? found.count : 0,
+      };
+    });
+
+    res.status(200).json(completeStats);
+  } catch (error) {
+    console.error('Erreur stats windows:', error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+};
