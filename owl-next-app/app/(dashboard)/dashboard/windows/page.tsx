@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { fetchFromApi } from '@/src/lib/apiClient';
 import { Sensor } from '@/src/types';
 import WindowSensorsView from '@/components/WindowSensorsView';
+import ActivityLog from '@/components/ActivityLog';
 import { AlertTriangle, Info } from 'lucide-react';
 
 export default async function WindowSensorsPage() {
@@ -153,6 +154,10 @@ export default async function WindowSensorsPage() {
             Aucun capteur de fenêtre n'a été trouvé pour votre compte.
           </p>
         </div>
+      )}
+
+      {!apiError && (
+        <ActivityLog initialDate={referenceDate} />
       )}
     </div>
   );

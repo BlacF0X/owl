@@ -24,3 +24,11 @@ export interface SensorReading {
   value_bool: boolean | null;
   value_num: number | null;
 }
+
+export interface WindowActivityEvent {
+  id: string;
+  timestamp: string;
+  state: 'Ouvert' | 'Fermé';
+  sensorName: string;
+  hubName: string;
+}
