@@ -9,6 +9,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { AppDataSource } from './config/data-source.js';
 import apiRouter from './api/routes/index.js';
+import swaggerUi from 'swagger-ui-express';
+import { specs } from './config/swagger.js';
 
 // =================================================================
 // Initialisation Globale
@@ -38,8 +40,8 @@ const app = express();
 
 app.use(cors());
 
-// Routes principales (non-API)
-app.get('/', (req, res) => res.send('API OwL online.'));
+// Route pour la documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
 // On branche notre routeur d'API sur le préfixe '/api'
 // Toutes les routes définies dans apiRouter commenceront par /api
