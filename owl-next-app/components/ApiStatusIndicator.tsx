@@ -13,7 +13,7 @@ const ApiStatusIndicator = () => {
     // Cette fonction sera exécutée une seule fois au chargement du composant
     const checkApiStatus = async () => {
       // Récupère l'URL de l'API depuis les variables d'environnement
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL + '/api/';
       if (!apiUrl) {
         console.error('NEXT_PUBLIC_API_URL is not defined.');
         setStatus('offline');
