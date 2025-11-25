@@ -4,20 +4,7 @@ import { fetchFromApi } from '@/src/lib/apiClient';
 import { Sensor } from '@/src/types';
 import ApiStatusIndicator from '@/components/ApiStatusIndicator';
 import Link from 'next/link';
-
-// La fonction utilitaire ne change pas, elle est prête à recevoir les données de l'API.
-const calculateDuration = (since: string | null): string => {
-  if (!since) return '';
-  const sinceDate = new Date(since);
-  const now = new Date();
-  const diffMs = now.getTime() - sinceDate.getTime();
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-  let duration = '';
-  if (diffHours > 0) duration += `${diffHours}h `;
-  if (diffMins > 0 || diffHours === 0) duration += `${diffMins}min`;
-  return duration.trim();
-};
+import { calculateDuration } from '@/src/utils/formatters';
 
 export default async function DashboardPage() {
   let user;

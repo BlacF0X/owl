@@ -1,28 +1,6 @@
 import { Sensor } from '@/src/types';
 import { DoorOpen, DoorClosed, Clock, ShieldCheck, AlertTriangle } from 'lucide-react';
-
-const formatDateTime = (dateString: string | null) => {
-  if (!dateString) return 'N/A';
-  return new Date(dateString).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
-};
-
-const calculateDuration = (since: string | null, referenceDate: Date = new Date()): string => {
-  if (!since) return '';
-  const sinceDate = new Date(since);
-
-  // On utilise referenceDate au lieu de new Date()
-  const diffMs = referenceDate.getTime() - sinceDate.getTime();
-
-  // Sécurité : si la diff est négative (bug de données), on met 0
-  const safeDiffMs = Math.max(0, diffMs);
-
-  const diffHours = Math.floor(safeDiffMs / (1000 * 60 * 60));
-  const diffMins = Math.floor((safeDiffMs % (1000 * 60 * 60)) / (1000 * 60));
-  let duration = '';
-  if (diffHours > 0) duration += `${diffHours}h `;
-  if (diffMins > 0 || diffHours === 0) duration += `${diffMins}min`;
-  return duration.trim();
-};
+import { formatDateTime, calculateDuration } from '@/src/utils/formatters';
 
 const WindowSensorCard: React.FC<{ sensor: Sensor; referenceDate?: Date }> = ({
   sensor,
