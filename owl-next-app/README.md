@@ -4,64 +4,7 @@ This is the README for the Project OwL web application, built with [Next.js](htt
 
 ---
 
-## **Getting Started (English)**
-
-This section will guide you through the process of setting up the development environment. This project uses [Doppler](https://doppler.com) to manage environment variables securely.
-
-### Prerequisites
-
-Before you begin, ensure you have the following installed on your machine:
-
-- [Node.js](https://nodejs.org) (v20 or later recommended)
-- [npm](https://www.npmjs.com) or [yarn](https://yarnpkg.com)
-- The [Doppler CLI](https://docs.doppler.com/reference/install-cli)
-
-### Installation
-
-1. **Clone the repository:**
-
-   ```bash
-   git clone https://github.com/your-repo/owl-next-app.git
-   cd owl-next-app
-   ```
-
-2. **Install project dependencies:**
-
-   ```bash
-   npm install
-   # or
-   # yarn install
-   ```
-
-3. **Connect to Doppler to fetch environment variables:**
-
-   > Ask Clément for login details [c.vier@students.ephec.be](mailto:c.vier@students.ephec.be)
-
-   ```bash
-   # This will open a browser window to authenticate you
-   doppler login
-
-   # This will link your local folder to the remote Doppler project
-   doppler setup
-   ```
-
-   Follow the interactive prompts to select the setup file (`doppler.yaml`).
-
-4. **Run the development server:**
-   To run the app, you must use the `npm run dev` command, that will execute `doppler run -- next dev --turbopack` which injects the secrets into the application environment.
-
-   ```bash
-   npm run dev
-   # or
-   # yarn dev
-   ```
-
-5. **Open the application:**
-   Open [http://localhost:3000](http://localhost:3000) with your browser to see the result. The page will auto-update as you edit the source files.
-
----
-
-## **Démarrage (Français)**
+## **Démarrage**
 
 Cette section vous guidera pour mettre en place l'environnement de développement. Ce projet utilise [Doppler](https://doppler.com) pour gérer les variables d'environnement de manière sécurisée.
 
