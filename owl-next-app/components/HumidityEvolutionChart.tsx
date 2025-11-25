@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { TrendingUp } from 'lucide-react';
 
@@ -13,23 +15,23 @@ interface HumidityEvolutionChartProps {
 const HumidityEvolutionChart: React.FC<HumidityEvolutionChartProps> = ({
   data,
 }) => {
-  // Trouver la valeur max pour normaliser les hauteurs
-  const maxValue = Math.max(...data.map((d) => d.value), 100);
-  const minValue = Math.min(...data.map((d) => d.value), 0);
+  if (!data || data.length === 0) {
+    return (
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <p className="text-sm text-slate-500">Aucune donnée disponible</p>
+      </div>
+    );
+  }
 
-  // Normaliser une valeur entre 30% et 100% de hauteur pour meilleure visibilité
-  const normalizeHeight = (value: number): number => {
-    const range = maxValue - minValue;
-    if (range === 0) return 60;
-    return ((value - minValue) / range) * 70 + 30;
-  };
-
-  // Générer les labels d'axe (0h, 4h, 8h, 12h, 16h, 20h, 24h)
-  const timeLabels = [0, 4, 8, 12, 16, 20, 24];
+  // Calculer min et max des valeurs
+  const values = data.map((d) => d.value);
+  const maxValue = Math.max(...values);
+  const minValue = Math.min(...values);
+  const range = maxValue - minValue || 1; // Éviter division par zéro
 
   // Calculer la moyenne
   const average = Math.round(
-    data.reduce((acc, d) => acc + d.value, 0) / data.length
+    values.reduce((acc, val) => acc + val, 0) / values.length
   );
 
   return (
@@ -44,42 +46,56 @@ const HumidityEvolutionChart: React.FC<HumidityEvolutionChartProps> = ({
         </h2>
       </div>
 
-      {/* Chart Container */}
+      {/* Chart */}
       <div className="space-y-3">
-        {/* Chart Bars - Fixed height container */}
-        <div className="relative flex h-64 items-end justify-between gap-1 border-b border-slate-200 pb-2">
-          {data.map((point, index) => {
-            const height = normalizeHeight(point.value);
-            return (
-              <div
-                key={index}
-                className="group relative flex flex-1 items-end justify-center"
-                style={{ minWidth: '8px', maxWidth: '20px' }}
-              >
-                {/* Tooltip on hover */}
-                <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded bg-slate-900 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:block group-hover:opacity-100">
-                  {point.hour}h: {point.value}%
-                </div>
-                {/* Bar */}
+        {/* Chart bars container with fixed height */}
+        <div className="relative h-64 border-b border-slate-200">
+          <div className="flex h-full items-end justify-between gap-1 pb-2">
+            {data.map((point, index) => {
+              // Normaliser la hauteur entre 20% et 95% pour meilleure visibilité
+              const normalizedHeight = 
+                range > 0 
+                  ? ((point.value - minValue) / range) * 75 + 20
+                  : 50;
+
+              return (
                 <div
-                  className="w-full rounded-t-sm bg-gradient-to-t from-teal-600 to-teal-400 transition-all duration-300 hover:from-teal-700 hover:to-teal-500"
-                  style={{ height: `${height}%` }}
-                  title={`${point.hour}h: ${point.value}%`}
-                ></div>
-              </div>
-            );
-          })}
+                  key={index}
+                  className="group relative flex flex-1 items-end justify-center"
+                  style={{ minWidth: '4px', maxWidth: '24px' }}
+                >
+                  {/* Tooltip */}
+                  <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded bg-slate-900 px-2 py-1 text-xs text-white group-hover:block">
+                    {point.hour}h: {point.value}%
+                  </div>
+
+                  {/* Bar */}
+                  <div
+                    className="w-full rounded-t-sm bg-gradient-to-t from-teal-600 to-teal-400 transition-all duration-200 hover:from-teal-700 hover:to-teal-500"
+                    style={{ 
+                      height: `${normalizedHeight}%`,
+                      minHeight: '8px'
+                    }}
+                  />
+                </div>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Time Labels */}
-        <div className="flex justify-between px-1 text-xs text-slate-500">
-          {timeLabels.map((label) => (
-            <span key={label}>{label}h</span>
-          ))}
+        {/* Time labels */}
+        <div className="flex justify-between text-xs text-slate-500">
+          <span>0h</span>
+          <span>4h</span>
+          <span>8h</span>
+          <span>12h</span>
+          <span>16h</span>
+          <span>20h</span>
+          <span>24h</span>
         </div>
       </div>
 
-      {/* Info */}
+      {/* Average info */}
       <div className="mt-4 rounded-lg bg-slate-50 p-3">
         <p className="text-sm text-slate-600">
           Moyenne sur 24h:{' '}
