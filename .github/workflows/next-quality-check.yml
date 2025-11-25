@@ -1,11 +1,6 @@
 name: CI - Code Quality - Next app
 
-on:
-  push:
-    paths:
-      - 'owl-next-app/**'
-      - '.github/workflows/next-quality-checks.yml'
-      
+on: 
   pull_request:
     branches: [ main, develop ]
     paths:
