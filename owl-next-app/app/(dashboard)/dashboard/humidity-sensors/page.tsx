@@ -27,14 +27,33 @@ export default function HumiditySensorsPage() {
     { id: '4', name: 'Salle de bain', humidity: 55, status: 'optimal' },
   ];
 
-  // Données mockées pour le graphique (24 heures)
-  const mockChartData: HumidityDataPoint[] = Array.from(
-    { length: 24 },
-    (_, i) => ({
-      hour: i,
-      value: Math.floor(Math.random() * 30) + 45, // Valeurs entre 45% et 75%
-    })
-  );
+  // Données mockées pour le graphique avec variation visible
+  const mockChartData: HumidityDataPoint[] = [
+    { hour: 0, value: 52 },
+    { hour: 1, value: 48 },
+    { hour: 2, value: 51 },
+    { hour: 3, value: 49 },
+    { hour: 4, value: 55 },
+    { hour: 5, value: 58 },
+    { hour: 6, value: 62 },
+    { hour: 7, value: 67 },
+    { hour: 8, value: 65 },
+    { hour: 9, value: 63 },
+    { hour: 10, value: 61 },
+    { hour: 11, value: 68 },
+    { hour: 12, value: 72 },
+    { hour: 13, value: 70 },
+    { hour: 14, value: 68 },
+    { hour: 15, value: 65 },
+    { hour: 16, value: 62 },
+    { hour: 17, value: 58 },
+    { hour: 18, value: 55 },
+    { hour: 19, value: 52 },
+    { hour: 20, value: 50 },
+    { hour: 21, value: 48 },
+    { hour: 22, value: 46 },
+    { hour: 23, value: 50 },
+  ];
 
   return (
     <div className="space-y-8">
