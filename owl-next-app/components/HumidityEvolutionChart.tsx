@@ -23,15 +23,12 @@ const HumidityEvolutionChart: React.FC<HumidityEvolutionChartProps> = ({
     );
   }
 
-  // Calculer min et max des valeurs
-  const values = data.map((d) => d.value);
-  const maxValue = Math.max(...values);
-  const minValue = Math.min(...values);
-  const range = maxValue - minValue || 1; // Éviter division par zéro
+  // Axe Y de 0 à 100%
+  const yTicks = [100, 80, 60, 40, 20, 0];
 
   // Calculer la moyenne
   const average = Math.round(
-    values.reduce((acc, val) => acc + val, 0) / values.length
+    data.reduce((acc, d) => acc + d.value, 0) / data.length
   );
 
   return (
@@ -47,55 +44,83 @@ const HumidityEvolutionChart: React.FC<HumidityEvolutionChartProps> = ({
       </div>
 
       {/* Chart */}
-      <div className="space-y-3">
-        {/* Chart bars container with fixed height */}
-        <div className="relative h-64 border-b border-slate-200">
-          <div className="flex h-full items-end justify-between gap-1 pb-2">
+      <div className="relative flex gap-3">
+        {/* Axe Y avec labels */}
+        <div className="flex flex-col justify-between py-1" style={{ height: '256px' }}>
+          {yTicks.map((tick) => (
+            <div
+              key={tick}
+              className="text-xs font-medium text-slate-500"
+              style={{ width: '35px', textAlign: 'right', lineHeight: '1' }}
+            >
+              {tick}%
+            </div>
+          ))}
+        </div>
+
+        {/* Zone du graphique */}
+        <div className="relative flex-1">
+          {/* Lignes de grille horizontales */}
+          <div className="absolute inset-0 flex flex-col justify-between py-1">
+            {yTicks.map((tick, index) => (
+              <div
+                key={tick}
+                className={
+                  index === yTicks.length - 1
+                    ? 'border-b-2 border-slate-300'
+                    : 'border-b border-slate-100'
+                }
+                style={{ height: '0px' }}
+              />
+            ))}
+          </div>
+
+          {/* Container des barres - 256px */}
+          <div className="relative flex h-64 items-end justify-between gap-1 px-1">
             {data.map((point, index) => {
-              // Normaliser la hauteur entre 20% et 95% pour meilleure visibilité
-              const normalizedHeight = 
-                range > 0 
-                  ? ((point.value - minValue) / range) * 75 + 20
-                  : 50;
+              // Hauteur en pixels: si value = 100%, height = 256px
+              // si value = 50%, height = 128px
+              const heightPx = (point.value / 100) * 256;
 
               return (
                 <div
                   key={index}
                   className="group relative flex flex-1 items-end justify-center"
-                  style={{ minWidth: '4px', maxWidth: '24px' }}
+                  style={{ minWidth: '6px', maxWidth: '24px' }}
                 >
                   {/* Tooltip */}
-                  <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded bg-slate-900 px-2 py-1 text-xs text-white group-hover:block">
-                    {point.hour}h: {point.value}%
+                  <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-slate-900 px-2.5 py-1.5 text-xs font-medium text-white shadow-lg group-hover:block">
+                    <div className="text-center">
+                      {point.hour}h: {point.value}%
+                    </div>
                   </div>
 
-                  {/* Bar */}
+                  {/* Barre */}
                   <div
                     className="w-full rounded-t-sm bg-gradient-to-t from-teal-600 to-teal-400 transition-all duration-200 hover:from-teal-700 hover:to-teal-500"
-                    style={{ 
-                      height: `${normalizedHeight}%`,
-                      minHeight: '8px'
+                    style={{
+                      height: `${heightPx}px`,
+                      minHeight: point.value > 0 ? '2px' : '0px',
                     }}
+                    title={`${point.hour}h: ${point.value}%`}
                   />
                 </div>
               );
             })}
           </div>
-        </div>
 
-        {/* Time labels */}
-        <div className="flex justify-between text-xs text-slate-500">
-          <span>0h</span>
-          <span>4h</span>
-          <span>8h</span>
-          <span>12h</span>
-          <span>16h</span>
-          <span>20h</span>
-          <span>24h</span>
+          {/* Labels de l'axe X */}
+          <div className="mt-3 flex justify-between px-1 text-xs font-medium text-slate-500">
+            {data
+              .filter((_, i) => i % 4 === 0)
+              .map((point) => (
+                <span key={point.hour}>{point.hour}h</span>
+              ))}
+          </div>
         </div>
       </div>
 
-      {/* Average info */}
+      {/* Info moyenne */}
       <div className="mt-4 rounded-lg bg-slate-50 p-3">
         <p className="text-sm text-slate-600">
           Moyenne sur 24h:{' '}

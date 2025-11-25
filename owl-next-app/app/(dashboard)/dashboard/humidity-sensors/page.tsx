@@ -70,18 +70,11 @@ export default function HumiditySensorsPage() {
       {/* Stats Cards */}
       <HumidityStatsCards stats={mockStats} />
 
-      {/* Main Grid: Home Map + Chart */}
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-        {/* Home Map - 2 columns on large screens */}
-        <div className="lg:col-span-2">
-          <HumidityHomeMap rooms={mockRooms} />
-        </div>
+      {/* Home Map - Full width */}
+      <HumidityHomeMap rooms={mockRooms} />
 
-        {/* Evolution Chart - 1 column on large screens */}
-        <div className="lg:col-span-1">
-          <HumidityEvolutionChart data={mockChartData} />
-        </div>
-      </div>
+      {/* Evolution Chart - Full width at bottom */}
+      <HumidityEvolutionChart data={mockChartData} />
     </div>
   );
 }
