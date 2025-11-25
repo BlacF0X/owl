@@ -17,6 +17,12 @@ const config: Config = {
   },
   // Configuration optionnelle : fichier de setup à exécuter avant chaque test
   // setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
+  collectCoverageFrom: [
+    'src/**/*.{js,jsx,ts,tsx}',
+    'components/**/*.{js,jsx,ts,tsx}',
+    '!src/**/*.d.ts', // Ignorer les fichiers de déclaration
+    '!**/node_modules/**',
+  ],
 };
 
 // createJestConfig est exporté de cette façon pour s'assurer que next/jest peut charger la config Next.js async
