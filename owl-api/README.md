@@ -58,7 +58,6 @@ Avant de commencer, assurez-vous d'avoir installé les outils suivants sur votre
 
 5. **Accéder à l'API et à la Documentation :**
    Le serveur démarrera par défaut sur le port **8080**.
-
    - **URL de base :** [http://localhost:8080](http://localhost:8080)
    - **Documentation Swagger :** [http://localhost:8080/api-docs](http://localhost:8080/api-docs)
 
