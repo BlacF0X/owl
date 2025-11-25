@@ -1,8 +1,7 @@
 import type { Metadata } from 'next';
 import HumidityStatsCards from '@/components/HumidityStatsCards';
-import HumidityRoomCard, {
-  type HumidityRoom,
-} from '@/components/HumidityRoomCard';
+import HumidityHomeMap from '@/components/HumidityHomeMap';
+import { type HumidityRoom } from '@/components/HumidityRoomCard';
 
 export const metadata: Metadata = {
   title: "Capteurs d'humidité | Dashboard OwL",
@@ -40,15 +39,8 @@ export default function HumiditySensorsPage() {
       {/* Stats Cards */}
       <HumidityStatsCards stats={mockStats} />
 
-      {/* Room Cards - Test Grid */}
-      <div className="rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="mb-6 text-xl font-semibold">Test des cartes de pièces</h2>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {mockRooms.map((room) => (
-            <HumidityRoomCard key={room.id} room={room} />
-          ))}
-        </div>
-      </div>
+      {/* Home Map with Room Cards */}
+      <HumidityHomeMap rooms={mockRooms} />
 
       {/* Placeholder pour le graphique */}
       <div className="rounded-lg border border-slate-200 bg-white p-8 text-center">
