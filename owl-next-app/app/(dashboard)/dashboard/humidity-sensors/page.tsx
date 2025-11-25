@@ -1,6 +1,9 @@
 import type { Metadata } from 'next';
 import HumidityStatsCards from '@/components/HumidityStatsCards';
 import HumidityHomeMap from '@/components/HumidityHomeMap';
+import HumidityEvolutionChart, {
+  type HumidityDataPoint,
+} from '@/components/HumidityEvolutionChart';
 import { type HumidityRoom } from '@/components/HumidityRoomCard';
 
 export const metadata: Metadata = {
@@ -24,6 +27,15 @@ export default function HumiditySensorsPage() {
     { id: '4', name: 'Salle de bain', humidity: 55, status: 'optimal' },
   ];
 
+  // Données mockées pour le graphique (24 heures)
+  const mockChartData: HumidityDataPoint[] = Array.from(
+    { length: 24 },
+    (_, i) => ({
+      hour: i,
+      value: Math.floor(Math.random() * 30) + 45, // Valeurs entre 45% et 75%
+    })
+  );
+
   return (
     <div className="space-y-8">
       {/* Header Section */}
@@ -39,14 +51,17 @@ export default function HumiditySensorsPage() {
       {/* Stats Cards */}
       <HumidityStatsCards stats={mockStats} />
 
-      {/* Home Map with Room Cards */}
-      <HumidityHomeMap rooms={mockRooms} />
+      {/* Main Grid: Home Map + Chart */}
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+        {/* Home Map - 2 columns on large screens */}
+        <div className="lg:col-span-2">
+          <HumidityHomeMap rooms={mockRooms} />
+        </div>
 
-      {/* Placeholder pour le graphique */}
-      <div className="rounded-lg border border-slate-200 bg-white p-8 text-center">
-        <p className="text-sm text-slate-500">
-          Le graphique d&apos;évolution sera ajouté dans la prochaine étape.
-        </p>
+        {/* Evolution Chart - 1 column on large screens */}
+        <div className="lg:col-span-1">
+          <HumidityEvolutionChart data={mockChartData} />
+        </div>
       </div>
     </div>
   );
