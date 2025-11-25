@@ -155,4 +155,33 @@ export const DEFAULT_HUMIDITY_THRESHOLDS: HumidityThreshold = {
   danger: { min: 70, max: 100 },
 };
 
+/**
+ * Helper function pour déterminer le statut selon le pourcentage d'humidité
+ */
+export function getHumidityStatus(humidity: number): HumidityStatus {
+  if (humidity >= 40 && humidity <= 60) {
+    return 'optimal';
+  } else if (humidity > 60 && humidity <= 70) {
+    return 'warning';
+  } else {
+    return 'danger';
+  }
+}
+
+/**
+ * Helper function pour obtenir le message de statut
+ */
+export function getHumidityStatusMessage(status: HumidityStatus): string {
+  switch (status) {
+    case 'optimal':
+      return 'Humidité optimale';
+    case 'warning':
+      return 'Surveillance recommandée';
+    case 'danger':
+      return 'Action nécessaire';
+    default:
+      return 'Statut inconnu';
+  }
+}
+
 export default app;
