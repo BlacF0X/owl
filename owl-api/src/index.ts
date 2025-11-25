@@ -41,7 +41,10 @@ const app = express();
 app.use(cors());
 
 // Route pour la documentation
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
+if (process.env.NODE_ENV !== 'production') {
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
+  console.log('📚 Documentation Swagger activée sur /api-docs');
+}
 
 // On branche notre routeur d'API sur le préfixe '/api'
 // Toutes les routes définies dans apiRouter commenceront par /api
