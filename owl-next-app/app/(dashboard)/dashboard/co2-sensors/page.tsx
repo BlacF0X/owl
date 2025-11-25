@@ -9,7 +9,6 @@ import {
   Bell,
   Clock,
   BarChart2,
-  ChevronDown,
 } from 'lucide-react';
 
 // --- Types de données ---
@@ -131,7 +130,6 @@ const RoomMap: React.FC<RoomMapProps> = ({ rooms, onTestHistory, sensors, loadin
                 <p className={`text-2xl font-bold ${styles.textColor}`}>{room.value} ppm</p>
               </div>
 
-              {/* Bouton de test de l'historique */}
               {sensor && onTestHistory && (
                 <button
                   onClick={() => onTestHistory(sensor.sensor_id, sensor.name)}
@@ -142,7 +140,7 @@ const RoomMap: React.FC<RoomMapProps> = ({ rooms, onTestHistory, sensors, loadin
                       : 'bg-blue-500 text-white hover:bg-blue-600'
                   }`}
                 >
-                  {loadingHistory === sensor.sensor_id ? 'Chargement...' : 'Voir historique'}
+                  {loadingHistory === sensor.sensor_id ? 'Chargement...' : 'Voir historique complet'}
                 </button>
               )}
             </div>
@@ -190,7 +188,7 @@ const AlertHistory: React.FC<{ alerts: AlertData[] }> = ({ alerts }) => (
   </div>
 );
 
-const EvolutionChart: React.FC<{ data: EvolutionData[] }> = ({ data }) => {
+const EvolutionChart: React.FC<{ data: EvolutionData[]; loading: boolean }> = ({ data, loading }) => {
   const yAxisLabels = ['1500', '1000', '500', '0'];
 
   return (
@@ -200,41 +198,56 @@ const EvolutionChart: React.FC<{ data: EvolutionData[] }> = ({ data }) => {
         <h2 className="text-xl font-semibold text-slate-800">Évolution (dernières 24h)</h2>
       </div>
 
-      <div className="flex pt-4">
-        <div className="flex h-56 flex-col justify-between pr-4 text-right text-sm text-slate-500">
-          {yAxisLabels.map((label) => (
-            <span key={label}>{label}</span>
-          ))}
+      {loading ? (
+        <div className="flex h-56 items-center justify-center text-slate-500">
+          Chargement du graphique...
         </div>
-
-        <div className="relative w-full h-56 border-l-2 border-b-2 border-gray-200">
-          <div className="absolute top-0 h-px w-full border-t border-dashed border-gray-300"></div>
-          <div className="absolute top-1/3 h-px w-full border-t border-dashed border-gray-300"></div>
-          <div className="absolute top-2/3 h-px w-full border-t border-dashed border-gray-300"></div>
-
-          <div className="flex h-full items-end justify-around px-1">
-            {data.map(({ hour, height, ppm }) => (
-              <div
-                key={hour}
-                className="group relative flex h-full w-full flex-col items-center justify-end text-sm"
-              >
-                <div className="absolute bottom-full mb-2 scale-0 opacity-0 transition-all duration-200 group-hover:scale-100 group-hover:opacity-100">
-                  <div className="whitespace-nowrap rounded-md bg-slate-800 px-2 py-1 text-xs font-bold text-white shadow-lg">
-                    {ppm} ppm
-                  </div>
-                  <div className="mx-auto -mt-1 h-2 w-2 rotate-45 bg-slate-800"></div>
-                </div>
-
-                <div
-                  className="w-3/5 rounded-t-md bg-blue-500 transition-colors group-hover:bg-blue-600"
-                  style={{ height: `${height}%` }}
-                ></div>
-                <span className="mt-2 text-slate-500">{hour}</span>
-              </div>
+      ) : data.length === 0 ? (
+        <div className="flex h-56 items-center justify-center text-slate-500">
+          Pas assez de données pour afficher le graphique.
+        </div>
+      ) : (
+        <div className="flex pt-4">
+          <div className="flex h-56 flex-col justify-between pr-4 text-right text-sm text-slate-500">
+            {yAxisLabels.map((label) => (
+              <span key={label}>{label}</span>
             ))}
           </div>
+
+          <div className="relative w-full h-56 border-l-2 border-b-2 border-gray-200">
+            {/* Lignes pointillées pour les paliers */}
+            <div className="absolute top-0 h-px w-full border-t border-dashed border-gray-300"></div>
+            <div className="absolute top-1/3 h-px w-full border-t border-dashed border-gray-300"></div>
+            <div className="absolute top-2/3 h-px w-full border-t border-dashed border-gray-300"></div>
+
+            <div className="flex h-full items-end justify-around px-1">
+              {data.map(({ hour, height, ppm }) => (
+                <div
+                  key={hour}
+                  className="group relative flex h-full w-full flex-col items-center justify-end text-sm"
+                >
+                  <div className="absolute bottom-full mb-2 scale-0 opacity-0 transition-all duration-200 group-hover:scale-100 group-hover:opacity-100 z-10">
+                    <div className="whitespace-nowrap rounded-md bg-slate-800 px-2 py-1 text-xs font-bold text-white shadow-lg">
+                      {ppm} ppm
+                    </div>
+                    <div className="mx-auto -mt-1 h-2 w-2 rotate-45 bg-slate-800"></div>
+                  </div>
+
+                  <div
+                    className={`w-3/5 rounded-t-md transition-colors ${
+                      ppm > 1200 ? 'bg-red-500 group-hover:bg-red-600' : 
+                      ppm > 800 ? 'bg-yellow-500 group-hover:bg-yellow-600' : 
+                      'bg-blue-500 group-hover:bg-blue-600'
+                    }`}
+                    style={{ height: `${height}%` }}
+                  ></div>
+                  <span className="mt-2 text-xs text-slate-500">{hour}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
@@ -258,35 +271,18 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, historyData, isLoad
           <h3 className="text-xl font-semibold text-slate-900">
             Historique : {historyData?.sensor.name}
           </h3>
-          <button
-            onClick={onClose}
-            className="text-slate-500 hover:text-slate-700 text-2xl"
-          >
-            ✕
-          </button>
+          <button onClick={onClose} className="text-slate-500 hover:text-slate-700 text-2xl">✕</button>
         </div>
 
         <div className="p-6">
-          {isLoading && (
-            <p className="text-center text-slate-600">Chargement de l'historique...</p>
-          )}
-
-          {error && (
-            <p className="text-center text-red-600">Erreur : {error}</p>
-          )}
+          {isLoading && <p className="text-center text-slate-600">Chargement de l'historique...</p>}
+          {error && <p className="text-center text-red-600">Erreur : {error}</p>}
 
           {historyData && !isLoading && (
             <div className="space-y-3">
               <div className="bg-slate-50 p-4 rounded-lg mb-4">
-                <p className="text-sm text-slate-600">
-                  Type de capteur : <span className="font-semibold">{historyData.sensor.type.name}</span>
-                </p>
-                <p className="text-sm text-slate-600">
-                  Unité : <span className="font-semibold">{historyData.sensor.type.unit}</span>
-                </p>
-                <p className="text-sm text-slate-600">
-                  Total lectures : <span className="font-semibold">{historyData.history.length}</span>
-                </p>
+                <p className="text-sm text-slate-600">Type : <span className="font-semibold">{historyData.sensor.type.name}</span></p>
+                <p className="text-sm text-slate-600">Unité : <span className="font-semibold">{historyData.sensor.type.unit}</span></p>
               </div>
 
               <table className="w-full text-sm">
@@ -299,9 +295,7 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, historyData, isLoad
                 <tbody>
                   {historyData.history.map((reading, index) => (
                     <tr key={index} className="border-b border-slate-100 hover:bg-slate-50">
-                      <td className="py-2 px-3 text-slate-800">
-                        {new Date(reading.timestamp).toLocaleString('fr-FR')}
-                      </td>
+                      <td className="py-2 px-3 text-slate-800">{new Date(reading.timestamp).toLocaleString('fr-FR')}</td>
                       <td className="py-2 px-3 text-right text-slate-800 font-medium">
                         {typeof reading.value === 'boolean'
                           ? reading.value ? 'Ouvert' : 'Fermé'
@@ -314,14 +308,8 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, historyData, isLoad
             </div>
           )}
         </div>
-
         <div className="sticky bottom-0 bg-slate-50 border-t border-slate-200 p-4 flex justify-end">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-slate-300 text-slate-800 rounded hover:bg-slate-400 font-medium"
-          >
-            Fermer
-          </button>
+          <button onClick={onClose} className="px-4 py-2 bg-slate-300 text-slate-800 rounded hover:bg-slate-400 font-medium">Fermer</button>
         </div>
       </div>
     </div>
@@ -336,13 +324,17 @@ const CO2SensorsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Stockage des données dérivées
+  // Données dérivées
   const [average, setAverage] = useState(0);
   const [rooms, setRooms] = useState<RoomData[]>([]);
   const [alerts, setAlerts] = useState<AlertData[]>([]);
   const [activeAlerts, setActiveAlerts] = useState(0);
   const [bannerAlert, setBannerAlert] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<string>('N/A');
+
+  // État pour le Graphique d'évolution (Nouveau)
+  const [evolutionData, setEvolutionData] = useState<EvolutionData[]>([]);
+  const [isGraphLoading, setIsGraphLoading] = useState(false);
 
   // État pour le modal d'historique
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
@@ -351,27 +343,45 @@ const CO2SensorsPage = () => {
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [loadingHistorySensorId, setLoadingHistorySensorId] = useState<string | null>(null);
 
+  // Fonction pour récupérer l'évolution (Nouveau)
+  const fetchEvolutionData = async (sensorId: string) => {
+    try {
+      setIsGraphLoading(true);
+      const token = await getToken();
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+
+      const response = await fetch(`${apiUrl}/api/co2/${sensorId}/evolution`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) throw new Error('Erreur fetch évolution');
+      
+      const data: EvolutionData[] = await response.json();
+      setEvolutionData(data);
+    } catch (err) {
+      console.error("Erreur graph CO2", err);
+    } finally {
+      setIsGraphLoading(false);
+    }
+  };
+
   useEffect(() => {
     const fetchSensors = async () => {
       try {
         setError(null);
         const token = await getToken();
-
-        // ✅ Utilisation de la variable d'environnement
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-        const response = await fetch(`${apiUrl}/api/sensorHistory.routes`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        
+        // Note: j'ai corrigé la route ici, c'est '/api/sensors' normalement
+        const response = await fetch(`${apiUrl}/api/sensors`, {
+          headers: { Authorization: `Bearer ${token}` },
         });
 
-        if (!response.ok) {
-          throw new Error(`Erreur API: ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`Erreur API: ${response.status}`);
 
         const data: Sensor[] = await response.json();
-        console.log('Capteurs récupérés:', data); // Pour debug
-
         setSensors(data);
         processSensorData(data);
       } catch (error) {
@@ -383,7 +393,6 @@ const CO2SensorsPage = () => {
     };
 
     const processSensorData = (data: Sensor[]) => {
-      // On filtre les capteurs CO2 valides avec valeur numérique
       const co2Sensors = data.filter(
         (sensor) =>
           (sensor.type.type_key === 'air_quality' || sensor.type.type_key === 'co2') &&
@@ -391,16 +400,21 @@ const CO2SensorsPage = () => {
       );
 
       if (co2Sensors.length === 0) {
-        console.warn('Aucun capteur CO2 trouvé dans les données');
+        setEvolutionData([]); // Reset graph si pas de capteur
         return;
       }
+
+      // --- NOUVEAU : Charger le graphique pour le premier capteur CO2 trouvé ---
+      // On le fait ici car on vient de confirmer qu'on a des capteurs
+      const mainSensorId = co2Sensors[0].sensor_id;
+      fetchEvolutionData(mainSensorId);
 
       // Calcul moyenne CO2
       const values = co2Sensors.map((s) => Number(s.displayValue));
       const avg = values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0;
       setAverage(Math.round(avg));
 
-      // Dernière mise à jour = la plus récente parmi les capteurs CO2
+      // Dernière mise à jour
       const latestDate = co2Sensors
         .map((s) => s.state_changed_at && new Date(s.state_changed_at))
         .filter(Boolean)
@@ -425,8 +439,7 @@ const CO2SensorsPage = () => {
         .filter((room) => room.status !== 'good')
         .map((room) => ({
           room: room.name,
-          message:
-            room.status === 'bad' ? `CO₂ > 1200 ppm` : `CO₂ > 800 ppm (surveillance)`,
+          message: room.status === 'bad' ? `CO₂ > 1200 ppm` : `CO₂ > 800 ppm (surveillance)`,
           time: new Date().toLocaleTimeString('fr-FR'),
         }));
       setAlerts(generatedAlerts);
@@ -449,7 +462,6 @@ const CO2SensorsPage = () => {
     fetchSensors();
   }, [getToken]);
 
-  // Fonction pour récupérer l'historique d'un capteur
   const fetchSensorHistory = async (sensorId: string, sensorName: string) => {
     try {
       setLoadingHistorySensorId(sensorId);
@@ -460,22 +472,13 @@ const CO2SensorsPage = () => {
       const token = await getToken();
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
-      console.log('🔍 Récupération de l\'historique pour:', sensorName);
-      console.log('Sensor ID:', sensorId);
-
       const response = await fetch(`${apiUrl}/api/sensors/${sensorId}/history`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (!response.ok) {
-        throw new Error(`Erreur API: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`Erreur API: ${response.status}`);
 
       const data: SensorHistoryResponse = await response.json();
-      console.log('✅ Historique récupéré:', data);
-
       setHistoryData(data);
       setHistoryModalOpen(true);
     } catch (error) {
@@ -511,22 +514,6 @@ const CO2SensorsPage = () => {
     );
   }
 
-  // Évolution simulée statique (à remplacer par vraies données plus tard)
-  const evolutionData: EvolutionData[] = [
-    { hour: '0h', height: 20, ppm: 300 },
-    { hour: '2h', height: 27, ppm: 405 },
-    { hour: '4h', height: 23, ppm: 345 },
-    { hour: '6h', height: 33, ppm: 495 },
-    { hour: '8h', height: 43, ppm: 645 },
-    { hour: '10h', height: 47, ppm: 705 },
-    { hour: '12h', height: 57, ppm: 855 },
-    { hour: '14h', height: 63, ppm: 945 },
-    { hour: '16h', height: 53, ppm: 795 },
-    { hour: '18h', height: 50, ppm: 750 },
-    { hour: '20h', height: 40, ppm: 600 },
-    { hour: '22h', height: 37, ppm: 555 },
-  ];
-
   return (
     <div className="space-y-10">
       <header>
@@ -553,7 +540,8 @@ const CO2SensorsPage = () => {
         </div>
 
         <div className="col-span-1">
-          <EvolutionChart data={evolutionData} />
+          {/* On passe maintenant les vraies données et l'état de chargement */}
+          <EvolutionChart data={evolutionData} loading={isGraphLoading} />
         </div>
       </div>
 
@@ -563,7 +551,6 @@ const CO2SensorsPage = () => {
         </div>
       )}
 
-      {/* Modal d'historique */}
       <HistoryModal
         isOpen={historyModalOpen}
         historyData={historyData}
