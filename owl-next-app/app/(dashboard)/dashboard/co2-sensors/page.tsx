@@ -9,6 +9,7 @@ import {
   Bell,
   Clock,
   BarChart2,
+  Building2
 } from 'lucide-react';
 
 // --- Types de données ---
@@ -23,6 +24,9 @@ interface SensorType {
 interface Sensor {
   sensor_id: string;
   hub_id: string;
+  hub?: {
+    name: string;
+  };
   name: string;
   displayValue: string;
   state_changed_at: string | null;
@@ -30,6 +34,7 @@ interface Sensor {
 }
 
 interface RoomData {
+  id: string;        // <-- Ajout critique pour éviter l'erreur 404
   name: string;
   value: number;
   status: RoomStatus;
@@ -76,46 +81,37 @@ const StatCard: React.FC<{ icon: React.ElementType; title: string; value: string
 const getStatusStyles = (status: RoomStatus) => {
   switch (status) {
     case 'good':
-      return {
-        borderColor: 'border-green-500',
-        textColor: 'text-green-600',
-        bgColor: 'bg-green-50',
-      };
+      return { borderColor: 'border-green-500', textColor: 'text-green-600', bgColor: 'bg-green-50' };
     case 'medium':
-      return {
-        borderColor: 'border-yellow-500',
-        textColor: 'text-yellow-600',
-        bgColor: 'bg-yellow-50',
-      };
+      return { borderColor: 'border-yellow-500', textColor: 'text-yellow-600', bgColor: 'bg-yellow-50' };
     case 'bad':
       return { borderColor: 'border-red-500', textColor: 'text-red-600', bgColor: 'bg-red-50' };
   }
 };
 
 interface RoomMapProps {
+  title: string;
+  icon: React.ElementType;
   rooms: RoomData[];
   onTestHistory?: (sensorId: string, sensorName: string) => void;
-  sensors?: Sensor[];
   loadingHistory?: string | null;
 }
 
-const RoomMap: React.FC<RoomMapProps> = ({ rooms, onTestHistory, sensors, loadingHistory }) => (
-  <div className="rounded-xl bg-white p-7 shadow-sm">
+const RoomMap: React.FC<RoomMapProps> = ({ title, icon: Icon, rooms, onTestHistory, loadingHistory }) => (
+  <div className="rounded-xl bg-white p-7 shadow-sm mb-8">
     <div className="flex items-center gap-3 mb-5">
-      <Home className="h-7 w-7 text-slate-700" />
-      <h2 className="text-xl font-semibold text-slate-800">Carte de l'habitation</h2>
+      <Icon className="h-7 w-7 text-slate-700" />
+      <h2 className="text-xl font-semibold text-slate-800">{title}</h2>
     </div>
     {rooms.length === 0 ? (
-      <p className="text-slate-600">Aucun capteur CO₂ trouvé.</p>
+      <p className="text-slate-600 italic">Aucun capteur détecté pour cette zone.</p>
     ) : (
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         {rooms.map((room) => {
           const styles = getStatusStyles(room.status);
-          const sensor = sensors?.find((s) => s.name === room.name);
-
           return (
             <div
-              key={room.name}
+              key={room.id} // <-- Utilisation de l'ID comme clé
               className={`flex flex-col gap-3 rounded-lg p-5 ${styles.bgColor} border-l-4 ${styles.borderColor}`}
             >
               <div className="flex items-center justify-between">
@@ -130,17 +126,17 @@ const RoomMap: React.FC<RoomMapProps> = ({ rooms, onTestHistory, sensors, loadin
                 <p className={`text-2xl font-bold ${styles.textColor}`}>{room.value} ppm</p>
               </div>
 
-              {sensor && onTestHistory && (
+              {onTestHistory && (
                 <button
-                  onClick={() => onTestHistory(sensor.sensor_id, sensor.name)}
-                  disabled={loadingHistory === sensor.sensor_id}
+                  onClick={() => onTestHistory(room.id, room.name)}
+                  disabled={loadingHistory === room.id}
                   className={`w-full px-3 py-2 rounded text-sm font-medium transition-colors ${
-                    loadingHistory === sensor.sensor_id
+                    loadingHistory === room.id
                       ? 'bg-slate-300 text-slate-600 cursor-not-allowed'
                       : 'bg-blue-500 text-white hover:bg-blue-600'
                   }`}
                 >
-                  {loadingHistory === sensor.sensor_id ? 'Chargement...' : 'Voir historique complet'}
+                  {loadingHistory === room.id ? 'Chargement...' : 'Voir historique'}
                 </button>
               )}
             </div>
@@ -148,17 +144,6 @@ const RoomMap: React.FC<RoomMapProps> = ({ rooms, onTestHistory, sensors, loadin
         })}
       </div>
     )}
-    <div className="mt-6 space-y-2 text-base text-slate-600">
-      <p>
-        <span className="text-green-500">●</span> &lt; 800 ppm: Air sain
-      </p>
-      <p>
-        <span className="text-yellow-500">●</span> 800-1200 ppm: Aération conseillée
-      </p>
-      <p>
-        <span className="text-red-500">●</span> &gt; 1200 ppm: Aération nécessaire
-      </p>
-    </div>
   </div>
 );
 
@@ -173,10 +158,7 @@ const AlertHistory: React.FC<{ alerts: AlertData[] }> = ({ alerts }) => (
     ) : (
       <ul className="mt-4 space-y-4">
         {alerts.map((alert, index) => (
-          <li
-            key={index}
-            className="flex items-center justify-between text-base border-b border-slate-100 pb-3"
-          >
+          <li key={index} className="flex items-center justify-between text-base border-b border-slate-100 pb-3">
             <p className="text-slate-800">
               {alert.room}: <span className="font-semibold">{alert.message}</span>
             </p>
@@ -188,34 +170,33 @@ const AlertHistory: React.FC<{ alerts: AlertData[] }> = ({ alerts }) => (
   </div>
 );
 
+// --- COMPOSANT GRAPHIQUE SECURISÉ ---
 const EvolutionChart: React.FC<{ data: EvolutionData[]; loading: boolean }> = ({ data, loading }) => {
   const yAxisLabels = ['1500', '1000', '500', '0'];
 
   return (
-    <div className="rounded-xl bg-white p-7 shadow-sm">
+    <div className="rounded-xl bg-white p-7 shadow-sm h-full">
       <div className="flex items-center gap-3 mb-5">
         <BarChart2 className="h-7 w-7 text-slate-700" />
-        <h2 className="text-xl font-semibold text-slate-800">Évolution (dernières 24h)</h2>
+        <h2 className="text-xl font-semibold text-slate-800">Évolution (24h)</h2>
       </div>
 
       {loading ? (
         <div className="flex h-56 items-center justify-center text-slate-500">
-          Chargement du graphique...
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-slate-500 mr-2"></div> Chargement...
         </div>
-      ) : data.length === 0 ? (
-        <div className="flex h-56 items-center justify-center text-slate-500">
-          Pas assez de données pour afficher le graphique.
+      ) : (!data || data.length === 0) ? (
+        <div className="flex h-56 flex-col items-center justify-center text-slate-400 bg-slate-50 rounded-lg border border-dashed border-slate-200">
+          <BarChart2 className="h-8 w-8 mb-2 opacity-50" />
+          <p className="text-sm">Aucune donnée sur les dernières 24h</p>
         </div>
       ) : (
         <div className="flex pt-4">
           <div className="flex h-56 flex-col justify-between pr-4 text-right text-sm text-slate-500">
-            {yAxisLabels.map((label) => (
-              <span key={label}>{label}</span>
-            ))}
+            {yAxisLabels.map((label) => <span key={label}>{label}</span>)}
           </div>
 
           <div className="relative w-full h-56 border-l-2 border-b-2 border-gray-200">
-            {/* Lignes pointillées pour les paliers */}
             <div className="absolute top-0 h-px w-full border-t border-dashed border-gray-300"></div>
             <div className="absolute top-1/3 h-px w-full border-t border-dashed border-gray-300"></div>
             <div className="absolute top-2/3 h-px w-full border-t border-dashed border-gray-300"></div>
@@ -252,71 +233,93 @@ const EvolutionChart: React.FC<{ data: EvolutionData[]; loading: boolean }> = ({
   );
 };
 
-// Modal pour afficher l'historique
-interface HistoryModalProps {
-  isOpen: boolean;
-  historyData: SensorHistoryResponse | null;
-  isLoading: boolean;
-  error: string | null;
-  onClose: () => void;
-}
-
+// --- COMPOSANT MODAL HISTORIQUE SÉCURISÉ ---
 const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, historyData, isLoading, error, onClose }) => {
   if (!isOpen) return null;
 
+  const sensorName = historyData?.sensor?.name || 'Capteur';
+  const sensorType = historyData?.sensor?.type?.name || '-';
+  const sensorUnit = historyData?.sensor?.type?.unit || '';
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full max-h-96 overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-slate-200 p-6 flex justify-between items-center">
-          <h3 className="text-xl font-semibold text-slate-900">
-            Historique : {historyData?.sensor.name}
-          </h3>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-700 text-2xl">✕</button>
+      <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full max-h-96 overflow-y-auto flex flex-col">
+        
+        {/* Header */}
+        <div className="sticky top-0 bg-white border-b border-slate-200 p-6 flex justify-between items-center z-10">
+          <h3 className="text-xl font-semibold text-slate-900">Historique : {sensorName}</h3>
+          <button onClick={onClose} className="text-slate-500 hover:text-slate-700 text-2xl px-2">✕</button>
         </div>
 
-        <div className="p-6">
-          {isLoading && <p className="text-center text-slate-600">Chargement de l'historique...</p>}
-          {error && <p className="text-center text-red-600">Erreur : {error}</p>}
+        {/* Content */}
+        <div className="p-6 flex-1">
+          {isLoading && (
+            <div className="flex flex-col items-center justify-center py-8 text-slate-500">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-2"></div>
+              <p>Chargement...</p>
+            </div>
+          )}
 
-          {historyData && !isLoading && (
-            <div className="space-y-3">
-              <div className="bg-slate-50 p-4 rounded-lg mb-4">
-                <p className="text-sm text-slate-600">Type : <span className="font-semibold">{historyData.sensor.type.name}</span></p>
-                <p className="text-sm text-slate-600">Unité : <span className="font-semibold">{historyData.sensor.type.unit}</span></p>
+          {error && !isLoading && (
+            <div className="bg-red-50 text-red-700 px-4 py-3 rounded text-center">
+              <strong>Erreur : </strong>{error}
+            </div>
+          )}
+
+          {!isLoading && !error && (!historyData || !historyData.history || historyData.history.length === 0) && (
+            <div className="text-center py-8 text-slate-500 bg-slate-50 rounded-lg border border-dashed border-slate-200">
+              <p>Aucun historique disponible pour ce capteur.</p>
+            </div>
+          )}
+
+          {!isLoading && !error && historyData && historyData.history && historyData.history.length > 0 && (
+            <div className="space-y-4">
+              <div className="bg-blue-50 p-4 rounded-lg flex justify-between text-sm text-blue-800 font-medium">
+                <p>Type : {sensorType}</p>
+                <p>Unité : {sensorUnit}</p>
+                <p>Enregistrements : {historyData.history.length}</p>
               </div>
 
-              <table className="w-full text-sm">
-                <thead className="border-b border-slate-200">
-                  <tr>
-                    <th className="text-left py-2 px-3 text-slate-600 font-semibold">Timestamp</th>
-                    <th className="text-right py-2 px-3 text-slate-600 font-semibold">Valeur</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {historyData.history.map((reading, index) => (
-                    <tr key={index} className="border-b border-slate-100 hover:bg-slate-50">
-                      <td className="py-2 px-3 text-slate-800">{new Date(reading.timestamp).toLocaleString('fr-FR')}</td>
-                      <td className="py-2 px-3 text-right text-slate-800 font-medium">
-                        {typeof reading.value === 'boolean'
-                          ? reading.value ? 'Ouvert' : 'Fermé'
-                          : `${reading.value} ${historyData.sensor.type.unit}`}
-                      </td>
+              <div className="overflow-hidden rounded-lg border border-slate-200">
+                <table className="w-full text-sm text-left">
+                  <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">
+                    <tr>
+                      <th className="py-3 px-4">Date</th>
+                      <th className="py-3 px-4 text-right">Valeur</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {historyData.history.map((reading, index) => (
+                      <tr key={index} className="hover:bg-slate-50">
+                        <td className="py-3 px-4 text-slate-700">
+                          {reading.timestamp ? new Date(reading.timestamp).toLocaleString('fr-FR') : '-'}
+                        </td>
+                        <td className="py-3 px-4 text-right font-medium text-slate-900">
+                          {typeof reading.value === 'boolean'
+                            ? (reading.value ? 'Ouvert' : 'Fermé')
+                            : `${reading.value} ${sensorUnit}`}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </div>
-        <div className="sticky bottom-0 bg-slate-50 border-t border-slate-200 p-4 flex justify-end">
-          <button onClick={onClose} className="px-4 py-2 bg-slate-300 text-slate-800 rounded hover:bg-slate-400 font-medium">Fermer</button>
+
+        {/* Footer */}
+        <div className="sticky bottom-0 bg-slate-50 border-t border-slate-200 p-4 flex justify-end z-10">
+          <button onClick={onClose} className="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded hover:bg-slate-50 shadow-sm">
+            Fermer
+          </button>
         </div>
       </div>
     </div>
   );
 };
 
-// --- Composant Principal ---
+// --- COMPOSANT PRINCIPAL ---
 
 const CO2SensorsPage = () => {
   const { getToken } = useAuth();
@@ -324,44 +327,38 @@ const CO2SensorsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Données dérivées
   const [average, setAverage] = useState(0);
-  const [rooms, setRooms] = useState<RoomData[]>([]);
+  const [homeRooms, setHomeRooms] = useState<RoomData[]>([]);
+  const [officeRooms, setOfficeRooms] = useState<RoomData[]>([]);
+
   const [alerts, setAlerts] = useState<AlertData[]>([]);
   const [activeAlerts, setActiveAlerts] = useState(0);
   const [bannerAlert, setBannerAlert] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<string>('N/A');
 
-  // État pour le Graphique d'évolution (Nouveau)
   const [evolutionData, setEvolutionData] = useState<EvolutionData[]>([]);
   const [isGraphLoading, setIsGraphLoading] = useState(false);
 
-  // État pour le modal d'historique
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [historyData, setHistoryData] = useState<SensorHistoryResponse | null>(null);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [loadingHistorySensorId, setLoadingHistorySensorId] = useState<string | null>(null);
 
-  // Fonction pour récupérer l'évolution (Nouveau)
   const fetchEvolutionData = async (sensorId: string) => {
     try {
       setIsGraphLoading(true);
       const token = await getToken();
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-
       const response = await fetch(`${apiUrl}/api/co2/${sensorId}/evolution`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
-
       if (!response.ok) throw new Error('Erreur fetch évolution');
-      
       const data: EvolutionData[] = await response.json();
       setEvolutionData(data);
     } catch (err) {
       console.error("Erreur graph CO2", err);
+      setEvolutionData([]); // Reset en cas d'erreur pour afficher le graph vide
     } finally {
       setIsGraphLoading(false);
     }
@@ -374,18 +371,16 @@ const CO2SensorsPage = () => {
         const token = await getToken();
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
         
-        // Note: j'ai corrigé la route ici, c'est '/api/sensors' normalement
         const response = await fetch(`${apiUrl}/api/sensors`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
         if (!response.ok) throw new Error(`Erreur API: ${response.status}`);
-
         const data: Sensor[] = await response.json();
         setSensors(data);
         processSensorData(data);
       } catch (error) {
-        console.error('Erreur récupération capteurs:', error);
+        console.error('Erreur capteurs:', error);
         setError(error instanceof Error ? error.message : 'Erreur inconnue');
       } finally {
         setLoading(false);
@@ -400,62 +395,71 @@ const CO2SensorsPage = () => {
       );
 
       if (co2Sensors.length === 0) {
-        setEvolutionData([]); // Reset graph si pas de capteur
+        setEvolutionData([]);
         return;
       }
 
-      // --- NOUVEAU : Charger le graphique pour le premier capteur CO2 trouvé ---
-      // On le fait ici car on vient de confirmer qu'on a des capteurs
-      const mainSensorId = co2Sensors[0].sensor_id;
-      fetchEvolutionData(mainSensorId);
+      // 1. Graphique
+      fetchEvolutionData(co2Sensors[0].sensor_id);
 
-      // Calcul moyenne CO2
+      // 2. Moyenne & Date
       const values = co2Sensors.map((s) => Number(s.displayValue));
       const avg = values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0;
       setAverage(Math.round(avg));
 
-      // Dernière mise à jour
       const latestDate = co2Sensors
         .map((s) => s.state_changed_at && new Date(s.state_changed_at))
         .filter(Boolean)
         .sort((a, b) => (b!.getTime() - a!.getTime()))[0];
       setLastUpdate(latestDate ? latestDate.toLocaleTimeString('fr-FR') : 'N/A');
 
-      // Construction des rooms
-      const roomsData: RoomData[] = co2Sensors.map((s) => ({
-        name: s.name,
-        value: Number(s.displayValue),
-        status:
-          Number(s.displayValue) < 800
-            ? 'good'
-            : Number(s.displayValue) < 1200
-            ? 'medium'
-            : 'bad',
-      }));
-      setRooms(roomsData);
+      // 3. Tri dynamique (Maison / Bureau)
+      const homeData: RoomData[] = [];
+      const officeData: RoomData[] = [];
+      const otherData: RoomData[] = [];
 
-      // Génération des alertes
-      const generatedAlerts: AlertData[] = roomsData
+      co2Sensors.forEach((sensor) => {
+        const roomData: RoomData = {
+          id: sensor.sensor_id, // <-- ID critique ajouté ici
+          name: sensor.name,
+          value: Number(sensor.displayValue),
+          status: Number(sensor.displayValue) < 800 ? 'good' : Number(sensor.displayValue) < 1200 ? 'medium' : 'bad',
+        };
+
+        const hubName = sensor.hub?.name?.toLowerCase() || '';
+
+        if (hubName.includes('maison') || hubName.includes('home') || hubName.includes('appart')) {
+          homeData.push(roomData);
+        } else if (hubName.includes('bureau') || hubName.includes('office') || hubName.includes('lab')) {
+          officeData.push(roomData);
+        } else {
+          otherData.push(roomData);
+        }
+      });
+
+      setHomeRooms([...homeData, ...otherData]);
+      setOfficeRooms(officeData);
+
+      // 4. Alertes
+      const allRooms = [...homeData, ...officeData, ...otherData];
+      const generatedAlerts: AlertData[] = allRooms
         .filter((room) => room.status !== 'good')
         .map((room) => ({
           room: room.name,
-          message: room.status === 'bad' ? `CO₂ > 1200 ppm` : `CO₂ > 800 ppm (surveillance)`,
+          message: room.status === 'bad' ? `CO₂ > 1200 ppm` : `CO₂ > 800 ppm`,
           time: new Date().toLocaleTimeString('fr-FR'),
         }));
       setAlerts(generatedAlerts);
       setActiveAlerts(generatedAlerts.length);
 
-      // Bannière d'alerte
-      const highestRoom = roomsData.reduce(
-        (prev, curr) => (prev.value > curr.value ? prev : curr),
-        { name: '', value: 0, status: 'good' as RoomStatus }
-      );
-      if (highestRoom.value > 1000) {
-        setBannerAlert(
-          `Le taux de CO₂ dans ${highestRoom.name} dépasse 1000 ppm – pensez à aérer pendant 10 minutes.`
-        );
-      } else {
-        setBannerAlert(null);
+      // 5. Bannière
+      if (allRooms.length > 0) {
+        const highestRoom = allRooms.reduce((prev, curr) => (prev.value > curr.value ? prev : curr));
+        if (highestRoom.value > 1000) {
+          setBannerAlert(`Pic de CO₂ détecté (${highestRoom.value} ppm) dans : ${highestRoom.name}. Pensez à aérer.`);
+        } else {
+          setBannerAlert(null);
+        }
       }
     };
 
@@ -468,21 +472,20 @@ const CO2SensorsPage = () => {
       setHistoryLoading(true);
       setHistoryError(null);
       setHistoryData(null);
+      setHistoryModalOpen(true); // Ouvrir tout de suite pour montrer le chargement
 
       const token = await getToken();
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-
       const response = await fetch(`${apiUrl}/api/sensors/${sensorId}/history`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-
+      
       if (!response.ok) throw new Error(`Erreur API: ${response.status}`);
-
+      
       const data: SensorHistoryResponse = await response.json();
       setHistoryData(data);
-      setHistoryModalOpen(true);
     } catch (error) {
-      console.error('❌ Erreur récupération historique:', error);
+      console.error('❌ Erreur historique:', error);
       setHistoryError(error instanceof Error ? error.message : 'Erreur inconnue');
     } finally {
       setHistoryLoading(false);
@@ -490,57 +493,48 @@ const CO2SensorsPage = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-xl text-slate-600">Chargement des données...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <p className="text-xl text-red-600 mb-4">Erreur : {error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            Réessayer
-          </button>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <div className="flex justify-center min-h-screen items-center"><p className="text-xl text-slate-600">Chargement...</p></div>;
+  if (error) return <div className="flex justify-center min-h-screen items-center text-red-600">Erreur : {error}</div>;
 
   return (
     <div className="space-y-10">
       <header>
-        <h1 className="text-4xl font-bold text-slate-900">Dashboard CO₂ - Système Owl</h1>
-        <p className="mt-2 text-lg text-slate-600">
-          Surveillance en temps réel de la qualité de l'air intérieur
-        </p>
+        <h1 className="text-4xl font-bold text-slate-900">Qualité de l'Air</h1>
+        <p className="mt-2 text-lg text-slate-600">Surveillance en temps réel</p>
       </header>
 
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-3">
         <div className="col-span-1 space-y-10 lg:col-span-2">
           <div className="grid grid-cols-1 gap-10 sm:grid-cols-3">
-            <StatCard icon={LineChart} title="Moyenne CO₂" value={`${average} ppm`} />
-            <StatCard icon={AlertTriangle} title="Alertes actives" value={activeAlerts} />
-            <StatCard icon={Clock} title="Dernière mise à jour" value={lastUpdate} />
+            <StatCard icon={LineChart} title="Moyenne Globale" value={`${average} ppm`} />
+            <StatCard icon={AlertTriangle} title="Zones à aérer" value={activeAlerts} />
+            <StatCard icon={Clock} title="Dernier relevé" value={lastUpdate} />
           </div>
-          <RoomMap
-            rooms={rooms}
-            sensors={sensors}
-            onTestHistory={fetchSensorHistory}
-            loadingHistory={loadingHistorySensorId}
-          />
+
+          {homeRooms.length > 0 && (
+            <RoomMap
+              title="Maison"
+              icon={Home}
+              rooms={homeRooms}
+              onTestHistory={fetchSensorHistory}
+              loadingHistory={loadingHistorySensorId}
+            />
+          )}
+
+          {officeRooms.length > 0 && (
+            <RoomMap
+              title="Bureau"
+              icon={Building2}
+              rooms={officeRooms}
+              onTestHistory={fetchSensorHistory}
+              loadingHistory={loadingHistorySensorId}
+            />
+          )}
+
           <AlertHistory alerts={alerts} />
         </div>
 
         <div className="col-span-1">
-          {/* On passe maintenant les vraies données et l'état de chargement */}
           <EvolutionChart data={evolutionData} loading={isGraphLoading} />
         </div>
       </div>
