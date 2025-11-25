@@ -35,7 +35,7 @@ Before you begin, ensure you have the following installed on your machine:
 
 3. **Connect to Doppler to fetch environment variables:**
 
-   > Ask Clément for login details (c.vier@students.ephec.be)
+   > Ask Clément for login details [c.vier@students.ephec.be](mailto:c.vier@students.ephec.be)
 
    ```bash
    # This will open a browser window to authenticate you
@@ -45,7 +45,7 @@ Before you begin, ensure you have the following installed on your machine:
    doppler setup
    ```
 
-   Follow the interactive prompts to select the `owl-next-app` project and the `dev` configuration.
+   Follow the interactive prompts to select the setup file (`doppler.yaml`).
 
 4. **Run the development server:**
    To run the app, you must use the `npm run dev` command, that will execute `doppler run -- next dev --turbopack` which injects the secrets into the application environment.
@@ -92,7 +92,7 @@ Avant de commencer, assurez-vous d'avoir installé les outils suivants sur votre
 
 3. **Se connecter à Doppler pour récupérer les variables d'environnement :**
 
-   > Demander les informations de login à Clément (c.vier@students.ephec.be)
+   > Demander les informations de login à Clément [c.vier@students.ephec.be](mailto:c.vier@students.ephec.be)
 
    ```bash
    # Ceci ouvrira une fenêtre de navigateur pour vous authentifier
@@ -102,7 +102,7 @@ Avant de commencer, assurez-vous d'avoir installé les outils suivants sur votre
    doppler setup
    ```
 
-   Suivez les instructions interactives pour sélectionner le projet `owl-next-app` et la configuration `dev`.
+   Suivez les instructions interactives pour sélectionner le fichier de configuration (`doppler.yaml`).
 
 4. **Lancer le serveur de développement :**
    Pour lancer l'application, vous devez utiliser la commande `npm run dev`, cela va exécuter `doppler run -- next dev --turbopack` qui injecte les secrets dans l'environnement de l'application.
@@ -115,20 +115,3 @@ Avant de commencer, assurez-vous d'avoir installé les outils suivants sur votre
 
 5. **Ouvrir l'application :**
    Ouvrez [http://localhost:3000](http://localhost:3000) dans votre navigateur pour voir le résultat. La page se mettra à jour automatiquement à chaque modification des fichiers source.
-
----
-
-## **Learn More about Next.js**
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## **Deploy on Vercel**
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
