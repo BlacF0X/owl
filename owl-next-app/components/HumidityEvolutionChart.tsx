@@ -31,6 +31,17 @@ const HumidityEvolutionChart: React.FC<HumidityEvolutionChartProps> = ({
     data.reduce((acc, d) => acc + d.value, 0) / data.length
   );
 
+  // Fonction pour obtenir la couleur selon le pourcentage
+  const getBarColor = (value: number) => {
+    if (value >= 40 && value <= 60) {
+      return 'from-green-600 to-green-400';
+    } else if (value > 60 && value <= 70) {
+      return 'from-yellow-600 to-yellow-400';
+    } else {
+      return 'from-red-600 to-red-400';
+    }
+  };
+
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
       {/* Header */}
@@ -46,7 +57,10 @@ const HumidityEvolutionChart: React.FC<HumidityEvolutionChartProps> = ({
       {/* Chart */}
       <div className="relative flex gap-3">
         {/* Axe Y avec labels */}
-        <div className="flex flex-col justify-between py-1" style={{ height: '256px' }}>
+        <div
+          className="flex flex-col justify-between py-1"
+          style={{ height: '256px' }}
+        >
           {yTicks.map((tick) => (
             <div
               key={tick}
@@ -60,14 +74,14 @@ const HumidityEvolutionChart: React.FC<HumidityEvolutionChartProps> = ({
 
         {/* Zone du graphique */}
         <div className="relative flex-1">
-          {/* Lignes de grille horizontales */}
+          {/* Lignes de grille horizontales - SANS ligne à 0% */}
           <div className="absolute inset-0 flex flex-col justify-between py-1">
             {yTicks.map((tick, index) => (
               <div
                 key={tick}
                 className={
                   index === yTicks.length - 1
-                    ? 'border-b-2 border-slate-300'
+                    ? '' // Pas de bordure pour 0%
                     : 'border-b border-slate-100'
                 }
                 style={{ height: '0px' }}
@@ -75,12 +89,11 @@ const HumidityEvolutionChart: React.FC<HumidityEvolutionChartProps> = ({
             ))}
           </div>
 
-          {/* Container des barres - 256px */}
-          <div className="relative flex h-64 items-end justify-between gap-1 px-1">
+          {/* Container des barres */}
+          <div className="relative flex h-64 items-end justify-between gap-1 px-1 pb-3">
             {data.map((point, index) => {
-              // Hauteur en pixels: si value = 100%, height = 256px
-              // si value = 50%, height = 128px
               const heightPx = (point.value / 100) * 256;
+              const colorClass = getBarColor(point.value);
 
               return (
                 <div
@@ -95,9 +108,9 @@ const HumidityEvolutionChart: React.FC<HumidityEvolutionChartProps> = ({
                     </div>
                   </div>
 
-                  {/* Barre */}
+                  {/* Barre avec couleur dynamique */}
                   <div
-                    className="w-full rounded-t-sm bg-gradient-to-t from-teal-600 to-teal-400 transition-all duration-200 hover:from-teal-700 hover:to-teal-500"
+                    className={`w-full rounded-t-sm bg-gradient-to-t ${colorClass} transition-all duration-200 hover:opacity-80`}
                     style={{
                       height: `${heightPx}px`,
                       minHeight: point.value > 0 ? '2px' : '0px',
@@ -110,7 +123,7 @@ const HumidityEvolutionChart: React.FC<HumidityEvolutionChartProps> = ({
           </div>
 
           {/* Labels de l'axe X */}
-          <div className="mt-3 flex justify-between px-1 text-xs font-medium text-slate-500">
+          <div className="flex justify-between px-1 text-xs font-medium text-slate-500">
             {data
               .filter((_, i) => i % 4 === 0)
               .map((point) => (
