@@ -3,16 +3,32 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import {
-  Home,
+  LayoutDashboard, // Icône plus générique que Home
   LineChart,
   AlertTriangle,
   Bell,
   Clock,
   BarChart2,
-  Building2
+  MousePointerClick,
+  Info
 } from 'lucide-react';
 
-// --- Types de données ---
+// --- Imports Chart.js ---
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ChartOptions
+} from 'chart.js';
+import { Bar } from 'react-chartjs-2';
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+
+// --- Types ---
 type RoomStatus = 'good' | 'medium' | 'bad';
 
 interface SensorType {
@@ -24,9 +40,7 @@ interface SensorType {
 interface Sensor {
   sensor_id: string;
   hub_id: string;
-  hub?: {
-    name: string;
-  };
+  hub?: { name: string };
   name: string;
   displayValue: string;
   state_changed_at: string | null;
@@ -34,7 +48,7 @@ interface Sensor {
 }
 
 interface RoomData {
-  id: string;        // <-- Ajout critique pour éviter l'erreur 404
+  id: string;
   name: string;
   value: number;
   status: RoomStatus;
@@ -53,25 +67,16 @@ interface EvolutionData {
 }
 
 interface SensorHistoryResponse {
-  sensor: {
-    sensor_id: string;
-    name: string;
-    type: SensorType;
-  };
-  history: Array<{
-    timestamp: string;
-    value: number | boolean;
-  }>;
+  sensor: { sensor_id: string; name: string; type: SensorType };
+  history: Array<{ timestamp: string; value: number | boolean }>;
 }
 
 // --- Composants ---
 
 const StatCard: React.FC<{ icon: React.ElementType; title: string; value: string | number }> = ({
-  icon: Icon,
-  title,
-  value,
+  icon: Icon, title, value,
 }) => (
-  <div className="rounded-xl bg-white p-6 shadow-sm">
+  <div className="rounded-xl bg-white p-6 shadow-sm border border-slate-100">
     <Icon className="mb-3 h-8 w-8 text-slate-500" />
     <p className="text-base font-medium text-slate-600">{title}</p>
     <p className="mt-1 text-4xl font-bold text-slate-900">{value}</p>
@@ -80,63 +85,84 @@ const StatCard: React.FC<{ icon: React.ElementType; title: string; value: string
 
 const getStatusStyles = (status: RoomStatus) => {
   switch (status) {
-    case 'good':
-      return { borderColor: 'border-green-500', textColor: 'text-green-600', bgColor: 'bg-green-50' };
-    case 'medium':
-      return { borderColor: 'border-yellow-500', textColor: 'text-yellow-600', bgColor: 'bg-yellow-50' };
-    case 'bad':
-      return { borderColor: 'border-red-500', textColor: 'text-red-600', bgColor: 'bg-red-50' };
+    case 'good': return { borderColor: 'border-green-500', textColor: 'text-green-600', bgColor: 'bg-green-50' };
+    case 'medium': return { borderColor: 'border-yellow-500', textColor: 'text-yellow-600', bgColor: 'bg-yellow-50' };
+    case 'bad': return { borderColor: 'border-red-500', textColor: 'text-red-600', bgColor: 'bg-red-50' };
   }
 };
 
-interface RoomMapProps {
-  title: string;
-  icon: React.ElementType;
+// Composant unifié pour afficher la liste des capteurs
+interface SensorsGridProps {
   rooms: RoomData[];
-  onTestHistory?: (sensorId: string, sensorName: string) => void;
+  onTestHistory?: (id: string, name: string) => void;
   loadingHistory?: string | null;
+  onSelectSensor: (id: string) => void;
+  selectedId: string | null;
 }
 
-const RoomMap: React.FC<RoomMapProps> = ({ title, icon: Icon, rooms, onTestHistory, loadingHistory }) => (
-  <div className="rounded-xl bg-white p-7 shadow-sm mb-8">
-    <div className="flex items-center gap-3 mb-5">
-      <Icon className="h-7 w-7 text-slate-700" />
-      <h2 className="text-xl font-semibold text-slate-800">{title}</h2>
+const SensorsGrid: React.FC<SensorsGridProps> = ({ rooms, onTestHistory, loadingHistory, onSelectSensor, selectedId }) => (
+  <div className="rounded-xl bg-white p-6 shadow-sm border border-slate-100 h-full">
+    <div className="flex items-center gap-3 mb-6">
+      <div className="p-2 bg-slate-100 rounded-lg">
+        <LayoutDashboard className="h-6 w-6 text-slate-700" />
+      </div>
+      <h2 className="text-xl font-semibold text-slate-800">Vue d'ensemble des capteurs</h2>
     </div>
+
     {rooms.length === 0 ? (
-      <p className="text-slate-600 italic">Aucun capteur détecté pour cette zone.</p>
+      <p className="text-slate-500 italic text-center py-12">Aucun capteur détecté.</p>
     ) : (
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+      // GRILLE RESPONSIVE : 1 colonne mobile, 2 colonnes desktop
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {rooms.map((room) => {
           const styles = getStatusStyles(room.status);
+          const isSelected = selectedId === room.id;
+
           return (
             <div
-              key={room.id} // <-- Utilisation de l'ID comme clé
-              className={`flex flex-col gap-3 rounded-lg p-5 ${styles.bgColor} border-l-4 ${styles.borderColor}`}
+              key={room.id}
+              onClick={() => onSelectSensor(room.id)}
+              className={`
+                relative flex flex-col gap-2 rounded-lg p-4 border-l-4 transition-all cursor-pointer group
+                ${styles.bgColor} ${styles.borderColor}
+                ${isSelected ? 'ring-2 ring-blue-500 shadow-md bg-white' : 'hover:shadow-sm hover:brightness-[0.98]'}
+              `}
             >
+              {isSelected && (
+                <div className="absolute top-2 right-2">
+                  <span className="flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
+                  </span>
+                </div>
+              )}
+
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-semibold text-lg text-slate-800">{room.name}</p>
-                  <p className={`text-sm font-medium ${styles.textColor}`}>
+                  <p className="font-semibold text-base text-slate-800">{room.name}</p>
+                  <p className={`text-xs font-medium ${styles.textColor} mt-0.5`}>
                     {room.status === 'good' && 'Air sain'}
                     {room.status === 'medium' && 'Aération conseillée'}
                     {room.status === 'bad' && 'Aération nécessaire'}
                   </p>
                 </div>
-                <p className={`text-2xl font-bold ${styles.textColor}`}>{room.value} ppm</p>
+                <p className={`text-xl font-bold ${styles.textColor}`}>{room.value} ppm</p>
               </div>
 
               {onTestHistory && (
                 <button
-                  onClick={() => onTestHistory(room.id, room.name)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onTestHistory(room.id, room.name);
+                  }}
                   disabled={loadingHistory === room.id}
-                  className={`w-full px-3 py-2 rounded text-sm font-medium transition-colors ${
+                  className={`mt-3 w-full px-3 py-1.5 rounded text-xs font-medium transition-colors z-10 border ${
                     loadingHistory === room.id
-                      ? 'bg-slate-300 text-slate-600 cursor-not-allowed'
-                      : 'bg-blue-500 text-white hover:bg-blue-600'
+                      ? 'bg-slate-200 text-slate-500 border-transparent'
+                      : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-blue-600 hover:border-blue-200'
                   }`}
                 >
-                  {loadingHistory === room.id ? 'Chargement...' : 'Voir historique'}
+                  {loadingHistory === room.id ? '...' : 'Voir historique'}
                 </button>
               )}
             </div>
@@ -147,22 +173,99 @@ const RoomMap: React.FC<RoomMapProps> = ({ title, icon: Icon, rooms, onTestHisto
   </div>
 );
 
+const EvolutionChart: React.FC<{ data: EvolutionData[]; loading: boolean; titleSuffix?: string }> = ({ data, loading, titleSuffix }) => {
+  const options: ChartOptions<'bar'> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#1e293b',
+        padding: 12,
+        titleFont: { size: 13 },
+        bodyFont: { size: 13, weight: 'bold' },
+        callbacks: {
+          label: (context) => `${context.raw} ppm`,
+          title: (items) => `Heure : ${items[0].label}`
+        }
+      }
+    },
+    scales: {
+      y: { beginAtZero: true, max: 1500, grid: { color: '#f8fafc' }, ticks: { font: { size: 11 }, color: '#94a3b8' } },
+      x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#94a3b8', maxRotation: 0, autoSkip: true, maxTicksLimit: 12 } }
+    },
+    animation: { duration: 600, easing: 'easeOutQuart' }
+  };
+
+  const chartData = {
+    labels: data.map(d => d.hour),
+    datasets: [{
+      label: 'CO2 (ppm)',
+      data: data.map(d => d.ppm),
+      backgroundColor: data.map(d => {
+        if (d.ppm > 1200) return '#ef4444';
+        if (d.ppm > 800) return '#f59e0b';
+        return '#10b981';
+      }),
+      borderRadius: 4,
+      barThickness: 'flex',
+      maxBarThickness: 40,
+    }],
+  };
+
+  return (
+    <div className="rounded-xl bg-white p-6 shadow-sm border border-slate-100 h-full flex flex-col">
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-blue-50 rounded-lg">
+            <BarChart2 className="h-6 w-6 text-blue-600" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-slate-800">Évolution 24h</h2>
+            {titleSuffix && <p className="text-xs font-medium text-blue-500 mt-0.5">{titleSuffix}</p>}
+          </div>
+        </div>
+        <div className="flex gap-4 text-xs text-slate-500 font-medium">
+          <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> &lt; 800</div>
+          <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span> 800-1200</div>
+          <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-red-500"></span> &gt; 1200</div>
+        </div>
+      </div>
+      <div className="relative flex-1 w-full min-h-[300px]">
+        {loading ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 bg-slate-50/50 rounded-lg backdrop-blur-sm z-10">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-3"></div>
+            <p className="text-sm font-medium">Chargement...</p>
+          </div>
+        ) : (!data || data.length === 0) ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 bg-slate-50 rounded-lg border-2 border-dashed border-slate-200">
+            <BarChart2 className="h-10 w-10 mb-3 opacity-20" />
+            <p className="text-sm font-medium">Aucune donnée disponible</p>
+          </div>
+        ) : (
+          <Bar options={options} data={chartData} />
+        )}
+      </div>
+    </div>
+  );
+};
+
 const AlertHistory: React.FC<{ alerts: AlertData[] }> = ({ alerts }) => (
-  <div className="rounded-xl bg-white p-7 shadow-sm">
+  <div className="rounded-xl bg-white p-6 shadow-sm border border-slate-100 h-full">
     <div className="flex items-center gap-3 mb-5">
-      <Bell className="h-7 w-7 text-slate-700" />
+      <Bell className="h-6 w-6 text-slate-700" />
       <h2 className="text-xl font-semibold text-slate-800">Historique des alertes</h2>
     </div>
     {alerts.length === 0 ? (
-      <p className="text-slate-600">Aucune alerte active.</p>
+      <div className="h-32 flex items-center justify-center text-slate-400 italic text-sm border border-dashed border-slate-100 rounded-lg">
+        Aucune alerte active.
+      </div>
     ) : (
-      <ul className="mt-4 space-y-4">
+      <ul className="space-y-3">
         {alerts.map((alert, index) => (
-          <li key={index} className="flex items-center justify-between text-base border-b border-slate-100 pb-3">
-            <p className="text-slate-800">
-              {alert.room}: <span className="font-semibold">{alert.message}</span>
-            </p>
-            <p className="text-slate-500">{alert.time}</p>
+          <li key={index} className="flex items-center justify-between text-sm border-b border-slate-50 pb-2 last:border-0">
+            <p className="text-slate-800"><span className="font-semibold">{alert.room}</span> : {alert.message}</p>
+            <p className="text-slate-400 text-xs">{alert.time}</p>
           </li>
         ))}
       </ul>
@@ -170,134 +273,46 @@ const AlertHistory: React.FC<{ alerts: AlertData[] }> = ({ alerts }) => (
   </div>
 );
 
-// --- COMPOSANT GRAPHIQUE SECURISÉ ---
-const EvolutionChart: React.FC<{ data: EvolutionData[]; loading: boolean }> = ({ data, loading }) => {
-  const yAxisLabels = ['1500', '1000', '500', '0'];
-
-  return (
-    <div className="rounded-xl bg-white p-7 shadow-sm h-full">
-      <div className="flex items-center gap-3 mb-5">
-        <BarChart2 className="h-7 w-7 text-slate-700" />
-        <h2 className="text-xl font-semibold text-slate-800">Évolution (24h)</h2>
-      </div>
-
-      {loading ? (
-        <div className="flex h-56 items-center justify-center text-slate-500">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-slate-500 mr-2"></div> Chargement...
-        </div>
-      ) : (!data || data.length === 0) ? (
-        <div className="flex h-56 flex-col items-center justify-center text-slate-400 bg-slate-50 rounded-lg border border-dashed border-slate-200">
-          <BarChart2 className="h-8 w-8 mb-2 opacity-50" />
-          <p className="text-sm">Aucune donnée sur les dernières 24h</p>
-        </div>
-      ) : (
-        <div className="flex pt-4">
-          <div className="flex h-56 flex-col justify-between pr-4 text-right text-sm text-slate-500">
-            {yAxisLabels.map((label) => <span key={label}>{label}</span>)}
-          </div>
-
-          <div className="relative w-full h-56 border-l-2 border-b-2 border-gray-200">
-            <div className="absolute top-0 h-px w-full border-t border-dashed border-gray-300"></div>
-            <div className="absolute top-1/3 h-px w-full border-t border-dashed border-gray-300"></div>
-            <div className="absolute top-2/3 h-px w-full border-t border-dashed border-gray-300"></div>
-
-            <div className="flex h-full items-end justify-around px-1">
-              {data.map(({ hour, height, ppm }) => (
-                <div
-                  key={hour}
-                  className="group relative flex h-full w-full flex-col items-center justify-end text-sm"
-                >
-                  <div className="absolute bottom-full mb-2 scale-0 opacity-0 transition-all duration-200 group-hover:scale-100 group-hover:opacity-100 z-10">
-                    <div className="whitespace-nowrap rounded-md bg-slate-800 px-2 py-1 text-xs font-bold text-white shadow-lg">
-                      {ppm} ppm
-                    </div>
-                    <div className="mx-auto -mt-1 h-2 w-2 rotate-45 bg-slate-800"></div>
-                  </div>
-
-                  <div
-                    className={`w-3/5 rounded-t-md transition-colors ${
-                      ppm > 1200 ? 'bg-red-500 group-hover:bg-red-600' : 
-                      ppm > 800 ? 'bg-yellow-500 group-hover:bg-yellow-600' : 
-                      'bg-blue-500 group-hover:bg-blue-600'
-                    }`}
-                    style={{ height: `${height}%` }}
-                  ></div>
-                  <span className="mt-2 text-xs text-slate-500">{hour}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-// --- COMPOSANT MODAL HISTORIQUE SÉCURISÉ ---
 const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, historyData, isLoading, error, onClose }) => {
   if (!isOpen) return null;
-
   const sensorName = historyData?.sensor?.name || 'Capteur';
   const sensorType = historyData?.sensor?.type?.name || '-';
   const sensorUnit = historyData?.sensor?.type?.unit || '';
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full max-h-96 overflow-y-auto flex flex-col">
-        
-        {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-slate-200 p-6 flex justify-between items-center z-10">
-          <h3 className="text-xl font-semibold text-slate-900">Historique : {sensorName}</h3>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-700 text-2xl px-2">✕</button>
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto flex flex-col animate-in zoom-in-95 duration-200">
+        <div className="sticky top-0 bg-white border-b border-slate-200 p-5 flex justify-between items-center z-10">
+          <div>
+            <h3 className="text-xl font-bold text-slate-900">Historique</h3>
+            <p className="text-sm text-slate-500">{sensorName}</p>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-100 text-slate-500 transition-colors">✕</button>
         </div>
-
-        {/* Content */}
         <div className="p-6 flex-1">
-          {isLoading && (
-            <div className="flex flex-col items-center justify-center py-8 text-slate-500">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-2"></div>
-              <p>Chargement...</p>
-            </div>
-          )}
-
-          {error && !isLoading && (
-            <div className="bg-red-50 text-red-700 px-4 py-3 rounded text-center">
-              <strong>Erreur : </strong>{error}
-            </div>
-          )}
-
+          {isLoading && <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div></div>}
+          {error && !isLoading && <div className="bg-red-50 text-red-700 px-4 py-3 rounded-lg text-center border border-red-100"><strong>Erreur : </strong>{error}</div>}
           {!isLoading && !error && (!historyData || !historyData.history || historyData.history.length === 0) && (
-            <div className="text-center py-8 text-slate-500 bg-slate-50 rounded-lg border border-dashed border-slate-200">
-              <p>Aucun historique disponible pour ce capteur.</p>
-            </div>
+            <div className="text-center py-12 text-slate-500 bg-slate-50 rounded-xl border-2 border-dashed border-slate-200">Aucun historique.</div>
           )}
-
           {!isLoading && !error && historyData && historyData.history && historyData.history.length > 0 && (
-            <div className="space-y-4">
-              <div className="bg-blue-50 p-4 rounded-lg flex justify-between text-sm text-blue-800 font-medium">
-                <p>Type : {sensorType}</p>
-                <p>Unité : {sensorUnit}</p>
-                <p>Enregistrements : {historyData.history.length}</p>
+            <div className="space-y-5">
+              <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 flex justify-around text-sm text-blue-900 font-medium">
+                <div className="text-center"><p className="text-xs text-blue-500 uppercase tracking-wide mb-1">Type</p><p>{sensorType}</p></div>
+                <div className="text-center"><p className="text-xs text-blue-500 uppercase tracking-wide mb-1">Unité</p><p>{sensorUnit}</p></div>
+                <div className="text-center"><p className="text-xs text-blue-500 uppercase tracking-wide mb-1">Données</p><p>{historyData.history.length}</p></div>
               </div>
-
-              <div className="overflow-hidden rounded-lg border border-slate-200">
+              <div className="overflow-hidden rounded-xl border border-slate-200 shadow-sm">
                 <table className="w-full text-sm text-left">
-                  <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">
-                    <tr>
-                      <th className="py-3 px-4">Date</th>
-                      <th className="py-3 px-4 text-right">Valeur</th>
-                    </tr>
+                  <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-semibold">
+                    <tr><th className="py-3 px-5">Date & Heure</th><th className="py-3 px-5 text-right">Valeur</th></tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-slate-100 bg-white">
                     {historyData.history.map((reading, index) => (
-                      <tr key={index} className="hover:bg-slate-50">
-                        <td className="py-3 px-4 text-slate-700">
-                          {reading.timestamp ? new Date(reading.timestamp).toLocaleString('fr-FR') : '-'}
-                        </td>
-                        <td className="py-3 px-4 text-right font-medium text-slate-900">
-                          {typeof reading.value === 'boolean'
-                            ? (reading.value ? 'Ouvert' : 'Fermé')
-                            : `${reading.value} ${sensorUnit}`}
+                      <tr key={index} className="hover:bg-slate-50 transition-colors">
+                        <td className="py-3 px-5 text-slate-600 font-mono text-xs">{reading.timestamp ? new Date(reading.timestamp).toLocaleString('fr-FR') : '-'}</td>
+                        <td className="py-3 px-5 text-right font-bold text-slate-800">
+                          {typeof reading.value === 'boolean' ? (reading.value ? 'Ouvert' : 'Fermé') : `${reading.value} ${sensorUnit}`}
                         </td>
                       </tr>
                     ))}
@@ -307,29 +322,23 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, historyData, isLoad
             </div>
           )}
         </div>
-
-        {/* Footer */}
         <div className="sticky bottom-0 bg-slate-50 border-t border-slate-200 p-4 flex justify-end z-10">
-          <button onClick={onClose} className="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded hover:bg-slate-50 shadow-sm">
-            Fermer
-          </button>
+          <button onClick={onClose} className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-medium">Fermer</button>
         </div>
       </div>
     </div>
   );
 };
 
-// --- COMPOSANT PRINCIPAL ---
+// --- PAGE PRINCIPALE ---
 
 const CO2SensorsPage = () => {
   const { getToken } = useAuth();
-  const [sensors, setSensors] = useState<Sensor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [average, setAverage] = useState(0);
-  const [homeRooms, setHomeRooms] = useState<RoomData[]>([]);
-  const [officeRooms, setOfficeRooms] = useState<RoomData[]>([]);
+  const [allRooms, setAllRooms] = useState<RoomData[]>([]); // Liste UNIFIÉE
 
   const [alerts, setAlerts] = useState<AlertData[]>([]);
   const [activeAlerts, setActiveAlerts] = useState(0);
@@ -338,6 +347,8 @@ const CO2SensorsPage = () => {
 
   const [evolutionData, setEvolutionData] = useState<EvolutionData[]>([]);
   const [isGraphLoading, setIsGraphLoading] = useState(false);
+  const [selectedSensorId, setSelectedSensorId] = useState<string | null>(null);
+  const [selectedSensorName, setSelectedSensorName] = useState<string>('');
 
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [historyData, setHistoryData] = useState<SensorHistoryResponse | null>(null);
@@ -345,9 +356,12 @@ const CO2SensorsPage = () => {
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [loadingHistorySensorId, setLoadingHistorySensorId] = useState<string | null>(null);
 
-  const fetchEvolutionData = async (sensorId: string) => {
+  const handleSelectSensor = async (sensorId: string, sensorName?: string) => {
+    if (sensorId === selectedSensorId) return; 
+    setSelectedSensorId(sensorId);
+    if (sensorName) setSelectedSensorName(sensorName);
+    setIsGraphLoading(true);
     try {
-      setIsGraphLoading(true);
       const token = await getToken();
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
       const response = await fetch(`${apiUrl}/api/co2/${sensorId}/evolution`, {
@@ -358,9 +372,33 @@ const CO2SensorsPage = () => {
       setEvolutionData(data);
     } catch (err) {
       console.error("Erreur graph CO2", err);
-      setEvolutionData([]); // Reset en cas d'erreur pour afficher le graph vide
+      setEvolutionData([]);
     } finally {
       setIsGraphLoading(false);
+    }
+  };
+
+  const fetchSensorHistory = async (sensorId: string, sensorName: string) => {
+    try {
+      setLoadingHistorySensorId(sensorId);
+      setHistoryLoading(true);
+      setHistoryError(null);
+      setHistoryData(null);
+      setHistoryModalOpen(true);
+      const token = await getToken();
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+      const response = await fetch(`${apiUrl}/api/sensors/${sensorId}/history`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error(`Erreur API: ${response.status}`);
+      const data: SensorHistoryResponse = await response.json();
+      setHistoryData(data);
+    } catch (error) {
+      console.error('❌ Erreur historique:', error);
+      setHistoryError(error instanceof Error ? error.message : 'Erreur inconnue');
+    } finally {
+      setHistoryLoading(false);
+      setLoadingHistorySensorId(null);
     }
   };
 
@@ -370,14 +408,11 @@ const CO2SensorsPage = () => {
         setError(null);
         const token = await getToken();
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-        
         const response = await fetch(`${apiUrl}/api/sensors`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-
         if (!response.ok) throw new Error(`Erreur API: ${response.status}`);
         const data: Sensor[] = await response.json();
-        setSensors(data);
         processSensorData(data);
       } catch (error) {
         console.error('Erreur capteurs:', error);
@@ -399,10 +434,10 @@ const CO2SensorsPage = () => {
         return;
       }
 
-      // 1. Graphique
-      fetchEvolutionData(co2Sensors[0].sensor_id);
+      if (!selectedSensorId) {
+        handleSelectSensor(co2Sensors[0].sensor_id, co2Sensors[0].name);
+      }
 
-      // 2. Moyenne & Date
       const values = co2Sensors.map((s) => Number(s.displayValue));
       const avg = values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0;
       setAverage(Math.round(avg));
@@ -413,36 +448,17 @@ const CO2SensorsPage = () => {
         .sort((a, b) => (b!.getTime() - a!.getTime()))[0];
       setLastUpdate(latestDate ? latestDate.toLocaleTimeString('fr-FR') : 'N/A');
 
-      // 3. Tri dynamique (Maison / Bureau)
-      const homeData: RoomData[] = [];
-      const officeData: RoomData[] = [];
-      const otherData: RoomData[] = [];
+      // --- SIMPLIFICATION : UNE SEULE LISTE ---
+      const roomsData: RoomData[] = co2Sensors.map((sensor) => ({
+        id: sensor.sensor_id,
+        name: sensor.name,
+        value: Number(sensor.displayValue),
+        status: Number(sensor.displayValue) < 800 ? 'good' : Number(sensor.displayValue) < 1200 ? 'medium' : 'bad',
+      }));
 
-      co2Sensors.forEach((sensor) => {
-        const roomData: RoomData = {
-          id: sensor.sensor_id, // <-- ID critique ajouté ici
-          name: sensor.name,
-          value: Number(sensor.displayValue),
-          status: Number(sensor.displayValue) < 800 ? 'good' : Number(sensor.displayValue) < 1200 ? 'medium' : 'bad',
-        };
+      setAllRooms(roomsData);
 
-        const hubName = sensor.hub?.name?.toLowerCase() || '';
-
-        if (hubName.includes('maison') || hubName.includes('home') || hubName.includes('appart')) {
-          homeData.push(roomData);
-        } else if (hubName.includes('bureau') || hubName.includes('office') || hubName.includes('lab')) {
-          officeData.push(roomData);
-        } else {
-          otherData.push(roomData);
-        }
-      });
-
-      setHomeRooms([...homeData, ...otherData]);
-      setOfficeRooms(officeData);
-
-      // 4. Alertes
-      const allRooms = [...homeData, ...officeData, ...otherData];
-      const generatedAlerts: AlertData[] = allRooms
+      const generatedAlerts: AlertData[] = roomsData
         .filter((room) => room.status !== 'good')
         .map((room) => ({
           room: room.name,
@@ -452,11 +468,10 @@ const CO2SensorsPage = () => {
       setAlerts(generatedAlerts);
       setActiveAlerts(generatedAlerts.length);
 
-      // 5. Bannière
-      if (allRooms.length > 0) {
-        const highestRoom = allRooms.reduce((prev, curr) => (prev.value > curr.value ? prev : curr));
+      if (roomsData.length > 0) {
+        const highestRoom = roomsData.reduce((prev, curr) => (prev.value > curr.value ? prev : curr));
         if (highestRoom.value > 1000) {
-          setBannerAlert(`Pic de CO₂ détecté (${highestRoom.value} ppm) dans : ${highestRoom.name}. Pensez à aérer.`);
+          setBannerAlert(`Pic de CO₂ détecté (${highestRoom.value} ppm) dans : ${highestRoom.name}.`);
         } else {
           setBannerAlert(null);
         }
@@ -464,84 +479,64 @@ const CO2SensorsPage = () => {
     };
 
     fetchSensors();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [getToken]);
-
-  const fetchSensorHistory = async (sensorId: string, sensorName: string) => {
-    try {
-      setLoadingHistorySensorId(sensorId);
-      setHistoryLoading(true);
-      setHistoryError(null);
-      setHistoryData(null);
-      setHistoryModalOpen(true); // Ouvrir tout de suite pour montrer le chargement
-
-      const token = await getToken();
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-      const response = await fetch(`${apiUrl}/api/sensors/${sensorId}/history`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      
-      if (!response.ok) throw new Error(`Erreur API: ${response.status}`);
-      
-      const data: SensorHistoryResponse = await response.json();
-      setHistoryData(data);
-    } catch (error) {
-      console.error('❌ Erreur historique:', error);
-      setHistoryError(error instanceof Error ? error.message : 'Erreur inconnue');
-    } finally {
-      setHistoryLoading(false);
-      setLoadingHistorySensorId(null);
-    }
-  };
 
   if (loading) return <div className="flex justify-center min-h-screen items-center"><p className="text-xl text-slate-600">Chargement...</p></div>;
   if (error) return <div className="flex justify-center min-h-screen items-center text-red-600">Erreur : {error}</div>;
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-8 pb-12 max-w-7xl mx-auto">
       <header>
-        <h1 className="text-4xl font-bold text-slate-900">Qualité de l'Air</h1>
-        <p className="mt-2 text-lg text-slate-600">Surveillance en temps réel</p>
+        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Qualité de l'Air</h1>
+        <p className="mt-1 text-lg text-slate-500">Dashboard de surveillance en temps réel</p>
       </header>
 
-      <div className="grid grid-cols-1 gap-10 lg:grid-cols-3">
-        <div className="col-span-1 space-y-10 lg:col-span-2">
-          <div className="grid grid-cols-1 gap-10 sm:grid-cols-3">
-            <StatCard icon={LineChart} title="Moyenne Globale" value={`${average} ppm`} />
-            <StatCard icon={AlertTriangle} title="Zones à aérer" value={activeAlerts} />
-            <StatCard icon={Clock} title="Dernier relevé" value={lastUpdate} />
-          </div>
+      {/* KPIs */}
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+        <StatCard icon={LineChart} title="Moyenne Globale" value={`${average} ppm`} />
+        <StatCard icon={AlertTriangle} title="Zones à surveiller" value={activeAlerts} />
+        <StatCard icon={Clock} title="Dernier relevé" value={lastUpdate} />
+      </div>
 
-          {homeRooms.length > 0 && (
-            <RoomMap
-              title="Maison"
-              icon={Home}
-              rooms={homeRooms}
-              onTestHistory={fetchSensorHistory}
-              loadingHistory={loadingHistorySensorId}
-            />
-          )}
-
-          {officeRooms.length > 0 && (
-            <RoomMap
-              title="Bureau"
-              icon={Building2}
-              rooms={officeRooms}
-              onTestHistory={fetchSensorHistory}
-              loadingHistory={loadingHistorySensorId}
-            />
-          )}
-
-          <AlertHistory alerts={alerts} />
+      {/* GRILLE PRINCIPALE : Capteurs à gauche, Alertes à droite */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Liste des capteurs (2/3 de la largeur) */}
+        <div className="lg:col-span-2">
+          <SensorsGrid 
+            rooms={allRooms}
+            onTestHistory={fetchSensorHistory}
+            loadingHistory={loadingHistorySensorId}
+            onSelectSensor={(id) => handleSelectSensor(id, allRooms.find(r => r.id === id)?.name)}
+            selectedId={selectedSensorId}
+          />
         </div>
 
-        <div className="col-span-1">
-          <EvolutionChart data={evolutionData} loading={isGraphLoading} />
+        {/* Alertes (1/3 de la largeur) */}
+        <div className="lg:col-span-1">
+          <AlertHistory alerts={alerts} />
         </div>
       </div>
 
+      {/* GRAPHIQUE (Pleine largeur en bas) */}
+      <div className="w-full h-[450px]">
+        <EvolutionChart 
+          data={evolutionData} 
+          loading={isGraphLoading} 
+          titleSuffix={selectedSensorName ? `Capteur : ${selectedSensorName}` : ''}
+        />
+      </div>
+
       {bannerAlert && (
-        <div className="rounded-xl bg-yellow-400 p-5 text-center text-lg font-semibold text-yellow-900 shadow-md">
-          <p>{bannerAlert}</p>
+        <div className="fixed bottom-6 right-6 max-w-md rounded-xl bg-yellow-50 border border-yellow-200 p-4 shadow-lg z-50 animate-in slide-in-from-bottom-5">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-yellow-600 shrink-0 mt-0.5" />
+            <div>
+              <h4 className="font-semibold text-yellow-800">Alerte Qualité d'Air</h4>
+              <p className="text-sm text-yellow-700 mt-1">{bannerAlert}</p>
+            </div>
+            <button onClick={() => setBannerAlert(null)} className="text-yellow-500 hover:text-yellow-700 ml-auto">✕</button>
+          </div>
         </div>
       )}
 
