@@ -66,31 +66,34 @@ Ce dépôt est organisé pour séparer clairement les différents composants du 
 ```bash
 /
 ├── hardware/       # Code source et schémas pour le système embarqué
-├── backend/        # Code source de l'API et du serveur backend
-└── owl-next-app/   # Code source de l'application Next.js (ce projet)
+├── owl-api/        # Code source de l'API
+├── owl-db/         # Code source de l'initialisation de la db
+└── owl-next-app/   # Code source de l'application Next.js
 └── README.md       # Ce fichier
 ```
 
 ## **🏁 Getting Started**
 
+[![CI - Global Quality Check](https://github.com/BlacF0X/owl/actions/workflows/ci.yml/badge.svg)](https://github.com/BlacF0X/owl/actions/workflows/ci.yml)
+
 Pour lancer l'un des composants du projet, veuillez vous référer au `README.md` spécifique situé dans le dossier correspondant.
 
 - **Pour démarrer l'application web, suivez les instructions dans [`owl-next-app/README.md`](./owl-next-app/README.md).**
 
-*(Vous copierez le README de l'application Next.js que vous m'avez fourni dans le dossier `owl-next-app/`)*
+- **Pour démarrer l'API, suivez les instructions dans [`owl-api/README.md`](./owl-api/README.md).**
 
 ## ✨ **The Team**
 
 Ce projet est rendu possible grâce à une équipe de six développeurs passionnés :
 
-| Nom                 | Rôle                      |
-| ------------------- | ------------------------- |
-| **Arno Stärkel**    | Développeur Backend       |
-| **Clément Vier**    | Développeur Fullstack     |
-| **Corentin Mertens**| Développeur Électronique  |
-| **Liam Gérard**     | Développeur Frontend      |
-| **Lucas Bretenstein** | Développeur Backend     |
-| **Martin Stocq**    | Développeur Frontend      |
+| Nom                   | Rôle                                 |
+| --------------------- | ------------------------------------ |
+| **Arno Stärkel**      | Développeur Fullstack                |
+| **Clément Vier**      | Développeur Fullstack                |
+| **Corentin Mertens**  | Développeur Électronique             |
+| **Liam Gérard**       | Développeur Frontend et Électronique |
+| **Lucas Bretenstein** | Développeur Fullstack                  |
+| **Martin Stocq**      | Développeur Fullstack                 |
 
 ## 📧 **Contact**
 

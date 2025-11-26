@@ -1,0 +1,90 @@
+name: CI - Global Quality Check
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+# Annule les jobs en cours si un nouveau commit est poussé sur la même branche
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # =================================================
+  # JOB 1 : FRONTEND (Next.js)
+  # =================================================
+  frontend-checks:
+    name: Frontend (Lint, Format, Test, Build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./owl-next-app
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js (v24)
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: owl-next-app/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run Prettier
+        run: npm run format:check
+
+      - name: Run Tests (Jest)
+        run: npm run test
+
+      - name: Build Check
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: "http://localhost:8080"
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: "pk_test_Y2xlcmsubW9jay5jb20k"
+          CLERK_SECRET_KEY: "sk_test_mock"
+
+  # =================================================
+  # JOB 2 : BACKEND (API)
+  # =================================================
+  backend-checks:
+    name: API (Lint, Format, Build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./owl-api
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js (v24)
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: owl-api/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run Prettier
+        run: npm run format:check
+
+      - name: Build Check
+        run: npm run build
+        env:
+          CLERK_SECRET_KEY: "sk_test_mock"
+          CLERK_WEBHOOK_SECRET: "whsec_test_mock"
+          DATABASE_URL: "postgresql://user.test:password@mock.supabase.com:1000"

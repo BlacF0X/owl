@@ -3,10 +3,28 @@ import { getDbConnectionTest } from '../controllers/test.controller.js';
 
 const router = Router();
 
-// Définit la route GET /db-test et lui attache le contrôleur
-router.get('/db-test', getDbConnectionTest);
-
-// Vous pourriez ajouter d'autres routes de test ici
-// router.get('/another-test', anotherTestController);
+/**
+ * @swagger
+ * /test/db:
+ *   get:
+ *     summary: Test de la connexion à la base de données
+ *     tags: [General]
+ *     security: []
+ *     responses:
+ *       200:
+ *         description: Connexion réussie
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 sensorTypesInDatabase:
+ *                   type: integer
+ *       500:
+ *         description: Erreur de connexion
+ */
+router.get('/db', getDbConnectionTest);
 
 export default router;
