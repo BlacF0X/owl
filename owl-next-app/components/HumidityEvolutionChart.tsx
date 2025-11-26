@@ -12,9 +12,7 @@ interface HumidityEvolutionChartProps {
   data: HumidityDataPoint[];
 }
 
-const HumidityEvolutionChart: React.FC<HumidityEvolutionChartProps> = ({
-  data,
-}) => {
+const HumidityEvolutionChart: React.FC<HumidityEvolutionChartProps> = ({ data }) => {
   if (!data || data.length === 0) {
     return (
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -27,9 +25,7 @@ const HumidityEvolutionChart: React.FC<HumidityEvolutionChartProps> = ({
   const yTicks = [100, 80, 60, 40, 20, 0];
 
   // Calculer la moyenne
-  const average = Math.round(
-    data.reduce((acc, d) => acc + d.value, 0) / data.length
-  );
+  const average = Math.round(data.reduce((acc, d) => acc + d.value, 0) / data.length);
 
   // Fonction pour obtenir la couleur selon le pourcentage
   const getBarColor = (value: number) => {
@@ -49,18 +45,13 @@ const HumidityEvolutionChart: React.FC<HumidityEvolutionChartProps> = ({
         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100">
           <TrendingUp className="h-5 w-5 text-slate-700" />
         </div>
-        <h2 className="text-xl font-semibold text-slate-900">
-          Évolution (dernières 24h)
-        </h2>
+        <h2 className="text-xl font-semibold text-slate-900">Évolution (dernières 24h)</h2>
       </div>
 
       {/* Chart */}
       <div className="relative flex gap-3">
         {/* Axe Y avec labels */}
-        <div
-          className="flex flex-col justify-between py-1"
-          style={{ height: '256px' }}
-        >
+        <div className="flex flex-col justify-between py-1" style={{ height: '256px' }}>
           {yTicks.map((tick) => (
             <div
               key={tick}
@@ -136,8 +127,7 @@ const HumidityEvolutionChart: React.FC<HumidityEvolutionChartProps> = ({
       {/* Info moyenne */}
       <div className="mt-4 rounded-lg bg-slate-50 p-3">
         <p className="text-sm text-slate-600">
-          Moyenne sur 24h:{' '}
-          <span className="font-semibold text-slate-900">{average}%</span>
+          Moyenne sur 24h: <span className="font-semibold text-slate-900">{average}%</span>
         </p>
       </div>
     </div>

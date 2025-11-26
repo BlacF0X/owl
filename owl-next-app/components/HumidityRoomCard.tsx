@@ -16,7 +16,7 @@ interface HumidityRoomCardProps {
 // Helper function pour déterminer les classes CSS selon le statut
 const getStatusClasses = (status: HumidityStatus) => {
   const baseClasses = 'rounded-xl border-2 p-5 transition-all hover:shadow-md';
-  
+
   switch (status) {
     case 'optimal':
       return `${baseClasses} bg-green-50 border-green-500`;

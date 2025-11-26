@@ -22,9 +22,7 @@ const HumidityStatsCards: React.FC<HumidityStatsCardsProps> = ({ stats }) => {
         <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">
           Humidité moyenne
         </p>
-        <p className="text-3xl font-semibold text-slate-900">
-          {stats.averageHumidity}%
-        </p>
+        <p className="text-3xl font-semibold text-slate-900">{stats.averageHumidity}%</p>
       </div>
 
       {/* Active Alerts Card */}
@@ -35,9 +33,7 @@ const HumidityStatsCards: React.FC<HumidityStatsCardsProps> = ({ stats }) => {
         <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">
           Alertes actives
         </p>
-        <p className="text-3xl font-semibold text-slate-900">
-          {stats.activeAlerts}
-        </p>
+        <p className="text-3xl font-semibold text-slate-900">{stats.activeAlerts}</p>
       </div>
 
       {/* Last Update Card */}
@@ -48,9 +44,7 @@ const HumidityStatsCards: React.FC<HumidityStatsCardsProps> = ({ stats }) => {
         <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">
           Dernière mise à jour
         </p>
-        <p className="text-2xl font-semibold text-slate-900">
-          {stats.lastUpdate}
-        </p>
+        <p className="text-2xl font-semibold text-slate-900">{stats.lastUpdate}</p>
       </div>
     </div>
   );
