@@ -10,7 +10,7 @@ import {
   Clock,
   BarChart2,
   MousePointerClick,
-  Info
+  Info,
 } from 'lucide-react';
 
 // --- Imports Chart.js ---
@@ -22,7 +22,7 @@ import {
   Title,
   Tooltip,
   Legend,
-  ChartOptions
+  ChartOptions,
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
 
@@ -74,7 +74,9 @@ interface SensorHistoryResponse {
 // --- Composants ---
 
 const StatCard: React.FC<{ icon: React.ElementType; title: string; value: string | number }> = ({
-  icon: Icon, title, value,
+  icon: Icon,
+  title,
+  value,
 }) => (
   <div className="rounded-xl bg-white p-6 shadow-sm border border-slate-100">
     <Icon className="mb-3 h-8 w-8 text-slate-500" />
@@ -85,9 +87,20 @@ const StatCard: React.FC<{ icon: React.ElementType; title: string; value: string
 
 const getStatusStyles = (status: RoomStatus) => {
   switch (status) {
-    case 'good': return { borderColor: 'border-green-500', textColor: 'text-green-600', bgColor: 'bg-green-50' };
-    case 'medium': return { borderColor: 'border-yellow-500', textColor: 'text-yellow-600', bgColor: 'bg-yellow-50' };
-    case 'bad': return { borderColor: 'border-red-500', textColor: 'text-red-600', bgColor: 'bg-red-50' };
+    case 'good':
+      return {
+        borderColor: 'border-green-500',
+        textColor: 'text-green-600',
+        bgColor: 'bg-green-50',
+      };
+    case 'medium':
+      return {
+        borderColor: 'border-yellow-500',
+        textColor: 'text-yellow-600',
+        bgColor: 'bg-yellow-50',
+      };
+    case 'bad':
+      return { borderColor: 'border-red-500', textColor: 'text-red-600', bgColor: 'bg-red-50' };
   }
 };
 
@@ -100,7 +113,13 @@ interface SensorsGridProps {
   selectedId: string | null;
 }
 
-const SensorsGrid: React.FC<SensorsGridProps> = ({ rooms, onTestHistory, loadingHistory, onSelectSensor, selectedId }) => (
+const SensorsGrid: React.FC<SensorsGridProps> = ({
+  rooms,
+  onTestHistory,
+  loadingHistory,
+  onSelectSensor,
+  selectedId,
+}) => (
   <div className="rounded-xl bg-white p-6 shadow-sm border border-slate-100 h-full">
     <div className="flex items-center gap-3 mb-6">
       <div className="p-2 bg-slate-100 rounded-lg">
@@ -173,7 +192,11 @@ const SensorsGrid: React.FC<SensorsGridProps> = ({ rooms, onTestHistory, loading
   </div>
 );
 
-const EvolutionChart: React.FC<{ data: EvolutionData[]; loading: boolean; titleSuffix?: string }> = ({ data, loading, titleSuffix }) => {
+const EvolutionChart: React.FC<{
+  data: EvolutionData[];
+  loading: boolean;
+  titleSuffix?: string;
+}> = ({ data, loading, titleSuffix }) => {
   const options: ChartOptions<'bar'> = {
     responsive: true,
     maintainAspectRatio: false,
@@ -186,31 +209,47 @@ const EvolutionChart: React.FC<{ data: EvolutionData[]; loading: boolean; titleS
         bodyFont: { size: 13, weight: 'bold' },
         callbacks: {
           label: (context) => `${context.raw} ppm`,
-          title: (items) => `Heure : ${items[0].label}`
-        }
-      }
+          title: (items) => `Heure : ${items[0].label}`,
+        },
+      },
     },
     scales: {
-      y: { beginAtZero: true, max: 1500, grid: { color: '#f8fafc' }, ticks: { font: { size: 11 }, color: '#94a3b8' } },
-      x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#94a3b8', maxRotation: 0, autoSkip: true, maxTicksLimit: 12 } }
+      y: {
+        beginAtZero: true,
+        max: 1500,
+        grid: { color: '#f8fafc' },
+        ticks: { font: { size: 11 }, color: '#94a3b8' },
+      },
+      x: {
+        grid: { display: false },
+        ticks: {
+          font: { size: 11 },
+          color: '#94a3b8',
+          maxRotation: 0,
+          autoSkip: true,
+          maxTicksLimit: 12,
+        },
+      },
     },
-    animation: { duration: 600, easing: 'easeOutQuart' }
+    animation: { duration: 600, easing: 'easeOutQuart' },
   };
 
   const chartData = {
-    labels: data.map(d => d.hour),
-    datasets: [{
-      label: 'CO2 (ppm)',
-      data: data.map(d => d.ppm),
-      backgroundColor: data.map(d => {
-        if (d.ppm > 1200) return '#ef4444';
-        if (d.ppm > 800) return '#f59e0b';
-        return '#10b981';
-      }),
-      borderRadius: 4,
-      barThickness: 'flex',
-      maxBarThickness: 40,
-    }],
+    labels: data.map((d) => d.hour),
+    datasets: [
+      {
+        label: 'CO2 (ppm)',
+        data: data.map((d) => d.ppm),
+        backgroundColor: data.map((d) => {
+          if (d.ppm > 1200) return '#ef4444';
+          if (d.ppm > 800) return '#f59e0b';
+          return '#10b981';
+        }),
+        borderRadius: 4,
+        barThickness: 'flex',
+        maxBarThickness: 40,
+      },
+    ],
   };
 
   return (
@@ -222,13 +261,21 @@ const EvolutionChart: React.FC<{ data: EvolutionData[]; loading: boolean; titleS
           </div>
           <div>
             <h2 className="text-lg font-bold text-slate-800">Évolution 24h</h2>
-            {titleSuffix && <p className="text-xs font-medium text-blue-500 mt-0.5">{titleSuffix}</p>}
+            {titleSuffix && (
+              <p className="text-xs font-medium text-blue-500 mt-0.5">{titleSuffix}</p>
+            )}
           </div>
         </div>
         <div className="flex gap-4 text-xs text-slate-500 font-medium">
-          <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> &lt; 800</div>
-          <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span> 800-1200</div>
-          <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-red-500"></span> &gt; 1200</div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> &lt; 800
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span> 800-1200
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-red-500"></span> &gt; 1200
+          </div>
         </div>
       </div>
       <div className="relative flex-1 w-full min-h-[300px]">
@@ -237,7 +284,7 @@ const EvolutionChart: React.FC<{ data: EvolutionData[]; loading: boolean; titleS
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-3"></div>
             <p className="text-sm font-medium">Chargement...</p>
           </div>
-        ) : (!data || data.length === 0) ? (
+        ) : !data || data.length === 0 ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 bg-slate-50 rounded-lg border-2 border-dashed border-slate-200">
             <BarChart2 className="h-10 w-10 mb-3 opacity-20" />
             <p className="text-sm font-medium">Aucune donnée disponible</p>
@@ -263,8 +310,13 @@ const AlertHistory: React.FC<{ alerts: AlertData[] }> = ({ alerts }) => (
     ) : (
       <ul className="space-y-3">
         {alerts.map((alert, index) => (
-          <li key={index} className="flex items-center justify-between text-sm border-b border-slate-50 pb-2 last:border-0">
-            <p className="text-slate-800"><span className="font-semibold">{alert.room}</span> : {alert.message}</p>
+          <li
+            key={index}
+            className="flex items-center justify-between text-sm border-b border-slate-50 pb-2 last:border-0"
+          >
+            <p className="text-slate-800">
+              <span className="font-semibold">{alert.room}</span> : {alert.message}
+            </p>
             <p className="text-slate-400 text-xs">{alert.time}</p>
           </li>
         ))}
@@ -273,7 +325,13 @@ const AlertHistory: React.FC<{ alerts: AlertData[] }> = ({ alerts }) => (
   </div>
 );
 
-const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, historyData, isLoading, error, onClose }) => {
+const HistoryModal: React.FC<HistoryModalProps> = ({
+  isOpen,
+  historyData,
+  isLoading,
+  error,
+  onClose,
+}) => {
   if (!isOpen) return null;
   const sensorName = historyData?.sensor?.name || 'Capteur';
   const sensorType = historyData?.sensor?.type?.name || '-';
@@ -287,43 +345,90 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, historyData, isLoad
             <h3 className="text-xl font-bold text-slate-900">Historique</h3>
             <p className="text-sm text-slate-500">{sensorName}</p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-100 text-slate-500 transition-colors">✕</button>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-full hover:bg-slate-100 text-slate-500 transition-colors"
+          >
+            ✕
+          </button>
         </div>
         <div className="p-6 flex-1">
-          {isLoading && <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div></div>}
-          {error && !isLoading && <div className="bg-red-50 text-red-700 px-4 py-3 rounded-lg text-center border border-red-100"><strong>Erreur : </strong>{error}</div>}
-          {!isLoading && !error && (!historyData || !historyData.history || historyData.history.length === 0) && (
-            <div className="text-center py-12 text-slate-500 bg-slate-50 rounded-xl border-2 border-dashed border-slate-200">Aucun historique.</div>
-          )}
-          {!isLoading && !error && historyData && historyData.history && historyData.history.length > 0 && (
-            <div className="space-y-5">
-              <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 flex justify-around text-sm text-blue-900 font-medium">
-                <div className="text-center"><p className="text-xs text-blue-500 uppercase tracking-wide mb-1">Type</p><p>{sensorType}</p></div>
-                <div className="text-center"><p className="text-xs text-blue-500 uppercase tracking-wide mb-1">Unité</p><p>{sensorUnit}</p></div>
-                <div className="text-center"><p className="text-xs text-blue-500 uppercase tracking-wide mb-1">Données</p><p>{historyData.history.length}</p></div>
-              </div>
-              <div className="overflow-hidden rounded-xl border border-slate-200 shadow-sm">
-                <table className="w-full text-sm text-left">
-                  <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-semibold">
-                    <tr><th className="py-3 px-5">Date & Heure</th><th className="py-3 px-5 text-right">Valeur</th></tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 bg-white">
-                    {historyData.history.map((reading, index) => (
-                      <tr key={index} className="hover:bg-slate-50 transition-colors">
-                        <td className="py-3 px-5 text-slate-600 font-mono text-xs">{reading.timestamp ? new Date(reading.timestamp).toLocaleString('fr-FR') : '-'}</td>
-                        <td className="py-3 px-5 text-right font-bold text-slate-800">
-                          {typeof reading.value === 'boolean' ? (reading.value ? 'Ouvert' : 'Fermé') : `${reading.value} ${sensorUnit}`}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+          {isLoading && (
+            <div className="flex justify-center py-12">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>
             </div>
           )}
+          {error && !isLoading && (
+            <div className="bg-red-50 text-red-700 px-4 py-3 rounded-lg text-center border border-red-100">
+              <strong>Erreur : </strong>
+              {error}
+            </div>
+          )}
+          {!isLoading &&
+            !error &&
+            (!historyData || !historyData.history || historyData.history.length === 0) && (
+              <div className="text-center py-12 text-slate-500 bg-slate-50 rounded-xl border-2 border-dashed border-slate-200">
+                Aucun historique.
+              </div>
+            )}
+          {!isLoading &&
+            !error &&
+            historyData &&
+            historyData.history &&
+            historyData.history.length > 0 && (
+              <div className="space-y-5">
+                <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 flex justify-around text-sm text-blue-900 font-medium">
+                  <div className="text-center">
+                    <p className="text-xs text-blue-500 uppercase tracking-wide mb-1">Type</p>
+                    <p>{sensorType}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-blue-500 uppercase tracking-wide mb-1">Unité</p>
+                    <p>{sensorUnit}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-blue-500 uppercase tracking-wide mb-1">Données</p>
+                    <p>{historyData.history.length}</p>
+                  </div>
+                </div>
+                <div className="overflow-hidden rounded-xl border border-slate-200 shadow-sm">
+                  <table className="w-full text-sm text-left">
+                    <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-semibold">
+                      <tr>
+                        <th className="py-3 px-5">Date & Heure</th>
+                        <th className="py-3 px-5 text-right">Valeur</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 bg-white">
+                      {historyData.history.map((reading, index) => (
+                        <tr key={index} className="hover:bg-slate-50 transition-colors">
+                          <td className="py-3 px-5 text-slate-600 font-mono text-xs">
+                            {reading.timestamp
+                              ? new Date(reading.timestamp).toLocaleString('fr-FR')
+                              : '-'}
+                          </td>
+                          <td className="py-3 px-5 text-right font-bold text-slate-800">
+                            {typeof reading.value === 'boolean'
+                              ? reading.value
+                                ? 'Ouvert'
+                                : 'Fermé'
+                              : `${reading.value} ${sensorUnit}`}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
         </div>
         <div className="sticky bottom-0 bg-slate-50 border-t border-slate-200 p-4 flex justify-end z-10">
-          <button onClick={onClose} className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-medium">Fermer</button>
+          <button
+            onClick={onClose}
+            className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-medium"
+          >
+            Fermer
+          </button>
         </div>
       </div>
     </div>
@@ -357,7 +462,7 @@ const CO2SensorsPage = () => {
   const [loadingHistorySensorId, setLoadingHistorySensorId] = useState<string | null>(null);
 
   const handleSelectSensor = async (sensorId: string, sensorName?: string) => {
-    if (sensorId === selectedSensorId) return; 
+    if (sensorId === selectedSensorId) return;
     setSelectedSensorId(sensorId);
     if (sensorName) setSelectedSensorName(sensorName);
     setIsGraphLoading(true);
@@ -371,7 +476,7 @@ const CO2SensorsPage = () => {
       const data: EvolutionData[] = await response.json();
       setEvolutionData(data);
     } catch (err) {
-      console.error("Erreur graph CO2", err);
+      console.error('Erreur graph CO2', err);
       setEvolutionData([]);
     } finally {
       setIsGraphLoading(false);
@@ -445,7 +550,7 @@ const CO2SensorsPage = () => {
       const latestDate = co2Sensors
         .map((s) => s.state_changed_at && new Date(s.state_changed_at))
         .filter(Boolean)
-        .sort((a, b) => (b!.getTime() - a!.getTime()))[0];
+        .sort((a, b) => b!.getTime() - a!.getTime())[0];
       setLastUpdate(latestDate ? latestDate.toLocaleTimeString('fr-FR') : 'N/A');
 
       // --- SIMPLIFICATION : UNE SEULE LISTE ---
@@ -453,7 +558,12 @@ const CO2SensorsPage = () => {
         id: sensor.sensor_id,
         name: sensor.name,
         value: Number(sensor.displayValue),
-        status: Number(sensor.displayValue) < 800 ? 'good' : Number(sensor.displayValue) < 1200 ? 'medium' : 'bad',
+        status:
+          Number(sensor.displayValue) < 800
+            ? 'good'
+            : Number(sensor.displayValue) < 1200
+              ? 'medium'
+              : 'bad',
       }));
 
       setAllRooms(roomsData);
@@ -469,9 +579,13 @@ const CO2SensorsPage = () => {
       setActiveAlerts(generatedAlerts.length);
 
       if (roomsData.length > 0) {
-        const highestRoom = roomsData.reduce((prev, curr) => (prev.value > curr.value ? prev : curr));
+        const highestRoom = roomsData.reduce((prev, curr) =>
+          prev.value > curr.value ? prev : curr
+        );
         if (highestRoom.value > 1000) {
-          setBannerAlert(`Pic de CO₂ détecté (${highestRoom.value} ppm) dans : ${highestRoom.name}.`);
+          setBannerAlert(
+            `Pic de CO₂ détecté (${highestRoom.value} ppm) dans : ${highestRoom.name}.`
+          );
         } else {
           setBannerAlert(null);
         }
@@ -479,11 +593,21 @@ const CO2SensorsPage = () => {
     };
 
     fetchSensors();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [getToken]);
 
-  if (loading) return <div className="flex justify-center min-h-screen items-center"><p className="text-xl text-slate-600">Chargement...</p></div>;
-  if (error) return <div className="flex justify-center min-h-screen items-center text-red-600">Erreur : {error}</div>;
+  if (loading)
+    return (
+      <div className="flex justify-center min-h-screen items-center">
+        <p className="text-xl text-slate-600">Chargement...</p>
+      </div>
+    );
+  if (error)
+    return (
+      <div className="flex justify-center min-h-screen items-center text-red-600">
+        Erreur : {error}
+      </div>
+    );
 
   return (
     <div className="space-y-8 pb-12 max-w-7xl mx-auto">
@@ -503,11 +627,11 @@ const CO2SensorsPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Liste des capteurs (2/3 de la largeur) */}
         <div className="lg:col-span-2">
-          <SensorsGrid 
+          <SensorsGrid
             rooms={allRooms}
             onTestHistory={fetchSensorHistory}
             loadingHistory={loadingHistorySensorId}
-            onSelectSensor={(id) => handleSelectSensor(id, allRooms.find(r => r.id === id)?.name)}
+            onSelectSensor={(id) => handleSelectSensor(id, allRooms.find((r) => r.id === id)?.name)}
             selectedId={selectedSensorId}
           />
         </div>
@@ -520,9 +644,9 @@ const CO2SensorsPage = () => {
 
       {/* GRAPHIQUE (Pleine largeur en bas) */}
       <div className="w-full h-[450px]">
-        <EvolutionChart 
-          data={evolutionData} 
-          loading={isGraphLoading} 
+        <EvolutionChart
+          data={evolutionData}
+          loading={isGraphLoading}
           titleSuffix={selectedSensorName ? `Capteur : ${selectedSensorName}` : ''}
         />
       </div>
@@ -535,7 +659,12 @@ const CO2SensorsPage = () => {
               <h4 className="font-semibold text-yellow-800">Alerte Qualité d'Air</h4>
               <p className="text-sm text-yellow-700 mt-1">{bannerAlert}</p>
             </div>
-            <button onClick={() => setBannerAlert(null)} className="text-yellow-500 hover:text-yellow-700 ml-auto">✕</button>
+            <button
+              onClick={() => setBannerAlert(null)}
+              className="text-yellow-500 hover:text-yellow-700 ml-auto"
+            >
+              ✕
+            </button>
           </div>
         </div>
       )}
