@@ -21,7 +21,7 @@ type TemperatureDayChartProps = {
 };
 
 const TemperatureDayChart: React.FC<TemperatureDayChartProps> = ({ data }) => {
-  // Labels horaires : 0h à 23h (si data.length === 24)
+  // Labels horaires : 0h à 23h
   const labels = Array.from({ length: data.length }, (_, i) => `${i}h`);
 
   const chartData = {
