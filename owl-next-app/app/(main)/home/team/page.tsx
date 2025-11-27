@@ -27,7 +27,7 @@ const teamMembers = [
     role: 'Développeur Frontend',
     description:
       "Responsable de l'expérience utilisateur, Liam crée des interfaces intuitives et esthétiques.",
-    image: '/Liam.jpg',
+    image: '/liam.jpg',
   },
   {
     name: 'Lucas Bretenstein',
