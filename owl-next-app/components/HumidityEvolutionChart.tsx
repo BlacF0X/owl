@@ -21,7 +21,7 @@ const HumidityEvolutionChart: React.FC<HumidityEvolutionChartProps> = ({ data })
     );
   }
 
-  // Axe Y de 0 à 100%
+  // Axe Y de 0% à 100%
   const yTicks = [100, 80, 60, 40, 20, 0];
 
   // Calculer la moyenne
