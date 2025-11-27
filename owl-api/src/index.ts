@@ -36,9 +36,33 @@ if (!AppDataSource.isInitialized) {
 // =================================================================
 // Configuration de l'application Express
 // =================================================================
+// Définition des origines autorisées selon l'environnement
+const getCorsOrigins = () => {
+  // 1. PRODUCTION
+  if (process.env.NODE_ENV === 'production') {
+    return 'https://project-owl.vercel.app';
+  }
+
+  // 2. PREVIEW
+  if (process.env.NODE_ENV === 'preview') {
+    return 'https://project-owl-preview.vercel.app';
+  }
+
+  // 3. DÉVELOPPEMENT LOCAL
+  return [
+    'http://localhost:3000', // Votre frontend Next.js
+    'http://localhost:8080', // Pour les tests d'API en local
+  ];
+};
+
 const app = express();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: getCorsOrigins(),
+    credentials: true,
+  })
+);
 
 // Route pour la documentation
 if (process.env.NODE_ENV !== 'production') {
