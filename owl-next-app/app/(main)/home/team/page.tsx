@@ -7,20 +7,20 @@ const teamMembers = [
     role: 'Développeur Backend',
     description:
       'Spécialisé dans le développement backend, Arno assure la robustesse et la performance de notre infrastructure.',
-    image: 'AS', // Initiales en attendant la photo
+    image: '/arno.jpg',
   },
   {
     name: 'Clément Vier',
     role: 'Développeur Fullstack',
     description:
       "En tant que développeur fullstack, Clément apporte sa polyvalence et son expertise sur l'ensemble de notre stack technique.",
-    image: 'CV',
+    image: '/clement.jpg',
   },
   {
     name: 'Corentin Mertens',
     role: 'Développeur Électronique',
     description: 'Expert en électronique, Corentin gère tous les aspects hardware de notre projet.',
-    image: 'CM',
+    image: '/coco.jpg',
   },
   {
     name: 'Liam Gérard',
@@ -34,14 +34,14 @@ const teamMembers = [
     role: 'Développeur Backend',
     description:
       'Lucas assure la solidité de notre backend et optimise les performances de nos services.',
-    image: 'LB',
+    image: '/lucas.jpg',
   },
   {
     name: 'Martin Stocq',
     role: 'Développeur Frontend',
     description:
       "Martin travaille sur l'interface utilisateur pour offrir la meilleure expérience possible.",
-    image: 'MS',
+    image: '/martin.jpg',
   },
 ];
 
