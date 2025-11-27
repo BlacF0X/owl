@@ -22,7 +22,7 @@
 
 # @name TestRacine
 # Teste si l'API est en ligne
-GET {{baseUrl}}/
+GET {{baseUrl}}/api/
 
 ###
 
