@@ -12,6 +12,14 @@ import apiRouter from './api/routes/index.js';
 import swaggerUi from 'swagger-ui-express';
 import { specs } from './config/swagger.js';
 
+// Liens CDN pour les fichiers statiques de Swagger UI
+const CSS_URL =
+  'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.0.0/swagger-ui.min.css';
+const JS_URL = [
+  'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.0.0/swagger-ui-bundle.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.0.0/swagger-ui-standalone-preset.min.js',
+];
+
 // =================================================================
 // Initialisation Globale
 // =================================================================
@@ -66,7 +74,15 @@ app.use(
 
 // Route pour la documentation
 if (process.env.NODE_ENV !== 'production') {
-  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
+  app.use(
+    '/api-docs',
+    swaggerUi.serve,
+    swaggerUi.setup(specs, {
+      customCssUrl: CSS_URL,
+      customJs: JS_URL,
+      customSiteTitle: 'Project OwL API Docs',
+    })
+  );
   console.log('📚 Documentation Swagger activée sur /api-docs');
 }
 
