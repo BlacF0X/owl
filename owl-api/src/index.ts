@@ -9,6 +9,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { AppDataSource } from './config/data-source.js';
 import apiRouter from './api/routes/index.js';
+import swaggerUi from 'swagger-ui-express';
 import { specs } from './config/swagger.js';
 
 // =================================================================
@@ -64,49 +65,8 @@ app.use(
 );
 
 // Route pour la documentation
-if (process.env.NODE_ENV !== 'production') {
-  app.get('/api-docs/swagger.json', (req, res) => {
-    res.setHeader('Content-Type', 'application/json');
-    res.send(specs);
-  });
-
-  // 2. Servir une page HTML pure qui initialise Swagger UI via CDN
-  app.get('/api-docs', (req, res) => {
-    res.setHeader('Content-Type', 'text/html');
-    res.send(`
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8">
-        <title>Project OwL API Docs</title>
-        <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui.css" />
-        <style>
-          body { margin: 0; padding: 0; }
-          #swagger-ui { max-width: 100%; margin: 0 auto; }
-        </style>
-      </head>
-      <body>
-        <div id="swagger-ui"></div>
-        <script src="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-bundle.js" crossorigin></script>
-        <script src="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-standalone-preset.js" crossorigin></script>
-        <script>
-          window.onload = () => {
-            window.ui = SwaggerUIBundle({
-              url: '/api-docs/swagger.json', // Pointe vers notre route JSON
-              dom_id: '#swagger-ui',
-              presets: [
-                SwaggerUIBundle.presets.apis,
-                SwaggerUIStandalonePreset
-              ],
-              layout: "StandaloneLayout",
-            });
-          };
-        </script>
-      </body>
-      </html>
-    `);
-  });
-
+if (process.env.NODE_ENV === 'dev') {
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
   console.log('📚 Documentation Swagger activée sur /api-docs');
 }
 
