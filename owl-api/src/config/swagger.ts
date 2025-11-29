@@ -75,12 +75,7 @@ const options = {
     ],
   },
   // Chemin vers les fichiers contenant les annotations
-  apis: [
-    './src/api/routes/*.ts',
-    './src/index.ts',
-    './dist/api/routes/*.js',
-    './dist/index.js',
-  ],
+  apis: ['./src/api/routes/*.ts', './src/index.ts'],
 };
 
 export const specs = swaggerJsdoc(options);
