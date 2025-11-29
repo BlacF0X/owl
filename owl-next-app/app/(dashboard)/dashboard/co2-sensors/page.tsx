@@ -9,8 +9,6 @@ import {
   Bell,
   Clock,
   BarChart2,
-  MousePointerClick,
-  Info,
 } from 'lucide-react';
 
 // --- Imports Chart.js ---
@@ -69,6 +67,14 @@ interface EvolutionData {
 interface SensorHistoryResponse {
   sensor: { sensor_id: string; name: string; type: SensorType };
   history: Array<{ timestamp: string; value: number | boolean }>;
+}
+
+interface HistoryModalProps {
+  isOpen: boolean;
+  historyData: SensorHistoryResponse | null;
+  isLoading: boolean;
+  error: string | null;
+  onClose: () => void;
 }
 
 // --- Composants ---
@@ -246,7 +252,7 @@ const EvolutionChart: React.FC<{
           return '#10b981';
         }),
         borderRadius: 4,
-        barThickness: 'flex',
+        barThickness: 'flex' as const,
         maxBarThickness: 40,
       },
     ],
@@ -483,7 +489,7 @@ const CO2SensorsPage = () => {
     }
   };
 
-  const fetchSensorHistory = async (sensorId: string, sensorName: string) => {
+  const fetchSensorHistory = async (sensorId: string) => {
     try {
       setLoadingHistorySensorId(sensorId);
       setHistoryLoading(true);
@@ -548,9 +554,9 @@ const CO2SensorsPage = () => {
       setAverage(Math.round(avg));
 
       const latestDate = co2Sensors
-        .map((s) => s.state_changed_at && new Date(s.state_changed_at))
-        .filter(Boolean)
-        .sort((a, b) => b!.getTime() - a!.getTime())[0];
+        .map((s) => (s.state_changed_at ? new Date(s.state_changed_at) : null))
+        .filter((date): date is Date => date !== null)
+        .sort((a, b) => b.getTime() - a.getTime())[0];
       setLastUpdate(latestDate ? latestDate.toLocaleTimeString('fr-FR') : 'N/A');
 
       // --- SIMPLIFICATION : UNE SEULE LISTE ---
