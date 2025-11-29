@@ -81,8 +81,17 @@ if (process.env.NODE_ENV !== 'production') {
       customCssUrl: CSS_URL,
       customJs: JS_URL,
       customSiteTitle: 'Project OwL API Docs',
+      swaggerOptions: {
+        url: '/api-docs/swagger.json',
+      },
     })
   );
+
+  app.get('/api-docs/swagger.json', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(specs);
+  });
+
   console.log('📚 Documentation Swagger activée sur /api-docs');
 }
 
