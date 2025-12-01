@@ -9,10 +9,7 @@ interface HumidityRoomDetailsModalProps {
   onClose: () => void;
 }
 
-export default function HumidityRoomDetailsModal({
-  room,
-  onClose,
-}: HumidityRoomDetailsModalProps) {
+export default function HumidityRoomDetailsModal({ room, onClose }: HumidityRoomDetailsModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
       <div className="w-full max-w-md overflow-hidden rounded-xl bg-white shadow-2xl">
@@ -37,8 +34,8 @@ export default function HumidityRoomDetailsModal({
                 {room.status === 'optimal'
                   ? 'Optimal'
                   : room.status === 'warning'
-                  ? 'Alerte'
-                  : 'Critique'}
+                    ? 'Alerte'
+                    : 'Critique'}
               </p>
               <p className="text-xs text-slate-500">Statut</p>
             </div>
@@ -47,7 +44,7 @@ export default function HumidityRoomDetailsModal({
           <div className="rounded-lg bg-blue-50 p-4">
             <p className="text-sm text-blue-900">
               {room.status === 'optimal' && '✓ Humidité idéale pour le confort et la santé'}
-              {room.status === 'warning' && '⚠️ L\'humidité est élevée, aérez la pièce'}
+              {room.status === 'warning' && "⚠️ L'humidité est élevée, aérez la pièce"}
               {room.status === 'danger' && '⚠️ Humidité trop élevée, risque de moisissures'}
             </p>
           </div>

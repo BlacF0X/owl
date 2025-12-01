@@ -2,10 +2,11 @@
 
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/clerk-react';
-import { Droplets, AlertTriangle, Clock } from 'lucide-react';
 import HumidityStatsCards from '@/components/HumidityStatsCards';
 import HumidityRoomsView from '@/components/HumidityRoomsView';
-import HumidityEvolutionChart, { type HumidityDataPoint } from '@/components/HumidityEvolutionChart';
+import HumidityEvolutionChart, {
+  type HumidityDataPoint,
+} from '@/components/HumidityEvolutionChart';
 import { type HumidityRoom } from '@/components/HumidityRoomCard';
 
 interface HumiditySensor {
@@ -134,9 +135,7 @@ export default function HumiditySensorsPage() {
   return (
     <div className="space-y-8">
       <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">
-          Dashboard Humidité - Système OwL
-        </h1>
+        <h1 className="text-3xl font-semibold tracking-tight">Dashboard Humidité - Système OwL</h1>
         <p className="text-sm text-muted-foreground">
           Surveillance en temps réel de l'humidité intérieure
         </p>

@@ -1,11 +1,7 @@
 'use client';
 
 import React from 'react';
-import {
-  Droplets,
-  AlertTriangle,
-  CheckCircle,
-} from 'lucide-react';
+import { Droplets, AlertTriangle, CheckCircle } from 'lucide-react';
 import { formatDateTime } from '@/src/utils/formatters';
 
 export interface HumidityRoom {
@@ -22,10 +18,7 @@ interface HumidityRoomCardProps {
   onClick?: () => void;
 }
 
-const HumidityRoomCard: React.FC<HumidityRoomCardProps> = ({
-  room,
-  onClick,
-}) => {
+const HumidityRoomCard: React.FC<HumidityRoomCardProps> = ({ room, onClick }) => {
   let statusColor = '';
   let borderColor = '';
   let StatusIcon: React.ElementType;
@@ -65,15 +58,11 @@ const HumidityRoomCard: React.FC<HumidityRoomCardProps> = ({
       </div>
 
       <div className="mt-4 text-center">
-        <p className={`text-3xl font-extrabold ${statusColor}`}>
-          {room.humidity}%
-        </p>
+        <p className={`text-3xl font-extrabold ${statusColor}`}>{room.humidity}%</p>
       </div>
 
       <div className="mt-2">
-        <p className={`text-xs font-medium ${statusColor} text-center`}>
-          {statusMessage}
-        </p>
+        <p className={`text-xs font-medium ${statusColor} text-center`}>{statusMessage}</p>
       </div>
 
       <div className="mt-6 border-t pt-4 text-slate-600">

@@ -7,7 +7,10 @@ import { Between } from 'typeorm';
 /**
  * @description Récupère UNIQUEMENT les capteurs d'humidité pour l'utilisateur authentifié.
  */
-export const getHumiditySensorsForUser = async (req: Request, res: Response) => {
+export const getHumiditySensorsForUser = async (
+  req: Request,
+  res: Response
+) => {
   try {
     // 1. Récupérer l'ID de l'utilisateur (identique à windows)
     const userId = req.auth?.userId;
@@ -59,7 +62,7 @@ export const getHumiditySensorsForUser = async (req: Request, res: Response) => 
     res.status(200).json(formattedSensors);
   } catch (error) {
     console.error(
-      'Erreur lors de la récupération des capteurs d\'humidité :',
+      "Erreur lors de la récupération des capteurs d'humidité :",
       error
     );
     res.status(500).json({ message: 'Erreur interne du serveur.' });
