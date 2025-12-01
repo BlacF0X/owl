@@ -10,32 +10,57 @@ export const metadata: Metadata = {
   description: "Surveillance en temps réel de l'humidité intérieure",
 };
 
-export default function HumiditySensorsPage() {
-  // Noms identiques au format CO2 : Qualité Air [Localisation] [Numéro]
-  const mockRooms: HumidityRoom[] = [
-    // Maison Principale
-    { id: 'humidity_maison_1', name: 'Qualité Air Maison 1', humidity: 52, status: 'optimal', hubName: 'Maison Principale', lastUpdate: new Date().toISOString() },
-    { id: 'humidity_maison_2', name: 'Qualité Air Maison 2', humidity: 68, status: 'warning', hubName: 'Maison Principale', lastUpdate: new Date().toISOString() },
-    { id: 'humidity_maison_3', name: 'Qualité Air Maison 3', humidity: 45, status: 'optimal', hubName: 'Maison Principale', lastUpdate: new Date().toISOString() },
-    { id: 'humidity_maison_4', name: 'Qualité Air Maison 4', humidity: 78, status: 'danger', hubName: 'Maison Principale', lastUpdate: new Date().toISOString() },
-    { id: 'humidity_maison_5', name: 'Qualité Air Maison 5', humidity: 55, status: 'optimal', hubName: 'Maison Principale', lastUpdate: new Date().toISOString() },
-    
-    // Bureau
-    { id: 'humidity_bureau_1', name: 'Qualité Air Bureau 1', humidity: 48, status: 'optimal', hubName: 'Bureau', lastUpdate: new Date().toISOString() },
-    { id: 'humidity_bureau_2', name: 'Qualité Air Bureau 2', humidity: 61, status: 'warning', hubName: 'Bureau', lastUpdate: new Date().toISOString() },
-    { id: 'humidity_bureau_3', name: 'Qualité Air Bureau 3', humidity: 50, status: 'optimal', hubName: 'Bureau', lastUpdate: new Date().toISOString() },
-    { id: 'humidity_bureau_4', name: 'Qualité Air Bureau 4', humidity: 69, status: 'warning', hubName: 'Bureau', lastUpdate: new Date().toISOString() },
-    { id: 'humidity_bureau_5', name: 'Qualité Air Bureau 5', humidity: 42, status: 'optimal', hubName: 'Bureau', lastUpdate: new Date().toISOString() },
-  ];
+async function fetchHumiditySensors(token: string) {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+  const response = await fetch(`${apiUrl}/api/humidity`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) throw new Error('Erreur fetch capteurs');
+  return response.json();
+}
 
-  // Calculer les stats dynamiquement
-  const averageHumidity = Math.round(
-    mockRooms.reduce((sum, room) => sum + room.humidity, 0) / mockRooms.length
-  );
-  
-  const activeAlerts = mockRooms.filter(
-    room => room.status === 'warning' || room.status === 'danger'
-  ).length;
+export default async function HumiditySensorsPage() {
+  let sensors: any[] = [];
+  let roomsByHub: Record<string, HumidityRoom[]> = {};
+  let averageHumidity = 0;
+  let activeAlerts = 0;
+
+  try {
+    // NOTE: Pour récupérer le token, tu devras utiliser getAuth() de Clerk côté serveur
+    // C'est une simplification - en production, tu devras passer le token correctement
+    sensors = await fetchHumiditySensors('YOUR_TOKEN_HERE');
+
+    // Transformer en HumidityRoom
+    const rooms: HumidityRoom[] = sensors.map((sensor) => ({
+      id: sensor.sensorid,
+      name: sensor.name,
+      humidity: parseInt(sensor.displayValue) || 0,
+      status: 
+        parseInt(sensor.displayValue) >= 40 && parseInt(sensor.displayValue) <= 60 
+          ? 'optimal' 
+          : parseInt(sensor.displayValue) > 60 
+          ? 'warning' 
+          : 'danger',
+      hubName: sensor.hub.name,
+      lastUpdate: new Date().toISOString(),
+    }));
+
+    // Grouper par hub
+    roomsByHub = rooms.reduce((acc, room) => {
+      const hub = room.hubName || 'Sans boîtier';
+      if (!acc[hub]) acc[hub] = [];
+      acc[hub].push(room);
+      return acc;
+    }, {} as Record<string, HumidityRoom[]>);
+
+    // Stats
+    averageHumidity = Math.round(
+      rooms.reduce((sum, r) => sum + r.humidity, 0) / rooms.length
+    );
+    activeAlerts = rooms.filter(r => r.status !== 'optimal').length;
+  } catch (error) {
+    console.error('Erreur chargement humidité:', error);
+  }
 
   const mockStats = {
     averageHumidity,
@@ -43,42 +68,11 @@ export default function HumiditySensorsPage() {
     lastUpdate: 'Maintenant',
   };
 
-  // Graphique : évolution de l'humidité sur 24h
-  const generateChartData = (): HumidityDataPoint[] => {
-    const base = averageHumidity;
-    return Array.from({ length: 24 }, (_, hour) => {
-      let variation = 0;
-      if (hour >= 6 && hour <= 10) variation = 8;
-      else if (hour >= 11 && hour <= 15) variation = 12;
-      else if (hour >= 16 && hour <= 20) variation = 10;
-      else variation = -5;
-      
-      const noise = (Math.random() - 0.5) * 4;
-      const value = Math.max(30, Math.min(85, base + variation + noise));
-      
-      return {
-        hour,
-        value: Math.round(value),
-      };
-    });
-  };
-
-  const mockChartData = generateChartData();
-
-  // Grouper les pièces par boîtier
-  const roomsByHub = useMemo(() => {
-    return mockRooms.reduce(
-      (acc, room) => {
-        const hub = room.hubName || 'Sans boîtier';
-        if (!acc[hub]) {
-          acc[hub] = [];
-        }
-        acc[hub].push(room);
-        return acc;
-      },
-      {} as Record<string, HumidityRoom[]>
-    );
-  }, []);
+  // Graphique (peut rester mockée ou être appelée depuis API)
+  const mockChartData: HumidityDataPoint[] = Array.from({ length: 24 }, (_, hour) => ({
+    hour,
+    value: Math.round(averageHumidity + (Math.random() - 0.5) * 10),
+  }));
 
   return (
     <div className="space-y-8">
@@ -92,9 +86,7 @@ export default function HumiditySensorsPage() {
       </div>
 
       <HumidityStatsCards stats={mockStats} />
-
       <HumidityRoomsView roomsByHub={roomsByHub} />
-
       <HumidityEvolutionChart data={mockChartData} />
     </div>
   );
