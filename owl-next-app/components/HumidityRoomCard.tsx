@@ -8,21 +8,24 @@ import {
 } from 'lucide-react';
 import { formatDateTime } from '@/src/utils/formatters';
 
-export type HumidityStatus = 'optimal' | 'warning' | 'danger';
-
 export interface HumidityRoom {
   id: string;
   name: string;
   humidity: number;
-  status: HumidityStatus;
+  status: 'optimal' | 'warning' | 'danger';
   lastUpdate?: string;
+  hubName?: string;
 }
 
 interface HumidityRoomCardProps {
   room: HumidityRoom;
+  onClick?: () => void;
 }
 
-const HumidityRoomCard: React.FC<HumidityRoomCardProps> = ({ room }) => {
+const HumidityRoomCard: React.FC<HumidityRoomCardProps> = ({
+  room,
+  onClick,
+}) => {
   let statusColor = '';
   let borderColor = '';
   let StatusIcon: React.ElementType;
@@ -51,7 +54,10 @@ const HumidityRoomCard: React.FC<HumidityRoomCardProps> = ({ room }) => {
 
   return (
     <div
-      className={`rounded-lg bg-white p-6 shadow-sm ${borderColor} flex flex-col justify-between h-full`}
+      onClick={onClick}
+      className={`rounded-lg bg-white p-6 shadow-sm ${borderColor} flex flex-col justify-between h-full ${
+        onClick ? 'cursor-pointer hover:shadow-md transition-shadow' : ''
+      }`}
     >
       <div className="flex items-start justify-between mb-4">
         <h3 className="text-xl font-bold text-slate-800">{room.name}</h3>
