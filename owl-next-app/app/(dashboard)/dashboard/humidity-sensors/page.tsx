@@ -1,10 +1,11 @@
+'use client';
+
+import React, { useMemo } from 'react';
 import type { Metadata } from 'next';
 import HumidityStatsCards from '@/components/HumidityStatsCards';
-import HumidityHomeMap from '@/components/HumidityHomeMap';
-import HumidityEvolutionChart, {
-  type HumidityDataPoint,
-} from '@/components/HumidityEvolutionChart';
-import { type HumidityRoom } from '@/components/HumidityRoomCard';
+import HumidityRoomsView from '@/components/HumidityRoomsView';
+import HumidityEvolutionChart, { type HumidityDataPoint } from '@/components/HumidityEvolutionChart';
+import { HumidityRoom } from '@/components/HumidityRoomCard';
 
 export const metadata: Metadata = {
   title: "Capteurs d'humidité | Dashboard OwL",
@@ -12,22 +13,25 @@ export const metadata: Metadata = {
 };
 
 export default function HumiditySensorsPage() {
-  // Données mockées pour tester l'affichage
+  const mockRooms: HumidityRoom[] = [
+    { id: '1', name: 'Salon', humidity: 52, status: 'optimal', hubName: 'Maison Principale', lastUpdate: new Date().toISOString() },
+    { id: '2', name: 'Cuisine', humidity: 64, status: 'warning', hubName: 'Maison Principale', lastUpdate: new Date().toISOString() },
+    { id: '3', name: 'Chambre', humidity: 72, status: 'danger', hubName: 'Maison Principale', lastUpdate: new Date().toISOString() },
+    { id: '4', name: 'Salle de bain', humidity: 78, status: 'danger', hubName: 'Maison Principale', lastUpdate: new Date().toISOString() },
+    { id: '5', name: 'Corridor', humidity: 55, status: 'optimal', hubName: 'Maison Principale', lastUpdate: new Date().toISOString() },
+    { id: '6', name: 'Bureau 1', humidity: 48, status: 'optimal', hubName: 'Bureau', lastUpdate: new Date().toISOString() },
+    { id: '7', name: 'Bureau 2', humidity: 61, status: 'warning', hubName: 'Bureau', lastUpdate: new Date().toISOString() },
+    { id: '8', name: 'Salle de réunion', humidity: 55, status: 'optimal', hubName: 'Bureau', lastUpdate: new Date().toISOString() },
+    { id: '9', name: 'Couloir', humidity: 50, status: 'optimal', hubName: 'Bureau', lastUpdate: new Date().toISOString() },
+    { id: '10', name: 'Coin pause', humidity: 69, status: 'warning', hubName: 'Bureau', lastUpdate: new Date().toISOString() },
+  ];
+
   const mockStats = {
-    averageHumidity: 58,
-    activeAlerts: 1,
+    averageHumidity: 60,
+    activeAlerts: 3,
     lastUpdate: 'Maintenant',
   };
 
-  // Données mockées pour les pièces
-  const mockRooms: HumidityRoom[] = [
-    { id: '1', name: 'Salon', humidity: 52, status: 'optimal' },
-    { id: '2', name: 'Cuisine', humidity: 64, status: 'warning' },
-    { id: '3', name: 'Chambre', humidity: 72, status: 'danger' },
-    { id: '4', name: 'Salle de bain', humidity: 55, status: 'optimal' },
-  ];
-
-  // Données mockées pour le graphique avec variation visible
   const mockChartData: HumidityDataPoint[] = [
     { hour: 0, value: 52 },
     { hour: 1, value: 48 },
@@ -55,25 +59,35 @@ export default function HumiditySensorsPage() {
     { hour: 23, value: 50 },
   ];
 
+  const roomsByHub = useMemo(() => {
+    return mockRooms.reduce(
+      (acc, room) => {
+        const hub = room.hubName || 'Sans boîtier';
+        if (!acc[hub]) {
+          acc[hub] = [];
+        }
+        acc[hub].push(room);
+        return acc;
+      },
+      {} as Record<string, HumidityRoom[]>
+    );
+  }, []);
+
   return (
     <div className="space-y-8">
-      {/* Header Section */}
       <div className="space-y-2">
         <h1 className="text-3xl font-semibold tracking-tight">
-          Dashboard Qualité de l&apos;air - Système OwL
+          Dashboard Humidité - Système OwL
         </h1>
         <p className="text-sm text-muted-foreground">
-          Surveillance en temps réel de l&apos;humidité intérieure
+          Surveillance en temps réel de l'humidité intérieure
         </p>
       </div>
 
-      {/* Stats Cards */}
       <HumidityStatsCards stats={mockStats} />
 
-      {/* Home Map - Full width */}
-      <HumidityHomeMap rooms={mockRooms} />
+      <HumidityRoomsView roomsByHub={roomsByHub} />
 
-      {/* Evolution Chart - Full width at bottom */}
       <HumidityEvolutionChart data={mockChartData} />
     </div>
   );
