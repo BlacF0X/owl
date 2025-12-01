@@ -1,66 +1,123 @@
-import React, { useMemo } from 'react';
-import type { Metadata } from 'next';
+'use client';
+
+import React, { useEffect, useState } from 'react';
+import { useAuth } from '@clerk/clerk-react';
+import { Droplets, AlertTriangle, Clock } from 'lucide-react';
 import HumidityStatsCards from '@/components/HumidityStatsCards';
 import HumidityRoomsView from '@/components/HumidityRoomsView';
 import HumidityEvolutionChart, { type HumidityDataPoint } from '@/components/HumidityEvolutionChart';
-import { HumidityRoom } from '@/components/HumidityRoomCard';
+import { type HumidityRoom } from '@/components/HumidityRoomCard';
 
-export const metadata: Metadata = {
-  title: "Capteurs d'humidité | Dashboard OwL",
-  description: "Surveillance en temps réel de l'humidité intérieure",
-};
-
-async function fetchHumiditySensors(token: string) {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-  const response = await fetch(`${apiUrl}/api/humidity`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!response.ok) throw new Error('Erreur fetch capteurs');
-  return response.json();
+interface HumiditySensor {
+  sensor_id: string;
+  hub: { hub_id: string; name: string };
+  name: string;
+  displayValue: string;
+  state_changed_at: string | null;
+  type: { type_key: string; name: string; unit: string };
 }
 
-export default async function HumiditySensorsPage() {
-  let sensors: any[] = [];
-  let roomsByHub: Record<string, HumidityRoom[]> = {};
-  let averageHumidity = 0;
-  let activeAlerts = 0;
+interface HumidityStats {
+  hour: number;
+  avgHumidity: number;
+}
 
-  try {
-    // NOTE: Pour récupérer le token, tu devras utiliser getAuth() de Clerk côté serveur
-    // C'est une simplification - en production, tu devras passer le token correctement
-    sensors = await fetchHumiditySensors('YOUR_TOKEN_HERE');
+export default function HumiditySensorsPage() {
+  const { getToken } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [sensors, setSensors] = useState<HumiditySensor[]>([]);
+  const [stats, setStats] = useState<HumidityStats[]>([]);
+  const [averageHumidity, setAverageHumidity] = useState(0);
+  const [activeAlerts, setActiveAlerts] = useState(0);
 
-    // Transformer en HumidityRoom
-    const rooms: HumidityRoom[] = sensors.map((sensor) => ({
-      id: sensor.sensorid,
-      name: sensor.name,
-      humidity: parseInt(sensor.displayValue) || 0,
-      status: 
-        parseInt(sensor.displayValue) >= 40 && parseInt(sensor.displayValue) <= 60 
-          ? 'optimal' 
-          : parseInt(sensor.displayValue) > 60 
-          ? 'warning' 
-          : 'danger',
-      hubName: sensor.hub.name,
-      lastUpdate: new Date().toISOString(),
-    }));
+  useEffect(() => {
+    const fetchHumidityData = async () => {
+      try {
+        setError(null);
+        const token = await getToken();
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
-    // Grouper par hub
-    roomsByHub = rooms.reduce((acc, room) => {
-      const hub = room.hubName || 'Sans boîtier';
-      if (!acc[hub]) acc[hub] = [];
-      acc[hub].push(room);
-      return acc;
-    }, {} as Record<string, HumidityRoom[]>);
+        // Fetch sensors
+        const sensorsResponse = await fetch(`${apiUrl}/api/humidity`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
-    // Stats
-    averageHumidity = Math.round(
-      rooms.reduce((sum, r) => sum + r.humidity, 0) / rooms.length
+        if (!sensorsResponse.ok) throw new Error('Erreur fetch capteurs');
+        const sensorsData: HumiditySensor[] = await sensorsResponse.json();
+        setSensors(sensorsData);
+
+        // Fetch stats
+        const statsResponse = await fetch(`${apiUrl}/api/humidity/stats`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!statsResponse.ok) throw new Error('Erreur fetch stats');
+        const statsData: HumidityStats[] = await statsResponse.json();
+        setStats(statsData);
+
+        // Calculer les stats
+        const humidityValues = sensorsData.map((s) => parseInt(s.displayValue) || 0);
+        const avg = Math.round(
+          humidityValues.reduce((a, b) => a + b, 0) / humidityValues.length || 0
+        );
+        setAverageHumidity(avg);
+
+        // Compter les alertes
+        const alertCount = sensorsData.filter((s) => {
+          const value = parseInt(s.displayValue) || 0;
+          return value < 40 || value > 70;
+        }).length;
+        setActiveAlerts(alertCount);
+      } catch (err) {
+        console.error('Erreur chargement humidité:', err);
+        setError(err instanceof Error ? err.message : 'Erreur inconnue');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHumidityData();
+  }, [getToken]);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center min-h-screen items-center">
+        <p className="text-xl text-slate-600">Chargement...</p>
+      </div>
     );
-    activeAlerts = rooms.filter(r => r.status !== 'optimal').length;
-  } catch (error) {
-    console.error('Erreur chargement humidité:', error);
   }
+
+  if (error) {
+    return (
+      <div className="flex justify-center min-h-screen items-center text-red-600">
+        Erreur: {error}
+      </div>
+    );
+  }
+
+  // Grouper par hub
+  const sensorsByHub = sensors.reduce(
+    (acc, sensor) => {
+      const hubName = sensor.hub.name;
+      if (!acc[hubName]) acc[hubName] = [];
+      acc[hubName].push({
+        id: sensor.sensor_id,
+        name: sensor.name,
+        humidity: parseInt(sensor.displayValue) || 0,
+        status:
+          parseInt(sensor.displayValue) >= 40 && parseInt(sensor.displayValue) <= 60
+            ? ('optimal' as const)
+            : parseInt(sensor.displayValue) > 60
+              ? ('warning' as const)
+              : ('danger' as const),
+        hubName: hubName,
+        lastUpdate: new Date().toISOString(),
+      } as HumidityRoom);
+      return acc;
+    },
+    {} as Record<string, HumidityRoom[]>
+  );
 
   const mockStats = {
     averageHumidity,
@@ -68,10 +125,10 @@ export default async function HumiditySensorsPage() {
     lastUpdate: 'Maintenant',
   };
 
-  // Graphique (peut rester mockée ou être appelée depuis API)
-  const mockChartData: HumidityDataPoint[] = Array.from({ length: 24 }, (_, hour) => ({
-    hour,
-    value: Math.round(averageHumidity + (Math.random() - 0.5) * 10),
+  // Convertir stats pour le graphique
+  const chartData: HumidityDataPoint[] = stats.map((s) => ({
+    hour: s.hour,
+    value: s.avgHumidity,
   }));
 
   return (
@@ -86,8 +143,10 @@ export default async function HumiditySensorsPage() {
       </div>
 
       <HumidityStatsCards stats={mockStats} />
-      <HumidityRoomsView roomsByHub={roomsByHub} />
-      <HumidityEvolutionChart data={mockChartData} />
+
+      <HumidityRoomsView roomsByHub={sensorsByHub} />
+
+      <HumidityEvolutionChart data={chartData} />
     </div>
   );
 }
