@@ -1,4 +1,12 @@
+'use client';
+
 import React from 'react';
+import {
+  Droplets,
+  AlertTriangle,
+  CheckCircle,
+} from 'lucide-react';
+import { formatDateTime } from '@/src/utils/formatters';
 
 export type HumidityStatus = 'optimal' | 'warning' | 'danger';
 
@@ -7,69 +15,75 @@ export interface HumidityRoom {
   name: string;
   humidity: number;
   status: HumidityStatus;
+  lastUpdate?: string;
 }
 
 interface HumidityRoomCardProps {
   room: HumidityRoom;
 }
 
-// Helper function pour déterminer les classes CSS selon le statut
-const getStatusClasses = (status: HumidityStatus) => {
-  const baseClasses = 'rounded-xl border-2 p-5 transition-all hover:shadow-md';
-
-  switch (status) {
-    case 'optimal':
-      return `${baseClasses} bg-green-50 border-green-500`;
-    case 'warning':
-      return `${baseClasses} bg-yellow-50 border-yellow-500`;
-    case 'danger':
-      return `${baseClasses} bg-red-50 border-red-500`;
-    default:
-      return baseClasses;
-  }
-};
-
-// Helper function pour obtenir le texte du statut
-const getStatusText = (status: HumidityStatus): string => {
-  switch (status) {
-    case 'optimal':
-      return 'Humidité optimale';
-    case 'warning':
-      return 'Surveillance recommandée';
-    case 'danger':
-      return 'Action nécessaire';
-    default:
-      return 'Statut inconnu';
-  }
-};
-
-// Helper function pour obtenir la couleur du texte du statut
-const getStatusTextColor = (status: HumidityStatus): string => {
-  switch (status) {
-    case 'optimal':
-      return 'text-green-700';
-    case 'warning':
-      return 'text-yellow-700';
-    case 'danger':
-      return 'text-red-700';
-    default:
-      return 'text-slate-700';
-  }
-};
-
 const HumidityRoomCard: React.FC<HumidityRoomCardProps> = ({ room }) => {
+  let statusColor = '';
+  let borderColor = '';
+  let StatusIcon: React.ElementType;
+  let statusMessage = '';
+
+  switch (room.status) {
+    case 'optimal':
+      statusColor = 'text-green-600';
+      borderColor = 'border-l-4 border-green-500';
+      StatusIcon = CheckCircle;
+      statusMessage = 'Humidité optimale (40-60%)';
+      break;
+    case 'warning':
+      statusColor = 'text-amber-600';
+      borderColor = 'border-l-4 border-amber-500';
+      StatusIcon = AlertTriangle;
+      statusMessage = 'Surveillance recommandée (60-70%)';
+      break;
+    case 'danger':
+      statusColor = 'text-red-600';
+      borderColor = 'border-l-4 border-red-500';
+      StatusIcon = AlertTriangle;
+      statusMessage = 'Action nécessaire (>70%)';
+      break;
+  }
+
   return (
-    <div className={getStatusClasses(room.status)}>
-      <div className="mb-1">
-        <h3 className="text-lg font-semibold text-slate-900">{room.name}</h3>
+    <div
+      className={`rounded-lg bg-white p-6 shadow-sm ${borderColor} flex flex-col justify-between h-full`}
+    >
+      <div className="flex items-start justify-between mb-4">
+        <h3 className="text-xl font-bold text-slate-800">{room.name}</h3>
+        <StatusIcon className={`h-8 w-8 flex-shrink-0 ${statusColor}`} />
       </div>
-      <div className="mb-3">
-        <p className={`text-xs font-medium ${getStatusTextColor(room.status)}`}>
-          {getStatusText(room.status)}
+
+      <div className="mt-4 text-center">
+        <p className={`text-3xl font-extrabold ${statusColor}`}>
+          {room.humidity}%
         </p>
       </div>
-      <div>
-        <p className="text-3xl font-bold text-slate-900">{room.humidity}%</p>
+
+      <div className="mt-2">
+        <p className={`text-xs font-medium ${statusColor} text-center`}>
+          {statusMessage}
+        </p>
+      </div>
+
+      <div className="mt-6 border-t pt-4 text-slate-600">
+        <div className="flex items-center gap-3 text-sm">
+          <Droplets className="h-5 w-5 text-slate-400" />
+          <div>
+            <p className="font-medium">
+              Taux actuel : <span className="font-bold">{room.humidity}%</span>
+            </p>
+            {room.lastUpdate && (
+              <p className="text-xs text-slate-400 mt-1">
+                Dernier relevé : {formatDateTime(room.lastUpdate)}
+              </p>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
