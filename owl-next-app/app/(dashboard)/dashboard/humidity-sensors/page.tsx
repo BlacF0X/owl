@@ -1,5 +1,3 @@
-'use client';
-
 import React, { useMemo } from 'react';
 import type { Metadata } from 'next';
 import HumidityStatsCards from '@/components/HumidityStatsCards';
@@ -13,52 +11,61 @@ export const metadata: Metadata = {
 };
 
 export default function HumiditySensorsPage() {
+  // Noms identiques au format CO2 : Qualité Air [Localisation] [Numéro]
   const mockRooms: HumidityRoom[] = [
-    { id: '1', name: 'Salon', humidity: 52, status: 'optimal', hubName: 'Maison Principale', lastUpdate: new Date().toISOString() },
-    { id: '2', name: 'Cuisine', humidity: 64, status: 'warning', hubName: 'Maison Principale', lastUpdate: new Date().toISOString() },
-    { id: '3', name: 'Chambre', humidity: 72, status: 'danger', hubName: 'Maison Principale', lastUpdate: new Date().toISOString() },
-    { id: '4', name: 'Salle de bain', humidity: 78, status: 'danger', hubName: 'Maison Principale', lastUpdate: new Date().toISOString() },
-    { id: '5', name: 'Corridor', humidity: 55, status: 'optimal', hubName: 'Maison Principale', lastUpdate: new Date().toISOString() },
-    { id: '6', name: 'Bureau 1', humidity: 48, status: 'optimal', hubName: 'Bureau', lastUpdate: new Date().toISOString() },
-    { id: '7', name: 'Bureau 2', humidity: 61, status: 'warning', hubName: 'Bureau', lastUpdate: new Date().toISOString() },
-    { id: '8', name: 'Salle de réunion', humidity: 55, status: 'optimal', hubName: 'Bureau', lastUpdate: new Date().toISOString() },
-    { id: '9', name: 'Couloir', humidity: 50, status: 'optimal', hubName: 'Bureau', lastUpdate: new Date().toISOString() },
-    { id: '10', name: 'Coin pause', humidity: 69, status: 'warning', hubName: 'Bureau', lastUpdate: new Date().toISOString() },
+    // Maison Principale
+    { id: 'humidity_maison_1', name: 'Qualité Air Maison 1', humidity: 52, status: 'optimal', hubName: 'Maison Principale', lastUpdate: new Date().toISOString() },
+    { id: 'humidity_maison_2', name: 'Qualité Air Maison 2', humidity: 68, status: 'warning', hubName: 'Maison Principale', lastUpdate: new Date().toISOString() },
+    { id: 'humidity_maison_3', name: 'Qualité Air Maison 3', humidity: 45, status: 'optimal', hubName: 'Maison Principale', lastUpdate: new Date().toISOString() },
+    { id: 'humidity_maison_4', name: 'Qualité Air Maison 4', humidity: 78, status: 'danger', hubName: 'Maison Principale', lastUpdate: new Date().toISOString() },
+    { id: 'humidity_maison_5', name: 'Qualité Air Maison 5', humidity: 55, status: 'optimal', hubName: 'Maison Principale', lastUpdate: new Date().toISOString() },
+    
+    // Bureau
+    { id: 'humidity_bureau_1', name: 'Qualité Air Bureau 1', humidity: 48, status: 'optimal', hubName: 'Bureau', lastUpdate: new Date().toISOString() },
+    { id: 'humidity_bureau_2', name: 'Qualité Air Bureau 2', humidity: 61, status: 'warning', hubName: 'Bureau', lastUpdate: new Date().toISOString() },
+    { id: 'humidity_bureau_3', name: 'Qualité Air Bureau 3', humidity: 50, status: 'optimal', hubName: 'Bureau', lastUpdate: new Date().toISOString() },
+    { id: 'humidity_bureau_4', name: 'Qualité Air Bureau 4', humidity: 69, status: 'warning', hubName: 'Bureau', lastUpdate: new Date().toISOString() },
+    { id: 'humidity_bureau_5', name: 'Qualité Air Bureau 5', humidity: 42, status: 'optimal', hubName: 'Bureau', lastUpdate: new Date().toISOString() },
   ];
 
+  // Calculer les stats dynamiquement
+  const averageHumidity = Math.round(
+    mockRooms.reduce((sum, room) => sum + room.humidity, 0) / mockRooms.length
+  );
+  
+  const activeAlerts = mockRooms.filter(
+    room => room.status === 'warning' || room.status === 'danger'
+  ).length;
+
   const mockStats = {
-    averageHumidity: 60,
-    activeAlerts: 3,
+    averageHumidity,
+    activeAlerts,
     lastUpdate: 'Maintenant',
   };
 
-  const mockChartData: HumidityDataPoint[] = [
-    { hour: 0, value: 52 },
-    { hour: 1, value: 48 },
-    { hour: 2, value: 51 },
-    { hour: 3, value: 49 },
-    { hour: 4, value: 55 },
-    { hour: 5, value: 58 },
-    { hour: 6, value: 62 },
-    { hour: 7, value: 67 },
-    { hour: 8, value: 65 },
-    { hour: 9, value: 63 },
-    { hour: 10, value: 61 },
-    { hour: 11, value: 68 },
-    { hour: 12, value: 72 },
-    { hour: 13, value: 70 },
-    { hour: 14, value: 68 },
-    { hour: 15, value: 65 },
-    { hour: 16, value: 62 },
-    { hour: 17, value: 58 },
-    { hour: 18, value: 55 },
-    { hour: 19, value: 52 },
-    { hour: 20, value: 50 },
-    { hour: 21, value: 48 },
-    { hour: 22, value: 46 },
-    { hour: 23, value: 50 },
-  ];
+  // Graphique : évolution de l'humidité sur 24h
+  const generateChartData = (): HumidityDataPoint[] => {
+    const base = averageHumidity;
+    return Array.from({ length: 24 }, (_, hour) => {
+      let variation = 0;
+      if (hour >= 6 && hour <= 10) variation = 8;
+      else if (hour >= 11 && hour <= 15) variation = 12;
+      else if (hour >= 16 && hour <= 20) variation = 10;
+      else variation = -5;
+      
+      const noise = (Math.random() - 0.5) * 4;
+      const value = Math.max(30, Math.min(85, base + variation + noise));
+      
+      return {
+        hour,
+        value: Math.round(value),
+      };
+    });
+  };
 
+  const mockChartData = generateChartData();
+
+  // Grouper les pièces par boîtier
   const roomsByHub = useMemo(() => {
     return mockRooms.reduce(
       (acc, room) => {
