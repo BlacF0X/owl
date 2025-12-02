@@ -4,99 +4,73 @@ import { Sensor as SensorEntity } from '../../entities/Sensor.js';
 import { SensorReading } from '../../entities/SensorReading.js';
 
 /**
- * @description Récupère l'évolution du CO2 pour le graphique.
- * Version CORRIGÉE : Conversion explicite des nombres et gestion des erreurs de type.
+ * @description Récupère l'historique complet formaté pour un capteur CO2
+ * Utilisé par le graphique et la modale de la page CO2
  */
-export const getCo2Evolution = async (req: Request, res: Response) => {
+export const getCo2History = async (req: Request, res: Response) => {
   try {
     const userId = req.auth?.userId;
-    const { sensorId } = req.params;
-
     if (!userId) {
-      return res.status(401).json({ message: 'Non autorisé.' });
+      return res.status(401).json({ message: 'ID utilisateur manquant.' });
     }
 
-    // 1. Vérification capteur
-    const sensorRepo = AppDataSource.getRepository(SensorEntity);
-    const sensor = await sensorRepo.findOne({
+    const { sensorId } = req.params;
+
+    // 1. Vérifier que le capteur appartient bien à l'utilisateur
+    const sensorRepository = AppDataSource.getRepository(SensorEntity);
+    const sensor = await sensorRepository.findOne({
       where: {
         sensor_id: sensorId,
-        hub: { user: { clerk_user_id: userId } },
+        hub: {
+          user: {
+            clerk_user_id: userId,
+          },
+        },
       },
+      relations: ['hub', 'hub.user', 'sensorType'],
     });
 
     if (!sensor) {
-      return res.status(404).json({ message: 'Capteur introuvable.' });
+      return res
+        .status(404)
+        .json({ message: 'Capteur non trouvé ou non autorisé.' });
     }
 
-    // 2. Récupération des 100 dernières valeurs
-    const readingRepo = AppDataSource.getRepository(SensorReading);
-    const readings = await readingRepo.find({
-      where: {
-        sensor: { sensor_id: sensorId },
-      },
+    // 2. Récupérer l'historique du capteur (ex: 100 dernières valeurs)
+    const readingRepository = AppDataSource.getRepository(SensorReading);
+    const readings = await readingRepository.find({
+      where: { sensor: { sensor_id: sensorId } },
       order: { timestamp: 'DESC' },
       take: 100,
     });
 
-    if (readings.length === 0) {
-      return res.status(200).json([]);
-    }
+    // 3. Formater la réponse comme attendu par le frontend (SensorHistoryResponse)
+    const formattedHistory = readings.map((reading) => ({
+      timestamp: reading.timestamp,
+      value: reading.value_num ?? 0, // On s'assure d'avoir un nombre pour le CO2
+    }));
 
-    // On remet dans l'ordre chronologique
-    readings.reverse();
+    const response = {
+      sensor: {
+        sensor_id: sensor.sensor_id,
+        name: sensor.name,
+        type: {
+          type_key: sensor.sensorType.type_key,
+          name: sensor.sensorType.name,
+          unit: sensor.sensorType.unit,
+        },
+      },
+      history: formattedHistory,
+    };
 
-    // 3. Agrégation par heure avec sécurisation des nombres
-    const groupedData: Record<string, number[]> = {};
-
-    readings.forEach((r) => {
-      // Sécurité : on force la conversion en nombre et on vérifie que c'est valide
-      const val = Number(r.value_num);
-
-      if (!isNaN(val) && val > 0) {
-        // On ignore les 0 ou les null
-        const dateObj = new Date(r.timestamp);
-        const hourKey = `${dateObj.getHours()}h`;
-
-        if (!groupedData[hourKey]) {
-          groupedData[hourKey] = [];
-        }
-        groupedData[hourKey].push(val);
-      }
-    });
-
-    // 4. Calcul des moyennes et hauteurs
-    const MAX_CHART_PPM = 1500; // Échelle max (correspond au haut du graph)
-
-    const evolutionData = Object.keys(groupedData).map((hour) => {
-      const values = groupedData[hour];
-
-      // Calcul de la moyenne sécurisé
-      const sum = values.reduce((a, b) => a + b, 0);
-      const avgPpm = Math.round(sum / values.length);
-
-      // Calcul de la hauteur
-      // Si avgPpm = 900, height = (900 / 1500) * 100 = 60%
-      let height = (avgPpm / MAX_CHART_PPM) * 100;
-
-      // Bornage entre 0 et 100% pour éviter les débordements CSS
-      if (height > 100) height = 100;
-      if (height < 0) height = 0;
-
-      return {
-        hour: hour,
-        ppm: avgPpm,
-        height: Math.round(height),
-      };
-    });
-
-    console.log(
-      `✅ Données envoyées pour ${sensorId}: ${evolutionData.length} points.`
-    );
-
-    res.status(200).json(evolutionData);
+    res.status(200).json(response);
   } catch (error) {
-    console.error('❌ Erreur CO2 Controller:', error);
-    res.status(500).json({ message: 'Erreur interne serveur.' });
+    console.error(
+      "Erreur lors de la récupération de l'historique CO2 :",
+      error
+    );
+    res.status(500).json({ message: 'Erreur interne du serveur.' });
   }
 };
+
+// (Si vous aviez d'autres fonctions comme getCo2Evolution ici, gardez-les ou remplacez-les selon besoin)
