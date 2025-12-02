@@ -3,12 +3,20 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import {
-  LayoutDashboard, // Icône plus générique que Home
+  LayoutDashboard,
   LineChart,
   AlertTriangle,
   Bell,
   Clock,
   BarChart2,
+  Home,
+  Briefcase,
+  Calendar,
+  X,
+  ArrowUpRight,
+  ArrowDownRight,
+  Minus,
+  Download
 } from 'lucide-react';
 
 // --- Imports Chart.js ---
@@ -50,6 +58,7 @@ interface RoomData {
   name: string;
   value: number;
   status: RoomStatus;
+  location: 'Maison' | 'Bureau';
 }
 
 interface AlertData {
@@ -77,6 +86,33 @@ interface HistoryModalProps {
   onClose: () => void;
 }
 
+// --- Styles Utilitaires ---
+const getStatusStyles = (status: RoomStatus) => {
+  switch (status) {
+    case 'good':
+      return {
+        borderColor: 'border-emerald-500',
+        textColor: 'text-emerald-700',
+        bgColor: 'bg-emerald-50',
+        indicator: 'bg-emerald-500'
+      };
+    case 'medium':
+      return {
+        borderColor: 'border-amber-500',
+        textColor: 'text-amber-700',
+        bgColor: 'bg-amber-50',
+        indicator: 'bg-amber-500'
+      };
+    case 'bad':
+      return { 
+        borderColor: 'border-rose-500', 
+        textColor: 'text-rose-700', 
+        bgColor: 'bg-rose-50', 
+        indicator: 'bg-rose-500' 
+      };
+  }
+};
+
 // --- Composants ---
 
 const StatCard: React.FC<{ icon: React.ElementType; title: string; value: string | number }> = ({
@@ -84,119 +120,120 @@ const StatCard: React.FC<{ icon: React.ElementType; title: string; value: string
   title,
   value,
 }) => (
-  <div className="rounded-xl bg-white p-6 shadow-sm border border-slate-100">
-    <Icon className="mb-3 h-8 w-8 text-slate-500" />
-    <p className="text-base font-medium text-slate-600">{title}</p>
-    <p className="mt-1 text-4xl font-bold text-slate-900">{value}</p>
+  <div className="rounded-xl bg-white p-5 shadow-sm border border-slate-200 flex items-center gap-4 transition-transform hover:scale-[1.01]">
+    <div className="p-3 rounded-lg bg-slate-50 border border-slate-100 text-slate-600">
+      <Icon className="h-6 w-6" />
+    </div>
+    <div>
+      <p className="text-sm font-medium text-slate-500">{title}</p>
+      <p className="text-2xl font-bold text-slate-900 tracking-tight">{value}</p>
+    </div>
   </div>
 );
 
-const getStatusStyles = (status: RoomStatus) => {
-  switch (status) {
-    case 'good':
-      return {
-        borderColor: 'border-green-500',
-        textColor: 'text-green-600',
-        bgColor: 'bg-green-50',
-      };
-    case 'medium':
-      return {
-        borderColor: 'border-yellow-500',
-        textColor: 'text-yellow-600',
-        bgColor: 'bg-yellow-50',
-      };
-    case 'bad':
-      return { borderColor: 'border-red-500', textColor: 'text-red-600', bgColor: 'bg-red-50' };
-  }
+const SensorCard: React.FC<{
+  room: RoomData;
+  isSelected: boolean;
+  onSelect: () => void;
+  onHistory: () => void;
+  loadingHistory: boolean;
+}> = ({ room, isSelected, onSelect, onHistory, loadingHistory }) => {
+  const styles = getStatusStyles(room.status);
+
+  return (
+    <div
+      onClick={onSelect}
+      className={`
+        group relative flex flex-col justify-between rounded-xl p-5 border transition-all cursor-pointer duration-200
+        ${isSelected 
+          ? 'border-blue-500 ring-1 ring-blue-500 bg-blue-50/30 shadow-md' 
+          : 'border-slate-200 bg-white hover:border-blue-300 hover:shadow-md'
+        }
+      `}
+    >
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex items-center gap-2.5 overflow-hidden">
+          <span className={`h-2.5 w-2.5 flex-shrink-0 rounded-full ${styles.indicator} ${isSelected ? 'animate-pulse' : ''}`}></span>
+          <h3 className="font-bold text-slate-800 truncate text-sm sm:text-base">{room.name}</h3>
+        </div>
+        <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${styles.borderColor} ${styles.bgColor} ${styles.textColor}`}>
+          {room.value} ppm
+        </span>
+      </div>
+
+      <div className="space-y-1 mb-4">
+        <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">État de l'air</p>
+        <p className={`text-sm font-semibold ${styles.textColor}`}>
+           {room.status === 'good' && '🌿 Excellent'}
+           {room.status === 'medium' && '⚠️ Moyen'}
+           {room.status === 'bad' && '🚨 Critique'}
+        </p>
+      </div>
+
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onHistory();
+        }}
+        disabled={loadingHistory}
+        className={`
+          w-full py-2 px-3 text-xs font-semibold rounded-lg border transition-all flex items-center justify-center gap-2
+          ${loadingHistory 
+            ? 'bg-slate-100 text-slate-400 border-transparent cursor-not-allowed' 
+            : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-blue-600 hover:border-blue-200 shadow-sm'
+          }
+        `}
+      >
+        {loadingHistory ? (
+          <div className="h-4 w-4 border-2 border-slate-300 border-t-blue-500 rounded-full animate-spin" />
+        ) : (
+          <>
+            <BarChart2 className="h-3.5 w-3.5" />
+            Analyse détaillée
+          </>
+        )}
+      </button>
+    </div>
+  );
 };
 
-// Composant unifié pour afficher la liste des capteurs
-interface SensorsGridProps {
+const SensorSection: React.FC<{
+  title: string;
+  icon: React.ElementType;
   rooms: RoomData[];
-  onTestHistory?: (id: string, name: string) => void;
-  loadingHistory?: string | null;
   onSelectSensor: (id: string) => void;
   selectedId: string | null;
-}
+  onTestHistory: (id: string) => void;
+  loadingHistoryId: string | null;
+}> = ({ title, icon: Icon, rooms, onSelectSensor, selectedId, onTestHistory, loadingHistoryId }) => {
+  if (rooms.length === 0) return null;
 
-const SensorsGrid: React.FC<SensorsGridProps> = ({
-  rooms,
-  onTestHistory,
-  loadingHistory,
-  onSelectSensor,
-  selectedId,
-}) => (
-  <div className="rounded-xl bg-white p-6 shadow-sm border border-slate-100 h-full">
-    <div className="flex items-center gap-3 mb-6">
-      <div className="p-2 bg-slate-100 rounded-lg">
-        <LayoutDashboard className="h-6 w-6 text-slate-700" />
+  return (
+    <div className="mb-8 last:mb-0 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="flex items-center gap-2.5 mb-4 px-1">
+        <div className="p-1.5 bg-slate-100 rounded-lg text-slate-500">
+           <Icon className="h-4 w-4" />
+        </div>
+        <h3 className="text-lg font-bold text-slate-800">{title}</h3>
+        <span className="bg-slate-100 text-slate-600 text-xs font-bold px-2.5 py-0.5 rounded-full border border-slate-200">
+          {rooms.length}
+        </span>
       </div>
-      <h2 className="text-xl font-semibold text-slate-800">Vue d'ensemble des capteurs</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+        {rooms.map((room) => (
+          <SensorCard
+            key={room.id}
+            room={room}
+            isSelected={selectedId === room.id}
+            onSelect={() => onSelectSensor(room.id)}
+            onHistory={() => onTestHistory(room.id)}
+            loadingHistory={loadingHistoryId === room.id}
+          />
+        ))}
+      </div>
     </div>
-
-    {rooms.length === 0 ? (
-      <p className="text-slate-500 italic text-center py-12">Aucun capteur détecté.</p>
-    ) : (
-      // GRILLE RESPONSIVE : 1 colonne mobile, 2 colonnes desktop
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {rooms.map((room) => {
-          const styles = getStatusStyles(room.status);
-          const isSelected = selectedId === room.id;
-
-          return (
-            <div
-              key={room.id}
-              onClick={() => onSelectSensor(room.id)}
-              className={`
-                relative flex flex-col gap-2 rounded-lg p-4 border-l-4 transition-all cursor-pointer group
-                ${styles.bgColor} ${styles.borderColor}
-                ${isSelected ? 'ring-2 ring-blue-500 shadow-md bg-white' : 'hover:shadow-sm hover:brightness-[0.98]'}
-              `}
-            >
-              {isSelected && (
-                <div className="absolute top-2 right-2">
-                  <span className="flex h-2.5 w-2.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
-                  </span>
-                </div>
-              )}
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-semibold text-base text-slate-800">{room.name}</p>
-                  <p className={`text-xs font-medium ${styles.textColor} mt-0.5`}>
-                    {room.status === 'good' && 'Air sain'}
-                    {room.status === 'medium' && 'Aération conseillée'}
-                    {room.status === 'bad' && 'Aération nécessaire'}
-                  </p>
-                </div>
-                <p className={`text-xl font-bold ${styles.textColor}`}>{room.value} ppm</p>
-              </div>
-
-              {onTestHistory && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onTestHistory(room.id, room.name);
-                  }}
-                  disabled={loadingHistory === room.id}
-                  className={`mt-3 w-full px-3 py-1.5 rounded text-xs font-medium transition-colors z-10 border ${
-                    loadingHistory === room.id
-                      ? 'bg-slate-200 text-slate-500 border-transparent'
-                      : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-blue-600 hover:border-blue-200'
-                  }`}
-                >
-                  {loadingHistory === room.id ? '...' : 'Voir historique'}
-                </button>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    )}
-  </div>
-);
+  );
+};
 
 const EvolutionChart: React.FC<{
   data: EvolutionData[];
@@ -211,8 +248,10 @@ const EvolutionChart: React.FC<{
       tooltip: {
         backgroundColor: '#1e293b',
         padding: 12,
-        titleFont: { size: 13 },
-        bodyFont: { size: 13, weight: 'bold' },
+        titleFont: { size: 13, family: 'Inter, sans-serif' },
+        bodyFont: { size: 13, weight: 'bold', family: 'Inter, sans-serif' },
+        cornerRadius: 8,
+        displayColors: false,
         callbacks: {
           label: (context) => `${context.raw} ppm`,
           title: (items) => `Heure : ${items[0].label}`,
@@ -222,18 +261,20 @@ const EvolutionChart: React.FC<{
     scales: {
       y: {
         beginAtZero: true,
-        max: 1500,
-        grid: { color: '#f8fafc' },
-        ticks: { font: { size: 11 }, color: '#94a3b8' },
+        max: 2000,
+        border: { display: false },
+        grid: { color: '#f1f5f9' },
+        ticks: { font: { size: 11 }, color: '#64748b', padding: 10 },
       },
       x: {
+        type: 'category',
         grid: { display: false },
         ticks: {
           font: { size: 11 },
-          color: '#94a3b8',
+          color: '#64748b',
           maxRotation: 0,
           autoSkip: true,
-          maxTicksLimit: 12,
+          maxTicksLimit: 8,
         },
       },
     },
@@ -247,53 +288,55 @@ const EvolutionChart: React.FC<{
         label: 'CO2 (ppm)',
         data: data.map((d) => d.ppm),
         backgroundColor: data.map((d) => {
-          if (d.ppm > 1200) return '#ef4444';
+          if (d.ppm > 1200) return '#f43f5e';
           if (d.ppm > 800) return '#f59e0b';
           return '#10b981';
         }),
         borderRadius: 4,
         barThickness: 'flex' as const,
-        maxBarThickness: 40,
+        maxBarThickness: 32,
       },
     ],
   };
 
   return (
-    <div className="rounded-xl bg-white p-6 shadow-sm border border-slate-100 h-full flex flex-col">
-      <div className="flex items-center justify-between mb-6">
+    <div className="rounded-xl bg-white p-6 shadow-sm border border-slate-200 h-full flex flex-col">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-blue-50 rounded-lg">
-            <BarChart2 className="h-6 w-6 text-blue-600" />
+          <div className="p-2 bg-blue-50 rounded-lg border border-blue-100 text-blue-600">
+            <BarChart2 className="h-5 w-5" />
           </div>
           <div>
             <h2 className="text-lg font-bold text-slate-800">Évolution 24h</h2>
             {titleSuffix && (
-              <p className="text-xs font-medium text-blue-500 mt-0.5">{titleSuffix}</p>
+              <p className="text-xs font-medium text-slate-500 mt-0.5">{titleSuffix}</p>
             )}
           </div>
         </div>
-        <div className="flex gap-4 text-xs text-slate-500 font-medium">
+        
+        <div className="flex gap-3 text-xs text-slate-600 font-medium bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
           <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> &lt; 800
+            <span className="w-2 h-2 rounded-full bg-emerald-500"></span> &lt; 800
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span> 800-1200
+            <span className="w-2 h-2 rounded-full bg-amber-500"></span> 800-1200
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-red-500"></span> &gt; 1200
+            <span className="w-2 h-2 rounded-full bg-rose-500"></span> &gt; 1200
           </div>
         </div>
       </div>
-      <div className="relative flex-1 w-full min-h-[300px]">
+
+      <div className="relative flex-1 w-full min-h-[320px]">
         {loading ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 bg-slate-50/50 rounded-lg backdrop-blur-sm z-10">
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 backdrop-blur-[1px] z-10 rounded-lg">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-3"></div>
-            <p className="text-sm font-medium">Chargement...</p>
+            <p className="text-sm font-medium text-slate-500">Chargement des données...</p>
           </div>
         ) : !data || data.length === 0 ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 bg-slate-50 rounded-lg border-2 border-dashed border-slate-200">
-            <BarChart2 className="h-10 w-10 mb-3 opacity-20" />
-            <p className="text-sm font-medium">Aucune donnée disponible</p>
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-50/50 rounded-lg border-2 border-dashed border-slate-200">
+            <BarChart2 className="h-10 w-10 mb-3 text-slate-300" />
+            <p className="text-sm font-medium text-slate-400">Aucune donnée récente</p>
           </div>
         ) : (
           <Bar options={options} data={chartData} />
@@ -304,33 +347,37 @@ const EvolutionChart: React.FC<{
 };
 
 const AlertHistory: React.FC<{ alerts: AlertData[] }> = ({ alerts }) => (
-  <div className="rounded-xl bg-white p-6 shadow-sm border border-slate-100 h-full">
-    <div className="flex items-center gap-3 mb-5">
-      <Bell className="h-6 w-6 text-slate-700" />
-      <h2 className="text-xl font-semibold text-slate-800">Historique des alertes</h2>
+  <div className="rounded-xl bg-white p-6 shadow-sm border border-slate-200 h-full flex flex-col">
+    <div className="flex items-center gap-3 mb-5 border-b border-slate-100 pb-4">
+      <Bell className="h-5 w-5 text-slate-500" />
+      <h2 className="text-lg font-bold text-slate-800">Alertes actives</h2>
     </div>
     {alerts.length === 0 ? (
-      <div className="h-32 flex items-center justify-center text-slate-400 italic text-sm border border-dashed border-slate-100 rounded-lg">
-        Aucune alerte active.
+      <div className="flex-1 flex flex-col items-center justify-center text-slate-400 bg-slate-50 rounded-lg border border-dashed border-slate-200 min-h-[200px]">
+        <Bell className="h-8 w-8 mb-2 opacity-20" />
+        <span className="text-sm italic">Aucune alerte en cours.</span>
       </div>
     ) : (
-      <ul className="space-y-3">
+      <div className="space-y-3 overflow-y-auto custom-scrollbar flex-1 pr-2">
         {alerts.map((alert, index) => (
-          <li
+          <div
             key={index}
-            className="flex items-center justify-between text-sm border-b border-slate-50 pb-2 last:border-0"
+            className="flex items-start gap-3 p-3.5 rounded-lg bg-red-50 border border-red-100/50 transition-colors hover:bg-red-100/50"
           >
-            <p className="text-slate-800">
-              <span className="font-semibold">{alert.room}</span> : {alert.message}
-            </p>
-            <p className="text-slate-400 text-xs">{alert.time}</p>
-          </li>
+            <AlertTriangle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-slate-800 truncate">{alert.room}</p>
+              <p className="text-xs text-slate-600 mt-0.5">{alert.message}</p>
+            </div>
+            <p className="text-xs font-medium text-slate-400 whitespace-nowrap bg-white/50 px-1.5 py-0.5 rounded">{alert.time}</p>
+          </div>
         ))}
-      </ul>
+      </div>
     )}
   </div>
 );
 
+// --- COMPOSANT MODALE CORRIGÉ (V3) ---
 const HistoryModal: React.FC<HistoryModalProps> = ({
   isOpen,
   historyData,
@@ -339,99 +386,201 @@ const HistoryModal: React.FC<HistoryModalProps> = ({
   onClose,
 }) => {
   if (!isOpen) return null;
-  const sensorName = historyData?.sensor?.name || 'Capteur';
-  const sensorType = historyData?.sensor?.type?.name || '-';
-  const sensorUnit = historyData?.sensor?.type?.unit || '';
+
+  const sensorName = historyData?.sensor?.name || 'Chargement...';
+  const sensorUnit = historyData?.sensor?.type?.unit || 'ppm';
+  
+  // 1. CORRECTION : Conversion plus souple des données
+  const allHistory = historyData?.history || [];
+  
+  // On extrait les valeurs numériques pour les stats, en convertissant si nécessaire
+  const validValues = allHistory
+    .map(h => Number(h.value)) // Force la conversion en nombre
+    .filter(v => !isNaN(v));   // Garde seulement les vrais nombres
+
+  const count = validValues.length;
+  const hasData = allHistory.length > 0; // On vérifie s'il y a des lignes brutes, même non numériques
+
+  // Stats de base
+  const latest = count > 0 ? validValues[0] : 0;
+  const previous = count > 1 ? validValues[1] : latest;
+  const min = count > 0 ? Math.min(...validValues) : 0;
+  const max = count > 0 ? Math.max(...validValues) : 0;
+  const avg = count > 0 ? Math.round(validValues.reduce((a, b) => a + b, 0) / count) : 0;
+
+  // Tendance
+  const trend = latest - previous;
+  const trendIcon = trend > 0 ? <ArrowUpRight className="h-4 w-4 text-red-500" /> : trend < 0 ? <ArrowDownRight className="h-4 w-4 text-green-500" /> : <Minus className="h-4 w-4 text-slate-400" />;
+  const trendText = trend > 0 ? 'En hausse' : trend < 0 ? 'En baisse' : 'Stable';
+  const trendColor = trend > 0 ? 'text-red-600' : trend < 0 ? 'text-green-600' : 'text-slate-500';
+
+  // Répartition Qualité
+  const goodCount = validValues.filter(v => v < 800).length;
+  const mediumCount = validValues.filter(v => v >= 800 && v <= 1200).length;
+  const badCount = validValues.filter(v => v > 1200).length;
+  
+  const goodPercent = count > 0 ? (goodCount / count) * 100 : 0;
+  const mediumPercent = count > 0 ? (mediumCount / count) * 100 : 0;
+  const badPercent = count > 0 ? (badCount / count) * 100 : 0;
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto flex flex-col animate-in zoom-in-95 duration-200">
-        <div className="sticky top-0 bg-white border-b border-slate-200 p-5 flex justify-between items-center z-10">
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6">
+      <div 
+        className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm transition-opacity" 
+        onClick={onClose}
+      />
+
+      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-200 border border-slate-200 overflow-hidden z-[100000]">
+        
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-white z-10 shrink-0">
           <div>
-            <h3 className="text-xl font-bold text-slate-900">Historique</h3>
-            <p className="text-sm text-slate-500">{sensorName}</p>
+            <h3 className="text-xl font-bold text-slate-900">Analyse détaillée</h3>
+            <div className="flex items-center gap-2 mt-1">
+               <span className="flex h-2 w-2 rounded-full bg-blue-500"></span>
+               <p className="text-sm font-medium text-slate-500">{sensorName}</p>
+            </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-full hover:bg-slate-100 text-slate-500 transition-colors"
-          >
-            ✕
+          <button onClick={onClose} className="p-2 rounded-full bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-all">
+            <X className="h-5 w-5" />
           </button>
         </div>
-        <div className="p-6 flex-1">
+
+        {/* Corps Scrollable */}
+        <div className="flex-1 overflow-y-auto bg-slate-50/30 custom-scrollbar p-6">
+          
           {isLoading && (
-            <div className="flex justify-center py-12">
-              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>
+            <div className="flex flex-col items-center justify-center py-20 h-full">
+              <div className="animate-spin rounded-full h-10 w-10 border-4 border-slate-200 border-t-blue-600 mb-4"></div>
+              <p className="text-sm font-medium text-slate-500">Chargement...</p>
             </div>
           )}
+
           {error && !isLoading && (
-            <div className="bg-red-50 text-red-700 px-4 py-3 rounded-lg text-center border border-red-100">
-              <strong>Erreur : </strong>
-              {error}
+            <div className="bg-red-50 text-red-600 p-4 rounded-lg text-center border border-red-100 mx-auto max-w-md">
+              <p>Erreur : {error}</p>
             </div>
           )}
-          {!isLoading &&
-            !error &&
-            (!historyData || !historyData.history || historyData.history.length === 0) && (
-              <div className="text-center py-12 text-slate-500 bg-slate-50 rounded-xl border-2 border-dashed border-slate-200">
-                Aucun historique.
-              </div>
-            )}
-          {!isLoading &&
-            !error &&
-            historyData &&
-            historyData.history &&
-            historyData.history.length > 0 && (
-              <div className="space-y-5">
-                <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 flex justify-around text-sm text-blue-900 font-medium">
-                  <div className="text-center">
-                    <p className="text-xs text-blue-500 uppercase tracking-wide mb-1">Type</p>
-                    <p>{sensorType}</p>
+
+          {!isLoading && !error && !hasData && (
+             <div className="flex flex-col items-center justify-center h-full text-slate-400 py-12">
+                <Calendar className="h-12 w-12 mb-3 opacity-10" />
+                <p className="font-medium">Aucune donnée brute reçue.</p>
+             </div>
+          )}
+
+          {!isLoading && !error && hasData && (
+            <div className="space-y-6">
+              
+              {/* STATS (Affichées uniquement si on a des nombres valides) */}
+              {count > 0 && (
+                <>
+                  {/* 1. Cartes KPIs */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                      <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Moyenne</p>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-2xl font-bold text-slate-800">{avg}</span>
+                        <span className="text-xs text-slate-500">{sensorUnit}</span>
+                      </div>
+                    </div>
+                    <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                      <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Minimum</p>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-2xl font-bold text-emerald-600">{min}</span>
+                        <span className="text-xs text-slate-500">{sensorUnit}</span>
+                      </div>
+                    </div>
+                    <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                      <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Maximum</p>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-2xl font-bold text-rose-600">{max}</span>
+                        <span className="text-xs text-slate-500">{sensorUnit}</span>
+                      </div>
+                    </div>
+                    <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                      <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Tendance</p>
+                      <div className="flex items-center gap-2">
+                        {trendIcon}
+                        <span className={`text-sm font-bold ${trendColor}`}>{trendText}</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-center">
-                    <p className="text-xs text-blue-500 uppercase tracking-wide mb-1">Unité</p>
-                    <p>{sensorUnit}</p>
+
+                  {/* 2. Analyse Répartition */}
+                  <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                     <h4 className="text-sm font-bold text-slate-800 mb-4">Qualité de l'air</h4>
+                     <div className="flex h-4 w-full rounded-full overflow-hidden bg-slate-100">
+                        <div style={{ width: `${goodPercent}%` }} className="bg-emerald-500" title="Bonne"></div>
+                        <div style={{ width: `${mediumPercent}%` }} className="bg-amber-500" title="Moyenne"></div>
+                        <div style={{ width: `${badPercent}%` }} className="bg-rose-500" title="Critique"></div>
+                     </div>
+                     <div className="flex justify-between mt-3 text-xs font-medium text-slate-500">
+                        <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500"></span> Excellente ({Math.round(goodPercent)}%)</div>
+                        <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-500"></span> Moyenne ({Math.round(mediumPercent)}%)</div>
+                        <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-rose-500"></span> Critique ({Math.round(badPercent)}%)</div>
+                     </div>
                   </div>
-                  <div className="text-center">
-                    <p className="text-xs text-blue-500 uppercase tracking-wide mb-1">Données</p>
-                    <p>{historyData.history.length}</p>
-                  </div>
+                </>
+              )}
+
+              {/* 3. Tableau Détails (Toujours affiché s'il y a des lignes) */}
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                  <h4 className="text-sm font-bold text-slate-800">Historique brut</h4>
+                  <span className="text-xs text-slate-500 bg-white border border-slate-200 px-2 py-1 rounded-md">
+                    {allHistory.length} lignes
+                  </span>
                 </div>
-                <div className="overflow-hidden rounded-xl border border-slate-200 shadow-sm">
+                <div className="max-h-[350px] overflow-y-auto">
                   <table className="w-full text-sm text-left">
-                    <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-semibold">
-                      <tr>
-                        <th className="py-3 px-5">Date & Heure</th>
-                        <th className="py-3 px-5 text-right">Valeur</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 bg-white">
-                      {historyData.history.map((reading, index) => (
-                        <tr key={index} className="hover:bg-slate-50 transition-colors">
-                          <td className="py-3 px-5 text-slate-600 font-mono text-xs">
-                            {reading.timestamp
-                              ? new Date(reading.timestamp).toLocaleString('fr-FR')
-                              : '-'}
-                          </td>
-                          <td className="py-3 px-5 text-right font-bold text-slate-800">
-                            {typeof reading.value === 'boolean'
-                              ? reading.value
-                                ? 'Ouvert'
-                                : 'Fermé'
-                              : `${reading.value} ${sensorUnit}`}
-                          </td>
+                      <thead className="bg-slate-50/50 border-b border-slate-100 text-slate-500 uppercase tracking-wider font-semibold text-xs sticky top-0">
+                        <tr>
+                          <th className="px-6 py-3 w-1/2 bg-slate-50">Date & Heure</th>
+                          <th className="px-6 py-3 w-1/2 text-right bg-slate-50">Valeur</th>
                         </tr>
-                      ))}
-                    </tbody>
+                      </thead>
+                      <tbody className="divide-y divide-slate-50">
+                        {allHistory.map((reading, index) => {
+                          // Conversion locale pour l'affichage
+                          const valNum = Number(reading.value);
+                          const isNum = !isNaN(valNum);
+                          
+                          return (
+                            <tr key={index} className="hover:bg-blue-50/30 transition-colors">
+                              <td className="px-6 py-3 text-slate-600 font-mono text-xs sm:text-sm">
+                                {reading.timestamp 
+                                  ? new Date(reading.timestamp).toLocaleString('fr-FR', {
+                                      day: '2-digit', month: '2-digit', year: 'numeric',
+                                      hour: '2-digit', minute: '2-digit'
+                                    }) 
+                                  : '-'}
+                              </td>
+                              <td className="px-6 py-3 text-right">
+                                <span className={`font-bold px-2 py-0.5 rounded text-xs ${
+                                    isNum && valNum > 1200 ? 'bg-rose-100 text-rose-700' :
+                                    isNum && valNum > 800 ? 'bg-amber-100 text-amber-700' :
+                                    isNum ? 'bg-emerald-100 text-emerald-700' : 'text-slate-500'
+                                  }`}>
+                                  {isNum ? valNum : String(reading.value)} {isNum ? sensorUnit : ''}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
                   </table>
                 </div>
               </div>
-            )}
+            </div>
+          )}
         </div>
-        <div className="sticky bottom-0 bg-slate-50 border-t border-slate-200 p-4 flex justify-end z-10">
+
+        {/* Footer Fixe */}
+        <div className="bg-white border-t border-slate-100 p-4 flex justify-end z-10 shrink-0">
           <button
             onClick={onClose}
-            className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-medium"
+            className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 text-sm rounded-lg hover:bg-slate-50 hover:border-slate-400 font-medium transition-all shadow-sm"
           >
             Fermer
           </button>
@@ -441,6 +590,7 @@ const HistoryModal: React.FC<HistoryModalProps> = ({
   );
 };
 
+
 // --- PAGE PRINCIPALE ---
 
 const CO2SensorsPage = () => {
@@ -449,7 +599,9 @@ const CO2SensorsPage = () => {
   const [error, setError] = useState<string | null>(null);
 
   const [average, setAverage] = useState(0);
-  const [allRooms, setAllRooms] = useState<RoomData[]>([]); // Liste UNIFIÉE
+  
+  const [homeRooms, setHomeRooms] = useState<RoomData[]>([]);
+  const [officeRooms, setOfficeRooms] = useState<RoomData[]>([]);
 
   const [alerts, setAlerts] = useState<AlertData[]>([]);
   const [activeAlerts, setActiveAlerts] = useState(0);
@@ -467,20 +619,46 @@ const CO2SensorsPage = () => {
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [loadingHistorySensorId, setLoadingHistorySensorId] = useState<string | null>(null);
 
+  // --- LOGIQUE GRAPHIQUE (24H GLISSANTES) ---
   const handleSelectSensor = async (sensorId: string, sensorName?: string) => {
-    if (sensorId === selectedSensorId) return;
+    if (sensorId === selectedSensorId && evolutionData.length > 0) return;
+    
     setSelectedSensorId(sensorId);
     if (sensorName) setSelectedSensorName(sensorName);
     setIsGraphLoading(true);
+    
     try {
       const token = await getToken();
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-      const response = await fetch(`${apiUrl}/api/co2/${sensorId}/evolution`, {
+      
+      const response = await fetch(`${apiUrl}/api/co2/${sensorId}/history`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!response.ok) throw new Error('Erreur fetch évolution');
-      const data: EvolutionData[] = await response.json();
-      setEvolutionData(data);
+      
+      if (!response.ok) throw new Error('Erreur de récupération');
+      
+      const data: SensorHistoryResponse = await response.json();
+      
+      // CALCUL DES 24 DERNIÈRES HEURES POUR LE GRAPHIQUE
+      const now = new Date();
+      const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+      const chartData: EvolutionData[] = data.history
+        .filter((item) => {
+           const itemDate = new Date(item.timestamp);
+           return typeof item.value === 'number' && itemDate >= twentyFourHoursAgo;
+        })
+        .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+        .map((item) => {
+          const dateObj = new Date(item.timestamp);
+          return {
+            hour: dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+            height: 0,
+            ppm: item.value as number,
+          };
+        });
+
+      setEvolutionData(chartData);
     } catch (err) {
       console.error('Erreur graph CO2', err);
       setEvolutionData([]);
@@ -489,6 +667,7 @@ const CO2SensorsPage = () => {
     }
   };
 
+  // --- LOGIQUE MODALE ---
   const fetchSensorHistory = async (sensorId: string) => {
     try {
       setLoadingHistorySensorId(sensorId);
@@ -496,11 +675,14 @@ const CO2SensorsPage = () => {
       setHistoryError(null);
       setHistoryData(null);
       setHistoryModalOpen(true);
+      
       const token = await getToken();
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-      const response = await fetch(`${apiUrl}/api/sensors/${sensorId}/history`, {
+      
+      const response = await fetch(`${apiUrl}/api/co2/${sensorId}/history`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      
       if (!response.ok) throw new Error(`Erreur API: ${response.status}`);
       const data: SensorHistoryResponse = await response.json();
       setHistoryData(data);
@@ -559,42 +741,37 @@ const CO2SensorsPage = () => {
         .sort((a, b) => b.getTime() - a.getTime())[0];
       setLastUpdate(latestDate ? latestDate.toLocaleTimeString('fr-FR') : 'N/A');
 
-      // --- SIMPLIFICATION : UNE SEULE LISTE ---
-      const roomsData: RoomData[] = co2Sensors.map((sensor) => ({
-        id: sensor.sensor_id,
-        name: sensor.name,
-        value: Number(sensor.displayValue),
-        status:
-          Number(sensor.displayValue) < 800
-            ? 'good'
-            : Number(sensor.displayValue) < 1200
-              ? 'medium'
-              : 'bad',
-      }));
+      const processedRooms: RoomData[] = co2Sensors.map((sensor) => {
+        const val = Number(sensor.displayValue);
+        const isOffice = sensor.name.toLowerCase().includes('bureau') || sensor.hub?.name.toLowerCase().includes('bureau');
 
-      setAllRooms(roomsData);
+        return {
+          id: sensor.sensor_id,
+          name: sensor.name,
+          value: val,
+          status: val < 800 ? 'good' : val < 1200 ? 'medium' : 'bad',
+          location: isOffice ? 'Bureau' : 'Maison', 
+        };
+      });
 
-      const generatedAlerts: AlertData[] = roomsData
+      setHomeRooms(processedRooms.filter(r => r.location === 'Maison'));
+      setOfficeRooms(processedRooms.filter(r => r.location === 'Bureau'));
+
+      const generatedAlerts: AlertData[] = processedRooms
         .filter((room) => room.status !== 'good')
         .map((room) => ({
           room: room.name,
-          message: room.status === 'bad' ? `CO₂ > 1200 ppm` : `CO₂ > 800 ppm`,
-          time: new Date().toLocaleTimeString('fr-FR'),
+          message: room.status === 'bad' ? `CO₂ critique (>1200)` : `Aération nécessaire`,
+          time: new Date().toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'}),
         }));
       setAlerts(generatedAlerts);
       setActiveAlerts(generatedAlerts.length);
 
-      if (roomsData.length > 0) {
-        const highestRoom = roomsData.reduce((prev, curr) =>
-          prev.value > curr.value ? prev : curr
-        );
-        if (highestRoom.value > 1000) {
-          setBannerAlert(
-            `Pic de CO₂ détecté (${highestRoom.value} ppm) dans : ${highestRoom.name}.`
-          );
-        } else {
-          setBannerAlert(null);
-        }
+      const criticalRoom = processedRooms.find(r => r.value > 1500);
+      if (criticalRoom) {
+        setBannerAlert(`Attention : Qualité d'air très dégradée dans ${criticalRoom.name} (${criticalRoom.value} ppm)`);
+      } else {
+        setBannerAlert(null);
       }
     };
 
@@ -604,52 +781,89 @@ const CO2SensorsPage = () => {
 
   if (loading)
     return (
-      <div className="flex justify-center min-h-screen items-center">
-        <p className="text-xl text-slate-600">Chargement...</p>
+      <div className="flex justify-center h-screen items-center bg-slate-50">
+        <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-slate-500 font-medium">Chargement du dashboard...</p>
+        </div>
       </div>
     );
+    
   if (error)
     return (
-      <div className="flex justify-center min-h-screen items-center text-red-600">
-        Erreur : {error}
+      <div className="flex justify-center h-screen items-center bg-slate-50">
+        <div className="bg-white p-8 rounded-xl shadow-lg border border-red-100 text-center max-w-md">
+            <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h3 className="text-lg font-bold text-slate-800 mb-2">Une erreur est survenue</h3>
+            <p className="text-slate-600">{error}</p>
+            <button onClick={() => window.location.reload()} className="mt-6 px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700">Réessayer</button>
+        </div>
       </div>
     );
 
   return (
-    <div className="space-y-8 pb-12 max-w-7xl mx-auto">
-      <header>
-        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Qualité de l'Air</h1>
-        <p className="mt-1 text-lg text-slate-500">Dashboard de surveillance en temps réel</p>
+    <div className="space-y-8 pb-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
+                <LayoutDashboard className="h-7 w-7 text-blue-600" />
+                Qualité de l'Air
+            </h1>
+            <p className="mt-1 text-slate-500">Surveillance en temps réel des niveaux de CO₂</p>
+        </div>
       </header>
 
       {/* KPIs */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCard icon={LineChart} title="Moyenne Globale" value={`${average} ppm`} />
         <StatCard icon={AlertTriangle} title="Zones à surveiller" value={activeAlerts} />
         <StatCard icon={Clock} title="Dernier relevé" value={lastUpdate} />
       </div>
 
-      {/* GRILLE PRINCIPALE : Capteurs à gauche, Alertes à droite */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Liste des capteurs (2/3 de la largeur) */}
-        <div className="lg:col-span-2">
-          <SensorsGrid
-            rooms={allRooms}
-            onTestHistory={fetchSensorHistory}
-            loadingHistory={loadingHistorySensorId}
-            onSelectSensor={(id) => handleSelectSensor(id, allRooms.find((r) => r.id === id)?.name)}
-            selectedId={selectedSensorId}
-          />
+        {/* COLONNE GAUCHE */}
+        <div className="lg:col-span-2 space-y-8">
+            
+            {/* Section Maison */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+                <SensorSection 
+                    title="Résidence"
+                    icon={Home}
+                    rooms={homeRooms}
+                    onSelectSensor={(id) => handleSelectSensor(id, homeRooms.find(r => r.id === id)?.name)}
+                    selectedId={selectedSensorId}
+                    onTestHistory={fetchSensorHistory}
+                    loadingHistoryId={loadingHistorySensorId}
+                />
+                {homeRooms.length === 0 && <p className="text-slate-400 italic text-sm px-2">Aucun capteur résidentiel détecté.</p>}
+            </div>
+
+            {/* Section Bureau */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+                <SensorSection 
+                    title="Bureaux"
+                    icon={Briefcase}
+                    rooms={officeRooms}
+                    onSelectSensor={(id) => handleSelectSensor(id, officeRooms.find(r => r.id === id)?.name)}
+                    selectedId={selectedSensorId}
+                    onTestHistory={fetchSensorHistory}
+                    loadingHistoryId={loadingHistorySensorId}
+                />
+                {officeRooms.length === 0 && <p className="text-slate-400 italic text-sm px-2">Aucun capteur de bureau détecté.</p>}
+            </div>
+
         </div>
 
-        {/* Alertes (1/3 de la largeur) */}
-        <div className="lg:col-span-1">
-          <AlertHistory alerts={alerts} />
+        {/* COLONNE DROITE */}
+        <div className="lg:col-span-1 flex flex-col gap-6">
+          <div className="flex-1 min-h-[300px]">
+             <AlertHistory alerts={alerts} />
+          </div>
         </div>
       </div>
 
-      {/* GRAPHIQUE (Pleine largeur en bas) */}
-      <div className="w-full h-[450px]">
+      {/* GRAPHIQUE */}
+      <div className="w-full h-[450px] bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         <EvolutionChart
           data={evolutionData}
           loading={isGraphLoading}
@@ -657,21 +871,22 @@ const CO2SensorsPage = () => {
         />
       </div>
 
+      {/* Notification flottante */}
       {bannerAlert && (
-        <div className="fixed bottom-6 right-6 max-w-md rounded-xl bg-yellow-50 border border-yellow-200 p-4 shadow-lg z-50 animate-in slide-in-from-bottom-5">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="h-5 w-5 text-yellow-600 shrink-0 mt-0.5" />
-            <div>
-              <h4 className="font-semibold text-yellow-800">Alerte Qualité d'Air</h4>
-              <p className="text-sm text-yellow-700 mt-1">{bannerAlert}</p>
+        <div className="fixed bottom-6 right-6 max-w-md w-full bg-white border-l-4 border-red-500 rounded-lg shadow-xl z-50 animate-in slide-in-from-bottom-10 p-4 flex items-start gap-4">
+            <div className="p-2 bg-red-100 rounded-full shrink-0">
+                <AlertTriangle className="h-5 w-5 text-red-600" />
+            </div>
+            <div className="flex-1">
+                <h4 className="font-bold text-slate-800">Alerte Critique</h4>
+                <p className="text-sm text-slate-600 mt-1">{bannerAlert}</p>
             </div>
             <button
               onClick={() => setBannerAlert(null)}
-              className="text-yellow-500 hover:text-yellow-700 ml-auto"
+              className="text-slate-400 hover:text-slate-600 transition-colors"
             >
               ✕
             </button>
-          </div>
         </div>
       )}
 
@@ -687,3 +902,4 @@ const CO2SensorsPage = () => {
 };
 
 export default CO2SensorsPage;
+  
