@@ -5,7 +5,7 @@ import { SensorReading } from '../../entities/SensorReading.js';
 
 /**
  * @description Récupère l'historique complet formaté pour un capteur CO2
- * Utilisé par le graphique et la modale de la page CO2
+ * Utilisé par le graphique et la modale de la page CO2 et renvoie les 100 dernieres lectures
  */
 export const getCo2History = async (req: Request, res: Response) => {
   try {
