@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom'; // <--- IMPORTANT
 import { X, Calendar, ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react';
-import { SensorHistoryResponse } from './Co2Types';
+import { SensorHistoryResponse } from './Co2Types'; // Vérifie le chemin de tes types
 
 interface HistoryModalProps {
   isOpen: boolean;
@@ -17,18 +18,24 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({
   error,
   onClose,
 }) => {
-  if (!isOpen) return null;
+  // État pour s'assurer que le composant est monté côté client
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
+  // Si pas ouvert ou pas monté, on ne rend rien
+  if (!isOpen || !mounted) return null;
 
   const sensorName = historyData?.sensor?.name || 'Chargement...';
   const sensorUnit = historyData?.sensor?.type?.unit || 'ppm';
-
   const allHistory = historyData?.history || [];
-
   const validValues = allHistory.map((h) => Number(h.value)).filter((v) => !isNaN(v));
 
   const count = validValues.length;
   const hasData = allHistory.length > 0;
-
   const latest = count > 0 ? validValues[0] : 0;
   const previous = count > 1 ? validValues[1] : latest;
   const min = count > 0 ? Math.min(...validValues) : 0;
@@ -55,13 +62,16 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({
   const mediumPercent = count > 0 ? (mediumCount / count) * 100 : 0;
   const badPercent = count > 0 ? (badCount / count) * 100 : 0;
 
-  return (
+  // Le contenu de la modale
+  const modalContent = (
     <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6">
+      {/* Backdrop */}
       <div
         className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
 
+      {/* Modal Panel */}
       <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-200 border border-slate-200 overflow-hidden z-[100000]">
         <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-white z-10 shrink-0">
           <div>
@@ -215,15 +225,7 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({
                             </td>
                             <td className="px-6 py-3 text-right">
                               <span
-                                className={`font-bold px-2 py-0.5 rounded text-xs ${
-                                  isNum && valNum > 1200
-                                    ? 'bg-rose-100 text-rose-700'
-                                    : isNum && valNum > 800
-                                      ? 'bg-amber-100 text-amber-700'
-                                      : isNum
-                                        ? 'bg-emerald-100 text-emerald-700'
-                                        : 'text-slate-500'
-                                }`}
+                                className={`font-bold px-2 py-0.5 rounded text-xs ${isNum && valNum > 1200 ? 'bg-rose-100 text-rose-700' : isNum && valNum > 800 ? 'bg-amber-100 text-amber-700' : isNum ? 'bg-emerald-100 text-emerald-700' : 'text-slate-500'}`}
                               >
                                 {isNum ? valNum : String(reading.value)} {isNum ? sensorUnit : ''}
                               </span>
@@ -250,4 +252,7 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({
       </div>
     </div>
   );
+
+  // UTILISATION DU PORTAL : On injecte le contenu directement dans le body
+  return createPortal(modalContent, document.body);
 };
