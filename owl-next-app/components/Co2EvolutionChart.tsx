@@ -95,7 +95,7 @@ export const EvolutionChart: React.FC<EvolutionChartProps> = ({ data, loading, t
             )}
           </div>
         </div>
-        
+
         <div className="flex gap-3 text-xs text-slate-600 font-medium bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
           <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-emerald-500"></span> &lt; 800

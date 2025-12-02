@@ -25,7 +25,9 @@ export const AlertHistory: React.FC<{ alerts: AlertData[] }> = ({ alerts }) => (
               <p className="text-sm font-bold text-slate-800 truncate">{alert.room}</p>
               <p className="text-xs text-slate-600 mt-0.5">{alert.message}</p>
             </div>
-            <p className="text-xs font-medium text-slate-400 whitespace-nowrap bg-white/50 px-1.5 py-0.5 rounded">{alert.time}</p>
+            <p className="text-xs font-medium text-slate-400 whitespace-nowrap bg-white/50 px-1.5 py-0.5 rounded">
+              {alert.time}
+            </p>
           </div>
         ))}
       </div>
