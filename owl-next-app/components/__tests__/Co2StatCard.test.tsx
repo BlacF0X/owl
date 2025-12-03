@@ -47,7 +47,7 @@ describe('Co2StatCard Component', () => {
 
   
   it('gère un titre long sans erreur', () => {
-    const longTitle = "Moyenne des capteurs de la zone industrielle nord-ouest";
+    const longTitle = "Moyenne des capteurs de la zone industrielle nord-ouet";
     render(<StatCard icon={Wind} title={longTitle} value="Ok" />);
 
     expect(screen.getByText(longTitle)).toBeInTheDocument();
