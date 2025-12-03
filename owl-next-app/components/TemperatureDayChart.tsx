@@ -8,92 +8,118 @@ import {
   LinearScale,
   PointElement,
   LineElement,
+  Title,
   Tooltip,
   Legend,
+  Filler,
 } from 'chart.js';
-import type { TooltipItem } from 'chart.js';
 
-// Chart.js registration
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend);
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
 
-type TemperatureDayChartProps = {
-  data: number[];
-};
+interface ChartProps {
+  data: { label: string; value: number }[];
+  color?: string;
+}
 
-const TemperatureDayChart: React.FC<TemperatureDayChartProps> = ({ data }) => {
-  // Labels horaires : 0h à 23h
-  const labels = Array.from({ length: data.length }, (_, i) => `${i}h`);
+export default function TemperatureDayChart({ data, color = '#f59e0b' }: ChartProps) {
+  const safeData = data && data.length > 0 ? data : [];
 
   const chartData = {
-    labels,
+    labels: safeData.map((d) => d.label),
     datasets: [
       {
         label: 'Température',
-        data,
-        borderColor: '#3b82f6',
-        backgroundColor: 'rgba(59,130,246,0.12)',
+        data: safeData.map((d) => d.value),
+        borderColor: color,
+        backgroundColor: (context: any) => {
+          const ctx = context.chart.ctx;
+          const gradient = ctx.createLinearGradient(0, 0, 0, 200);
+          gradient.addColorStop(0, 'rgba(245, 158, 11, 0.2)');
+          gradient.addColorStop(1, 'rgba(245, 158, 11, 0)');
+          return gradient;
+        },
         fill: true,
-        tension: 0.35,
-        pointRadius: 4,
-        pointBackgroundColor: data.map((v) => {
-          if (v <= 18) return '#3b82f6';
-          if (v >= 26) return '#dc2626';
-          return '#22c55e';
-        }),
-        pointBorderColor: '#fff',
+        tension: 0.4,
+        pointRadius: 0,
+        pointHoverRadius: 6,
+        pointBackgroundColor: '#fff',
+        pointBorderColor: color,
+        pointBorderWidth: 2,
         borderWidth: 2,
       },
     ],
   };
 
-  const chartOptions = {
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: { display: false },
       tooltip: {
-        enabled: true,
+        backgroundColor: '#fff',
+        titleColor: '#1e293b',
+        bodyColor: '#1e293b',
+        borderColor: '#e2e8f0',
+        borderWidth: 1,
+        padding: 10,
+        displayColors: false,
         callbacks: {
-          // Typage précis dans la callback pour éviter l'erreur any et 'is possibly null'
-          label: (ctx: TooltipItem<'line'>) => {
-            const y =
-              typeof ctx.parsed === 'number'
-                ? ctx.parsed
-                : ctx.parsed !== null && ctx.parsed !== undefined
-                  ? ctx.parsed.y
-                  : null;
-            return y !== null && y !== undefined ? `${y.toFixed(1)}°C` : '';
-          },
+          label: (context: any) => `${context.parsed.y.toFixed(1)}°C`,
         },
       },
     },
     scales: {
       x: {
-        title: { display: true, text: 'Heure', font: { size: 16 } },
+        grid: { display: false, drawBorder: false },
         ticks: {
-          autoSkip: false,
-          font: { size: 14 },
+          color: '#94a3b8',
+          font: { size: 10 }, // Police un peu plus petite pour que tout rentre
+          maxRotation: 0,
+          // --- MODIFICATIONS CLÉS ICI ---
+          autoSkip: false,    // Désactive la suppression automatique des labels
+          maxTicksLimit: 24,  // Autorise jusqu'à 24 labels (un par heure)
+          // -----------------------------
         },
-        grid: { display: false },
+        border: { display: false },
       },
       y: {
         min: 15,
         max: 30,
-        title: { display: true, text: 'Température (°C)', font: { size: 16 } },
-        ticks: {
-          stepSize: 1,
-          font: { size: 14 },
+        grid: {
+          color: '#f1f5f9',
+          borderDash: [5, 5],
         },
-        grid: { color: '#e5e7eb', borderDash: [4, 4] },
+        ticks: {
+          stepSize: 5,
+          color: '#94a3b8',
+          font: { size: 11 },
+          callback: (value: any) => `${value}°`,
+        },
+        border: { display: false },
       },
     },
-    responsive: true,
-    maintainAspectRatio: false,
+    interaction: {
+      mode: 'index' as const,
+      intersect: false,
+    },
   };
 
-  return (
-    <div className="w-full md:w-[600px] h-[300px]">
-      <Line data={chartData} options={chartOptions} />
-    </div>
-  );
-};
+  if (safeData.length === 0) {
+    return (
+      <div className="h-full w-full flex items-center justify-center text-slate-400 text-sm bg-slate-50 rounded-lg">
+        Pas de données disponibles
+      </div>
+    );
+  }
 
-export default TemperatureDayChart;
+  return <Line data={chartData} options={options} />;
+}
