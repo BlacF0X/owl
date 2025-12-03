@@ -21,7 +21,7 @@ interface HistoryItem {
 
 interface ChartDataPoint {
   label: string;
-  value: number;
+  value: number | null; // Peut être null pour le futur
 }
 
 interface Props {
@@ -29,9 +29,12 @@ interface Props {
   token: string | null;
 }
 
+// --- Composant Carte Individuelle ---
 const SensorCard = ({ sensor, token }: { sensor: TemperatureSensor; token: string | null }) => {
   const [history, setHistory] = useState<ChartDataPoint[]>([]);
   const [loading, setLoading] = useState(true);
+  // On stocke l'index (0-23) de l'heure considérée comme "Maintenant"
+  const [currentHourIndex, setCurrentHourIndex] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -43,6 +46,7 @@ const SensorCard = ({ sensor, token }: { sensor: TemperatureSensor; token: strin
       try {
         const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
         
+        // On demande une période large (7 jours)
         const res = await fetch(`${API_URL}/api/sensors/${sensor.sensor_id}/readings?period=7d`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -56,61 +60,56 @@ const SensorCard = ({ sensor, token }: { sensor: TemperatureSensor; token: strin
             return;
           }
 
-          // 1. On trie par date
+          // 1. Tri chronologique
           const sortedData = rawData.sort((a, b) => 
             new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
           );
 
-          // 2. On détecte le "Jour de référence" basé sur la dernière donnée
+          // 2. Détection de la "Dernière Heure Connue" (Maintenant simulé)
           const lastDataPoint = sortedData[sortedData.length - 1];
-          const referenceDate = new Date(lastDataPoint.timestamp); // ex: 20 Nov
+          const referenceDate = new Date(lastDataPoint.timestamp); 
+          const refHour = referenceDate.getHours();
           
-          // 3. On prépare la courbe fixe de 00h à 23h pour ce jour là
+          // On sauvegarde cette heure pour tracer la ligne verticale
+          setCurrentHourIndex(refHour);
+
+          // 3. Construction des 24 points (00h à 23h)
           const chartPoints: ChartDataPoint[] = [];
 
-          // Boucle fixe de 0 à 23
           for (let hour = 0; hour <= 23; hour++) {
-            const targetTime = new Date(referenceDate);
-            targetTime.setHours(hour, 0, 0, 0); // ex: 20 Nov à 00:00, 01:00...
-
-            // Label formaté "00h", "01h"...
             const hourLabel = `${hour.toString().padStart(2, '0')}h`;
+            
+            // SI FUTUR : On arrête la courbe (null)
+            if (hour > refHour) {
+                chartPoints.push({ label: hourLabel, value: null });
+                continue; // On passe à l'heure suivante
+            }
 
-            // Recherche de la donnée correspondante (même jour, même heure)
+            // SI PASSÉ OU PRÉSENT : On cherche la donnée
+            const targetTime = new Date(referenceDate);
+            targetTime.setHours(hour, 0, 0, 0);
+
             const match = sortedData.find(d => {
               const dTime = new Date(d.timestamp);
-              return dTime.getDate() === targetTime.getDate() && 
-                     dTime.getMonth() === targetTime.getMonth() &&
-                     dTime.getHours() === hour;
+              return dTime.getDate() === targetTime.getDate() && dTime.getHours() === hour;
             });
 
             if (match) {
               chartPoints.push({ label: hourLabel, value: match.value_num });
             } else {
-              // Si pas de donnée pour cette heure (ex: futur ou trou), on essaie de lisser
-              // Uniquement si l'heure cible est AVANT la dernière donnée reçue
-              // (pour ne pas inventer le futur)
-              if (targetTime <= referenceDate && chartPoints.length > 0) {
+              // Si trou dans le passé, on lisse avec la valeur précédente
+              if (chartPoints.length > 0) {
                  chartPoints.push({ 
                     label: hourLabel, 
                     value: chartPoints[chartPoints.length - 1].value 
                  });
               } else {
-                 // Sinon on met null ou on ignore (Chart.js gère les trous ou on met 0)
-                 // Pour garder l'axe fixe, il vaut mieux mettre une valeur par défaut ou null
-                 // Ici je choisis de mettre la valeur précédente si dispo, sinon rien
-                 if (chartPoints.length > 0) {
-                     chartPoints.push({ label: hourLabel, value: chartPoints[chartPoints.length-1].value });
-                 } else {
-                     // Si c'est le tout début (00h) et qu'on a pas de donnée, on cherche la première dispo de la journée
-                     // pour initialiser la courbe
-                     const firstVal = sortedData.find(d => new Date(d.timestamp).getDate() === referenceDate.getDate())?.value_num || 0;
-                     chartPoints.push({ label: hourLabel, value: firstVal });
-                 }
+                 // Cas initial (00h) sans donnée : on cherche la 1ère valeur dispo de la journée
+                 const firstVal = sortedData.find(d => new Date(d.timestamp).getDate() === referenceDate.getDate())?.value_num || 0;
+                 chartPoints.push({ label: hourLabel, value: firstVal });
               }
             }
           }
-
           setHistory(chartPoints);
         }
       } catch (err) {
@@ -146,13 +145,15 @@ const SensorCard = ({ sensor, token }: { sensor: TemperatureSensor; token: strin
             Aucune donnée disponible
           </div>
         ) : (
-          <TemperatureDayChart data={history} />
+          // On passe l'heure actuelle au composant graphique
+          <TemperatureDayChart data={history} currentHour={currentHourIndex} />
         )}
       </div>
     </div>
   );
 };
 
+// --- Composant Principal ---
 export default function TemperatureDashboard({ initialSensors, token }: Props) {
   if (!initialSensors || initialSensors.length === 0) {
     return (

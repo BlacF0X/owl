@@ -12,7 +12,9 @@ import {
   Tooltip,
   Legend,
   Filler,
+  ScriptableContext, // Assure-toi que cet import est là
 } from 'chart.js';
+import annotationPlugin from 'chartjs-plugin-annotation';
 
 ChartJS.register(
   CategoryScale,
@@ -22,15 +24,30 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  Filler
+  Filler,
+  annotationPlugin
 );
 
 interface ChartProps {
-  data: { label: string; value: number }[];
-  color?: string;
+  data: { label: string; value: number | null }[];
+  currentHour?: number | null;
 }
 
-export default function TemperatureDayChart({ data, color = '#f59e0b' }: ChartProps) {
+// Définition des couleurs
+const COLORS = {
+  blue: '#3b82f6',   // < 20°C
+  green: '#22c55e',  // 20-25°C
+  red: '#ef4444',    // > 25°C
+};
+
+// Fonction utilitaire pour déterminer la couleur d'un point
+const getColor = (value: number) => {
+  if (value > 25) return COLORS.red;
+  if (value < 20) return COLORS.blue;
+  return COLORS.green;
+};
+
+export default function TemperatureDayChart({ data, currentHour }: ChartProps) {
   const safeData = data && data.length > 0 ? data : [];
 
   const chartData = {
@@ -39,27 +56,48 @@ export default function TemperatureDayChart({ data, color = '#f59e0b' }: ChartPr
       {
         label: 'Température',
         data: safeData.map((d) => d.value),
-        borderColor: color,
-        backgroundColor: (context: any) => {
-          const ctx = context.chart.ctx;
-          const gradient = ctx.createLinearGradient(0, 0, 0, 200);
-          gradient.addColorStop(0, 'rgba(245, 158, 11, 0.2)');
-          gradient.addColorStop(1, 'rgba(245, 158, 11, 0)');
-          return gradient;
+        
+        // --- CORRECTION ICI : Typage explicite 'any' pour éviter l'erreur ---
+        segment: {
+          borderColor: (ctx: any) => {
+            // Vérification de sécurité : ctx.p1 peut être undefined lors des transitions
+            if (!ctx.p1 || !ctx.p1.parsed) return COLORS.green;
+            
+            const val = ctx.p1.parsed.y;
+            if (val > 25) return COLORS.red;
+            if (val < 20) return COLORS.blue;
+            return COLORS.green;
+          },
+          backgroundColor: (ctx: any) => {
+             if (!ctx.p1 || !ctx.p1.parsed) return `${COLORS.green}33`;
+
+              const val = ctx.p1.parsed.y;
+              if (val > 25) return `${COLORS.red}33`; // 33 = ~20% opacité
+              if (val < 20) return `${COLORS.blue}33`;
+              return `${COLORS.green}33`;
+          }
         },
+        // -------------------------------------------------------------------
+        
         fill: true,
         tension: 0.4,
         pointRadius: 0,
         pointHoverRadius: 6,
         pointBackgroundColor: '#fff',
-        pointBorderColor: color,
+        // Couleur de bordure dynamique au survol
+        pointBorderColor: (context: any) => {
+            const val = context.raw;
+            if (val === null) return COLORS.green; // Fallback
+            return getColor(val);
+        },
         pointBorderWidth: 2,
         borderWidth: 2,
+        spanGaps: false,
       },
     ],
   };
 
-  const options = {
+  const options: any = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -73,21 +111,55 @@ export default function TemperatureDayChart({ data, color = '#f59e0b' }: ChartPr
         padding: 10,
         displayColors: false,
         callbacks: {
-          label: (context: any) => `${context.parsed.y.toFixed(1)}°C`,
+          label: (context: any) => {
+              if (context.parsed.y === null) return '';
+              return `${context.parsed.y.toFixed(1)}°C`;
+          },
+          labelColor: (context: any) => {
+              const val = context.raw;
+              if (val === null) return { borderColor: COLORS.green, backgroundColor: COLORS.green };
+              
+              return {
+                  borderColor: getColor(val),
+                  backgroundColor: getColor(val)
+              };
+          }
         },
       },
+      annotation: {
+        annotations: currentHour !== null && currentHour !== undefined ? {
+          line1: {
+            type: 'line',
+            xMin: currentHour,
+            xMax: currentHour,
+            borderColor: '#94a3b8',
+            borderWidth: 2,
+            borderDash: [5, 5],
+            label: {
+              display: true,
+              content: 'Maintenant',
+              position: 'start',
+              backgroundColor: 'rgba(148, 163, 184, 0.9)',
+              color: 'white',
+              font: {
+                size: 10,
+                weight: 'bold'
+              },
+              yAdjust: 0,
+            },
+          }
+        } : {}
+      }
     },
     scales: {
       x: {
         grid: { display: false, drawBorder: false },
         ticks: {
           color: '#94a3b8',
-          font: { size: 10 }, // Police un peu plus petite pour que tout rentre
+          font: { size: 10 },
           maxRotation: 0,
-          // --- MODIFICATIONS CLÉS ICI ---
-          autoSkip: false,    // Désactive la suppression automatique des labels
-          maxTicksLimit: 24,  // Autorise jusqu'à 24 labels (un par heure)
-          // -----------------------------
+          autoSkip: false,
+          maxTicksLimit: 24,
         },
         border: { display: false },
       },
@@ -108,7 +180,7 @@ export default function TemperatureDayChart({ data, color = '#f59e0b' }: ChartPr
       },
     },
     interaction: {
-      mode: 'index' as const,
+      mode: 'index',
       intersect: false,
     },
   };
