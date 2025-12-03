@@ -26,7 +26,7 @@ describe('Co2SensorCard Component', () => {
     expect(screen.getByText('Salon')).toBeInTheDocument();
     expect(screen.getByText('450')).toBeInTheDocument();
     expect(screen.getByText('Excellent')).toBeInTheDocument();
-    
+
     // Vérification indirecte de la couleur verte (Emerald)
     const statusLabel = screen.getByText('Excellent');
     expect(statusLabel).toHaveClass('text-emerald-700');
@@ -79,7 +79,7 @@ describe('Co2SensorCard Component', () => {
 
     const button = screen.getByRole('button', { name: /voir l'analyse détaillée/i });
     fireEvent.click(button);
-    
+
     // Le stopPropagation est géré dans le composant, on vérifie juste l'appel
     expect(onHistory).toHaveBeenCalledTimes(1);
   });

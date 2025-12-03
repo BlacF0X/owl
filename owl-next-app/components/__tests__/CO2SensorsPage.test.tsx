@@ -98,14 +98,17 @@ describe('CO2SensorsPage Integration', () => {
     render(<CO2SensorsPage />);
 
     // On attend qu'une section apparaisse (indique la fin du chargement)
-    await waitFor(() => {
-      expect(screen.getByText('Résidence')).toBeInTheDocument();
-    }, { timeout: 10000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText('Résidence')).toBeInTheDocument();
+      },
+      { timeout: 10000 }
+    );
 
     // On utilise getAllByText car le nom peut apparaître dans la carte ET dans les alertes
     expect(screen.getAllByText('Salon').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Bureau 1').length).toBeGreaterThan(0);
-    
+
     // Moyenne: (450 + 1300) / 2 = 875
     expect(screen.getByText('875 ppm')).toBeInTheDocument();
   }, 15000);
@@ -120,9 +123,12 @@ describe('CO2SensorsPage Integration', () => {
 
     render(<CO2SensorsPage />);
 
-    await waitFor(() => {
-      expect(screen.getByText(/Erreur: API Error/i)).toBeInTheDocument();
-    }, { timeout: 10000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText(/Erreur: API Error/i)).toBeInTheDocument();
+      },
+      { timeout: 10000 }
+    );
   }, 15000);
 
   it("affiche une bannière d'alerte critique si un capteur dépasse 1500 ppm", async () => {
@@ -149,9 +155,12 @@ describe('CO2SensorsPage Integration', () => {
 
     render(<CO2SensorsPage />);
 
-    await waitFor(() => {
-      expect(screen.getByText(/Alerte Critique/i)).toBeInTheDocument();
-    }, { timeout: 10000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText(/Alerte Critique/i)).toBeInTheDocument();
+      },
+      { timeout: 10000 }
+    );
 
     // Le nom apparaît dans la carte, les alertes, et la bannière rouge => getAllByText
     expect(screen.getAllByText(/DangerZone/i).length).toBeGreaterThan(0);
@@ -176,15 +185,21 @@ describe('CO2SensorsPage Integration', () => {
 
     render(<CO2SensorsPage />);
 
-    await waitFor(() => {
-      expect(screen.getByText('Salon')).toBeInTheDocument();
-    }, { timeout: 10000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText('Salon')).toBeInTheDocument();
+      },
+      { timeout: 10000 }
+    );
 
     const historyButtons = screen.getAllByText(/Voir l'analyse détaillée/i);
     fireEvent.click(historyButtons[0]);
 
-    await waitFor(() => {
-      expect(screen.getByTestId('history-modal')).toBeInTheDocument();
-    }, { timeout: 10000 });
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('history-modal')).toBeInTheDocument();
+      },
+      { timeout: 10000 }
+    );
   }, 15000);
 });

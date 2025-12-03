@@ -29,9 +29,7 @@ describe('Co2EvolutionChart Component', () => {
   });
 
   it('affiche le graphique quand il y a des données', () => {
-    const mockData = [
-      { hour: '10:00', height: 100, ppm: 500 },
-    ];
+    const mockData = [{ hour: '10:00', height: 100, ppm: 500 }];
     render(<EvolutionChart data={mockData} loading={false} />);
     expect(screen.getByTestId('mock-bar-chart')).toBeInTheDocument();
   });

@@ -8,7 +8,6 @@ const mockHistoryData: SensorHistoryResponse = {
     sensor_id: '1',
     name: 'Salon',
     type: { type_key: 'co2', name: 'CO2', unit: 'ppm' },
-    
   },
   history: [
     { timestamp: '2025-12-03T10:00:00Z', value: 500 },
@@ -19,7 +18,7 @@ const mockHistoryData: SensorHistoryResponse = {
 describe('Co2HistoryModal Component', () => {
   // Comme on utilise createPortal, le contenu sera rendu dans document.body.
   // @testing-library/react gère cela assez bien par défaut.
-  
+
   it('ne rend rien si isOpen est false', () => {
     render(
       <HistoryModal
@@ -33,7 +32,7 @@ describe('Co2HistoryModal Component', () => {
     expect(screen.queryByText('Analyse détaillée')).not.toBeInTheDocument();
   });
 
-    it('affiche le chargement', () => {
+  it('affiche le chargement', () => {
     render(
       <HistoryModal
         isOpen={true}
@@ -43,10 +42,9 @@ describe('Co2HistoryModal Component', () => {
         onClose={jest.fn()}
       />
     );
-    
+
     expect(screen.getAllByText('Chargement...').length).toBeGreaterThan(0);
   });
-
 
   it('affiche les données statistiques et le tableau', () => {
     render(
@@ -61,9 +59,9 @@ describe('Co2HistoryModal Component', () => {
 
     // Titre
     expect(screen.getByText('Salon')).toBeInTheDocument();
-    
+
     // Stats calculées (Moyenne de 500 et 450 = 475)
-    expect(screen.getByText('475')).toBeInTheDocument(); 
+    expect(screen.getByText('475')).toBeInTheDocument();
     expect(screen.getByText('Minimum')).toBeInTheDocument();
 
     // Tableau historique
