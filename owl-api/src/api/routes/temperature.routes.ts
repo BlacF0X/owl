@@ -1,4 +1,3 @@
-// src/api/routes/temperature.routes.ts - PATTERN WINDOWS
 import Router from 'express';
 import {
   getTemperatureSensorsForUser,

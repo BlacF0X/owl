@@ -201,3 +201,63 @@ export const getWindowsHourlyStats = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Erreur serveur' });
   }
 };
+
+export const getTemperaturesHistory = async (req: Request, res: Response) => {
+  try {
+    const userId = req.auth?.userId;
+    const dateQuery = req.query.date as string; // Format YYYY-MM-DD
+
+    if (!userId) return res.status(401).json({ message: 'Non autorisé' });
+
+    // 1. Déterminer la plage de temps (de 00:00 à 23:59 pour la date donnée)
+    let targetDate = new Date();
+    if (dateQuery) {
+      // On s'assure que la date est valide
+      const parsedDate = new Date(dateQuery);
+      if (!isNaN(parsedDate.getTime())) {
+        targetDate = parsedDate;
+      }
+    }
+
+    // Début de la journée
+    const startOfDay = new Date(targetDate);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    // Fin de la journée
+    const endOfDay = new Date(targetDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const readingRepository = AppDataSource.getRepository(SensorReading);
+
+    // 2. Requête optimisée pour les températures
+    const history = await readingRepository.find({
+      where: {
+        sensor: {
+          // Filtre : Capteurs de ce user ET de type 'temperature' (ou la clé que tu utilises)
+          hub: { user: { clerk_user_id: userId } },
+          sensorType: { type_key: 'temperature' }, // Assure-toi que 'temperature' est la bonne clé dans ta DB
+        },
+        timestamp: Between(startOfDay, endOfDay),
+      },
+      relations: ['sensor', 'sensor.hub'], // Pour récupérer le nom du capteur et du hub
+      order: {
+        timestamp: 'DESC', // Plus récent en premier
+      },
+    });
+
+    // 3. Formatage pour le front
+    const formattedHistory = history.map((reading) => ({
+      id: reading.reading_id,
+      timestamp: reading.timestamp,
+      value: Number(reading.value_num), // On renvoie la valeur numérique
+      unit: '°C', // Tu peux aussi le récupérer via reading.sensor.sensorType.unit si tu l'as jointe
+      sensorName: reading.sensor.name,
+      hubName: reading.sensor.hub.name,
+    }));
+
+    res.status(200).json(formattedHistory);
+  } catch (error) {
+    console.error('Erreur historique temperatures:', error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+};
