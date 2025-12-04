@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import TemperatureCircle from '@/components/TemperatureCircle';
 import TemperatureDayChart from '@/components/TemperatureDayChart';
+import DashboardViewButtons, { ViewMode } from '@/components/TemperatureViewButtons';
 
 // --- Types ---
 export interface TemperatureSensor {
@@ -29,8 +30,7 @@ interface Props {
   token: string | null;
 }
 
-type ViewMode = 'current' | 'max' | 'min' | 'avg';
-
+// --- Composant Carte Individuelle ---
 const SensorCard = ({ sensor, token, viewMode }: { sensor: TemperatureSensor; token: string | null; viewMode: ViewMode }) => {
   const [loading, setLoading] = useState(true);
   
@@ -57,7 +57,6 @@ const SensorCard = ({ sensor, token, viewMode }: { sensor: TemperatureSensor; to
         setLoading(true);
         const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
         
-        // On demande large. Si l'API limite le nombre de points, c'est là qu'il faudra regarder côté Backend.
         const res = await fetch(`${API_URL}/api/sensors/${sensor.sensor_id}/readings?period=30d`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -67,7 +66,6 @@ const SensorCard = ({ sensor, token, viewMode }: { sensor: TemperatureSensor; to
         const rawData: HistoryItem[] = await res.json();
         if (rawData.length === 0) return;
 
-        // Tri chronologique
         const sortedData = rawData.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
         const lastDataPoint = sortedData[sortedData.length - 1];
         
@@ -76,7 +74,7 @@ const SensorCard = ({ sensor, token, viewMode }: { sensor: TemperatureSensor; to
         
         setCurrentTemp(parseFloat(sensor.displayValue) || 0);
 
-        // 1. Temps Réel (Dernières 24h dispo)
+        // 1. Temps Réel
         const refHour = referenceDate.getHours();
         setCurrentHourIndex(refHour);
         const chartPoints24h: ChartDataPoint[] = [];
@@ -96,16 +94,14 @@ const SensorCard = ({ sensor, token, viewMode }: { sensor: TemperatureSensor; to
           if (match) {
             chartPoints24h.push({ label: hourLabel, value: Number(match.value_num) });
           } else {
-             // Interpolation simple ou null
              const prev = chartPoints24h.length > 0 ? chartPoints24h[chartPoints24h.length - 1].value : null;
              chartPoints24h.push({ label: hourLabel, value: prev });
           }
         }
         setData24h(chartPoints24h);
 
-        // 2. Stats JOURNALIÈRES (Tout ce qu'on a reçu, groupé par jour)
+        // 2. Stats JOURNALIÈRES
         const tempsByDay = new Map<string, number[]>();
-        // On utilise un Set pour garder l'ordre chronologique des clés
         const dayKeysInOrder = new Set<string>();
 
         sortedData.forEach(item => {
@@ -127,7 +123,6 @@ const SensorCard = ({ sensor, token, viewMode }: { sensor: TemperatureSensor; to
         const chartPointsMin: ChartDataPoint[] = [];
         const chartPointsAvg: ChartDataPoint[] = [];
 
-        // On itère sur les jours trouvés (dans l'ordre chronologique grâce au sort initial)
         dayKeysInOrder.forEach(key => {
              const temps = tempsByDay.get(key);
              if (temps && temps.length > 0) {
@@ -141,15 +136,13 @@ const SensorCard = ({ sensor, token, viewMode }: { sensor: TemperatureSensor; to
              }
         });
         
-        // On coupe pour ne garder que les 7 derniers jours SI on en a trop
-        // (Mais si on en a moins, on affiche tout)
         const sliceLast7 = (arr: ChartDataPoint[]) => arr.slice(-7);
 
         setData7dMax(sliceLast7(chartPointsMax));
         setData7dMin(sliceLast7(chartPointsMin));
         setData7dAvg(sliceLast7(chartPointsAvg));
 
-        // 3. Stats du CERCLE (Dernier jour dispo)
+        // 3. Stats du CERCLE
         const lastDayTemps = tempsByDay.get(referenceDayKey) || [];
         if (lastDayTemps.length > 0) {
             setMaxTempToday(Math.max(...lastDayTemps));
@@ -213,6 +206,7 @@ const SensorCard = ({ sensor, token, viewMode }: { sensor: TemperatureSensor; to
   );
 };
 
+// --- Composant Principal ---
 export default function TemperatureDashboard({ initialSensors, token }: Props) {
   const [viewMode, setViewMode] = useState<ViewMode>('current');
 
@@ -226,32 +220,8 @@ export default function TemperatureDashboard({ initialSensors, token }: Props) {
 
   return (
     <div className="flex flex-col gap-6 w-full pb-10">
-      <div className="self-center flex bg-slate-100 p-1.5 rounded-xl shadow-inner border border-slate-200 mb-4 overflow-x-auto max-w-full">
-        <button
-          onClick={() => setViewMode('current')}
-          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ease-in-out whitespace-nowrap ${viewMode === 'current' ? 'bg-white text-blue-600 shadow-sm ring-1 ring-black/5' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'}`}
-        >
-          Temps Réel (24h)
-        </button>
-        <button
-          onClick={() => setViewMode('avg')}
-          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ease-in-out whitespace-nowrap ${viewMode === 'avg' ? 'bg-white text-blue-600 shadow-sm ring-1 ring-black/5' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'}`}
-        >
-          Moyenne (7j)
-        </button>
-        <button
-          onClick={() => setViewMode('max')}
-          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ease-in-out whitespace-nowrap ${viewMode === 'max' ? 'bg-white text-blue-600 shadow-sm ring-1 ring-black/5' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'}`}
-        >
-          Max (7j)
-        </button>
-        <button
-          onClick={() => setViewMode('min')}
-          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ease-in-out whitespace-nowrap ${viewMode === 'min' ? 'bg-white text-blue-600 shadow-sm ring-1 ring-black/5' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'}`}
-        >
-          Min (7j)
-        </button>
-      </div>
+      
+      <DashboardViewButtons currentMode={viewMode} onChange={setViewMode} />
 
       {initialSensors.map((sensor) => (
         <SensorCard key={sensor.sensor_id} sensor={sensor} token={token} viewMode={viewMode} />
