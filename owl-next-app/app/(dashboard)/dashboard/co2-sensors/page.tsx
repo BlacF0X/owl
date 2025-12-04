@@ -256,7 +256,7 @@ const CO2SensorsPage = () => {
     return <div className="flex justify-center h-screen items-center">Erreur: {error}</div>;
 
   return (
-    <div className="space-y-8 pb-12 w-full px-4 sm:px-6 lg:px-10 pt-6">
+    <div className="space-y-8 mb-10">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
