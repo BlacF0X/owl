@@ -40,7 +40,7 @@ export default async function TemperaturesDataPage() {
 
   // 3. Rendu
   return (
-    <div className="p-6 space-y-8 bg-slate-100 min-h-screen">
+    <div className="mb-10">
       <header className="mb-8">
         <h1 className="text-3xl font-bold text-slate-900">Tableau de bord des températures</h1>
         <p className="mt-1 text-slate-600">
