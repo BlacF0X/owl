@@ -141,7 +141,7 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors, token }) => {
                 filterType === 'all' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'
               }`}
             >
-              Tout
+              Toutes
             </button>
             <button
               onClick={() => setFilterType('high')}
@@ -149,7 +149,7 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors, token }) => {
                 filterType === 'high' ? 'bg-white text-red-600 shadow-sm' : 'text-slate-500 hover:text-red-600'
               }`}
             >
-              Trop chaud
+              Trop hautes
             </button>
             <button
               onClick={() => setFilterType('low')}
@@ -157,7 +157,7 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors, token }) => {
                 filterType === 'low' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-blue-600'
               }`}
             >
-              Trop froid
+              Trop basses
             </button>
           </div>
 

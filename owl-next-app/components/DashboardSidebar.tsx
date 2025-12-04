@@ -29,7 +29,7 @@ interface Hub {
 const navLinks = [
   { name: 'Général', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Capteurs de fenêtre', href: '/dashboard/windows', icon: DoorOpen },
-  // L'onglet Température est géré manuellement juste après
+  // Température géré manuellement
   { name: "Qualité de l'air", href: '/dashboard/humidity-sensors', icon: Wind },
   { name: 'Capteurs de CO2', href: '/dashboard/co2-sensors', icon: CloudSun },
 ];
@@ -43,7 +43,6 @@ const DashboardSidebar = () => {
   const [hubs, setHubs] = useState<Hub[]>([]);
   const [isHovered, setIsHovered] = useState(false);
 
-  // Récupération des Hubs dynamiques
   useEffect(() => {
     const fetchHubs = async () => {
       try {
@@ -79,7 +78,13 @@ const DashboardSidebar = () => {
     fetchHubs();
   }, [getToken]);
 
-  const isTempPage = pathname === '/dashboard/temperatures-datas';
+  // 1. LOGIQUE ACTIVE : On est actif si on est sur le path de base, PEU IMPORTE le paramètre hubId
+  const isTempActive = pathname === '/dashboard/temperatures-datas';
+
+  // 2. LOGIQUE DU LABEL : On cherche le nom du hub actif
+  const activeHubName = currentHubId 
+    ? hubs.find(h => h.id === currentHubId)?.name 
+    : null;
 
   return (
     <aside className="hidden w-64 flex-shrink-0 flex-col bg-white shadow-lg md:flex z-20">
@@ -103,7 +108,7 @@ const DashboardSidebar = () => {
               </li>
             ))}
 
-            {/* Onglet Température Interactif */}
+            {/* Onglet Température Dynamique */}
             <li
               className="group"
               onMouseEnter={() => setIsHovered(true)}
@@ -112,16 +117,20 @@ const DashboardSidebar = () => {
               <Link
                 href="/dashboard/temperatures-datas"
                 className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold transition-colors ${
-                  isTempPage && !currentHubId
+                  // Si on est sur la page température (avec ou sans hub), on met le fond NOIR
+                  isTempActive
                     ? 'bg-slate-900 text-white'
                     : 'text-slate-700 hover:bg-slate-100'
                 }`}
               >
-                <Thermometer className="h-5 w-5" />
-                <span>Température</span>
+                <Thermometer className="h-5 w-5 flex-shrink-0" />
+                <span className="truncate">
+                  {/* Affichage dynamique du texte */}
+                  {activeHubName ? `Température / ${activeHubName}` : 'Température'}
+                </span>
               </Link>
 
-              {/* Menu Déroulant (Hubs) */}
+              {/* Menu Déroulant */}
               {hubs.length > 0 && (
                 <div
                   className={`overflow-hidden transition-all duration-300 ease-in-out ${
@@ -157,7 +166,7 @@ const DashboardSidebar = () => {
                              : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
                         }`}
                       >
-                        Voir tous les hubs
+                        Voir tous les hubs confondus
                       </Link>
                     </div>
                   </div>
