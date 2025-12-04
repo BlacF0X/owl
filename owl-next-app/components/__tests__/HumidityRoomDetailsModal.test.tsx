@@ -3,7 +3,6 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import HumidityRoomDetailsModal from '../HumidityRoomDetailsModal';
 import { HumidityRoom } from '../HumidityRoomCard';
 
-
 const mockRoom: HumidityRoom = {
   id: '1',
   name: 'Salon',
@@ -12,7 +11,6 @@ const mockRoom: HumidityRoom = {
   lastUpdate: new Date().toISOString(),
   hubName: 'Maison',
 };
-
 
 describe('HumidityRoomDetailsModal Component', () => {
   const mockOnClose = jest.fn();
@@ -28,7 +26,9 @@ describe('HumidityRoomDetailsModal Component', () => {
   });
 
   it('affiche la valeur d humidite actuelle', () => {
-    const { container } = render(<HumidityRoomDetailsModal room={mockRoom} onClose={mockOnClose} />);
+    const { container } = render(
+      <HumidityRoomDetailsModal room={mockRoom} onClose={mockOnClose} />
+    );
 
     expect(container.textContent).toContain('55');
     expect(container.textContent).toContain('actuelle');
@@ -65,7 +65,9 @@ describe('HumidityRoomDetailsModal Component', () => {
   });
 
   it('affiche le message de confort pour statut optimal', () => {
-    const { container } = render(<HumidityRoomDetailsModal room={mockRoom} onClose={mockOnClose} />);
+    const { container } = render(
+      <HumidityRoomDetailsModal room={mockRoom} onClose={mockOnClose} />
+    );
 
     expect(container.textContent).toContain('confort');
     expect(container.textContent).toContain('santé');
@@ -77,7 +79,9 @@ describe('HumidityRoomDetailsModal Component', () => {
       status: 'warning',
     };
 
-    const { container } = render(<HumidityRoomDetailsModal room={warningRoom} onClose={mockOnClose} />);
+    const { container } = render(
+      <HumidityRoomDetailsModal room={warningRoom} onClose={mockOnClose} />
+    );
 
     expect(container.textContent).toContain('aérez');
   });
@@ -88,20 +92,26 @@ describe('HumidityRoomDetailsModal Component', () => {
       status: 'danger',
     };
 
-    const { container } = render(<HumidityRoomDetailsModal room={dangerRoom} onClose={mockOnClose} />);
+    const { container } = render(
+      <HumidityRoomDetailsModal room={dangerRoom} onClose={mockOnClose} />
+    );
 
     expect(container.textContent).toContain('moisissures');
   });
 
   it('affiche le boitier (hubName)', () => {
-    const { container } = render(<HumidityRoomDetailsModal room={mockRoom} onClose={mockOnClose} />);
+    const { container } = render(
+      <HumidityRoomDetailsModal room={mockRoom} onClose={mockOnClose} />
+    );
 
     expect(container.textContent).toContain('Boîtier');
     expect(screen.getByText('Maison')).toBeInTheDocument();
   });
 
   it('affiche le dernier releve', () => {
-    const { container } = render(<HumidityRoomDetailsModal room={mockRoom} onClose={mockOnClose} />);
+    const { container } = render(
+      <HumidityRoomDetailsModal room={mockRoom} onClose={mockOnClose} />
+    );
 
     expect(container.textContent).toContain('Dernier');
   });
@@ -133,7 +143,9 @@ describe('HumidityRoomDetailsModal Component', () => {
       hubName: undefined,
     };
 
-    const { container } = render(<HumidityRoomDetailsModal room={noHubRoom} onClose={mockOnClose} />);
+    const { container } = render(
+      <HumidityRoomDetailsModal room={noHubRoom} onClose={mockOnClose} />
+    );
 
     expect(container.textContent).not.toContain('Boîtier');
   });
@@ -155,7 +167,9 @@ describe('HumidityRoomDetailsModal Component', () => {
       humidity: 95,
     };
 
-    const { container } = render(<HumidityRoomDetailsModal room={highRoom} onClose={mockOnClose} />);
+    const { container } = render(
+      <HumidityRoomDetailsModal room={highRoom} onClose={mockOnClose} />
+    );
 
     expect(container.textContent).toContain('95');
   });

@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import HumidityStatsCards from '../HumidityStatsCards';
 import type { HumidityStats } from '../HumidityStatsCards';
 
@@ -10,14 +10,14 @@ describe('HumidityStatsCards Component', () => {
     lastUpdate: '2025-12-04 10:30',
   };
 
-  it('affiche la bonne valeur d\'humidité moyenne', () => {
+  it("affiche la bonne valeur d'humidité moyenne", () => {
     const { container } = render(<HumidityStatsCards stats={mockStats} />);
 
     expect(container.textContent).toContain('65');
     expect(container.textContent).toContain('Humidité moyenne');
   });
 
-  it('affiche le nombre d\'alertes actives', () => {
+  it("affiche le nombre d'alertes actives", () => {
     const { container } = render(<HumidityStatsCards stats={mockStats} />);
 
     expect(container.textContent).toContain('3');

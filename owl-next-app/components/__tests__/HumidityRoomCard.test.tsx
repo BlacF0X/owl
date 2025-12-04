@@ -3,7 +3,6 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import HumidityRoomCard from '../HumidityRoomCard';
 import { HumidityRoom } from '../HumidityRoomCard';
 
-
 const createMockRoom = (overrides?: Partial<HumidityRoom>): HumidityRoom => ({
   id: '1',
   name: 'Salon',
@@ -13,7 +12,6 @@ const createMockRoom = (overrides?: Partial<HumidityRoom>): HumidityRoom => ({
   hubName: 'Maison',
   ...overrides,
 });
-
 
 describe('HumidityRoomCard Component', () => {
   it('affiche correctement une piece avec humidite optimale', () => {
