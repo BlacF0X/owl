@@ -204,11 +204,10 @@ export default function TemperatureDashboard({ initialSensors, token }: Props) {
   }
 
   return (
-    // MODIFICATION ICI : Retrait de 'items-center' pour aligner à gauche comme le titre
     <div className="flex flex-col gap-6 w-full pb-10">
       {/* --- SEGMENTED CONTROL --- */}
-      {/* 'self-end' pour aligner les boutons à droite (face au titre à gauche) */}
-      <div className="self-end flex bg-slate-100 p-1.5 rounded-xl shadow-inner border border-slate-200 mb-4 overflow-x-auto max-w-full">
+      {/* Retour à 'self-center' */}
+      <div className="self-center flex bg-slate-100 p-1.5 rounded-xl shadow-inner border border-slate-200 mb-4 overflow-x-auto max-w-full">
         <button
           onClick={() => setViewMode('current')}
           className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ease-in-out whitespace-nowrap ${viewMode === 'current' ? 'bg-white text-blue-600 shadow-sm ring-1 ring-black/5' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'}`}
