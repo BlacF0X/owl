@@ -21,7 +21,7 @@ interface HistoryItem {
 
 interface ChartDataPoint {
   label: string;
-  value: number | null; // Peut être null pour le futur
+  value: number | null;
 }
 
 interface Props {
@@ -30,91 +30,104 @@ interface Props {
 }
 
 // --- Composant Carte Individuelle ---
-const SensorCard = ({ sensor, token }: { sensor: TemperatureSensor; token: string | null }) => {
-  const [history, setHistory] = useState<ChartDataPoint[]>([]);
+const SensorCard = ({ sensor, token, viewMode }: { sensor: TemperatureSensor; token: string | null; viewMode: 'current' | 'max' }) => {
   const [loading, setLoading] = useState(true);
-  // On stocke l'index (0-23) de l'heure considérée comme "Maintenant"
+  
+  // États pour les deux jeux de données
+  const [data24h, setData24h] = useState<ChartDataPoint[]>([]);
+  const [data7dMax, setData7dMax] = useState<ChartDataPoint[]>([]);
+  
+  // États pour les valeurs du cercle
+  const [currentTemp, setCurrentTemp] = useState<number>(0);
+  const [maxTempToday, setMaxTempToday] = useState<number | null>(null);
+  
+  // État pour la ligne "Maintenant"
   const [currentHourIndex, setCurrentHourIndex] = useState<number | null>(null);
 
   useEffect(() => {
-    const fetchHistory = async () => {
+    const fetchAndProcessData = async () => {
       if (!token) {
         setLoading(false);
         return;
       }
-
+      
       try {
+        setLoading(true);
         const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-
-        // On demande une période large (7 jours)
+        
+        // On demande toujours 7 jours
         const res = await fetch(`${API_URL}/api/sensors/${sensor.sensor_id}/readings?period=7d`, {
           headers: { Authorization: `Bearer ${token}` },
         });
+        
+        if (!res.ok) throw new Error('API fetch failed');
+        
+        const rawData: HistoryItem[] = await res.json();
+        if (rawData.length === 0) return;
 
-        if (res.ok) {
-          const rawData: HistoryItem[] = await res.json();
+        // Tri chronologique
+        const sortedData = rawData.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+        const lastDataPoint = sortedData[sortedData.length - 1];
+        const referenceDate = new Date(lastDataPoint.timestamp);
+        
+        setCurrentTemp(parseFloat(sensor.displayValue) || 0);
 
-          if (rawData.length === 0) {
-            setHistory([]);
-            setLoading(false);
-            return;
+        // --- 1. Logique pour la vue 24h "Temps Réel" ---
+        const refHour = referenceDate.getHours();
+        setCurrentHourIndex(refHour);
+        const chartPoints24h: ChartDataPoint[] = [];
+        
+        for (let hour = 0; hour <= 23; hour++) {
+          const hourLabel = `${hour.toString().padStart(2, '0')}h`;
+          
+          // Si c'est le futur (par rapport à la dernière donnée), on arrête
+          if (hour > refHour) {
+            chartPoints24h.push({ label: hourLabel, value: null });
+            continue;
           }
-
-          // 1. Tri chronologique
-          const sortedData = rawData.sort(
-            (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-          );
-
-          // 2. Détection de la "Dernière Heure Connue" (Maintenant simulé)
-          const lastDataPoint = sortedData[sortedData.length - 1];
-          const referenceDate = new Date(lastDataPoint.timestamp);
-          const refHour = referenceDate.getHours();
-
-          // On sauvegarde cette heure pour tracer la ligne verticale
-          setCurrentHourIndex(refHour);
-
-          // 3. Construction des 24 points (00h à 23h)
-          const chartPoints: ChartDataPoint[] = [];
-
-          for (let hour = 0; hour <= 23; hour++) {
-            const hourLabel = `${hour.toString().padStart(2, '0')}h`;
-
-            // SI FUTUR : On arrête la courbe (null)
-            if (hour > refHour) {
-              chartPoints.push({ label: hourLabel, value: null });
-              continue; // On passe à l'heure suivante
-            }
-
-            // SI PASSÉ OU PRÉSENT : On cherche la donnée
-            const targetTime = new Date(referenceDate);
-            targetTime.setHours(hour, 0, 0, 0);
-
-            const match = sortedData.find((d) => {
-              const dTime = new Date(d.timestamp);
-              return dTime.getDate() === targetTime.getDate() && dTime.getHours() === hour;
-            });
-
-            if (match) {
-              chartPoints.push({ label: hourLabel, value: match.value_num });
-            } else {
-              // Si trou dans le passé, on lisse avec la valeur précédente
-              if (chartPoints.length > 0) {
-                chartPoints.push({
-                  label: hourLabel,
-                  value: chartPoints[chartPoints.length - 1].value,
-                });
-              } else {
-                // Cas initial (00h) sans donnée : on cherche la 1ère valeur dispo de la journée
-                const firstVal =
-                  sortedData.find(
-                    (d) => new Date(d.timestamp).getDate() === referenceDate.getDate()
-                  )?.value_num || 0;
-                chartPoints.push({ label: hourLabel, value: firstVal });
-              }
-            }
+          
+          // Recherche de la donnée précise
+          const match = sortedData.find(d => {
+            const dTime = new Date(d.timestamp);
+            return dTime.getDate() === referenceDate.getDate() && dTime.getHours() === hour;
+          });
+          
+          if (match) {
+            chartPoints24h.push({ label: hourLabel, value: match.value_num });
+          } else if (chartPoints24h.length > 0) {
+            // Lissage avec valeur précédente
+            chartPoints24h.push({ label: hourLabel, value: chartPoints24h[chartPoints24h.length - 1].value });
+          } else {
+            // Cas 00h vide : on prend la premiere valeur dispo du jour
+            const firstVal = sortedData.find(d => new Date(d.timestamp).getDate() === referenceDate.getDate())?.value_num || 0;
+            chartPoints24h.push({ label: hourLabel, value: firstVal });
           }
-          setHistory(chartPoints);
         }
+        setData24h(chartPoints24h);
+
+        // --- 2. Logique pour la vue 7j "Max" ---
+        const tempsByDay = new Map<string, number[]>();
+        sortedData.forEach(item => {
+          const d = new Date(item.timestamp);
+          const dayKey = d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' }); // Ex: "Lun 20"
+          if (!tempsByDay.has(dayKey)) tempsByDay.set(dayKey, []);
+          tempsByDay.get(dayKey)?.push(item.value_num);
+        });
+
+        const chartPoints7d: ChartDataPoint[] = [];
+        tempsByDay.forEach((temps, day) => {
+          chartPoints7d.push({
+            label: day,
+            value: Math.max(...temps),
+          });
+        });
+        setData7dMax(chartPoints7d);
+
+        // Temp max du jour J pour le cercle
+        const todayKeyStr = referenceDate.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' });
+        const todayTemps = tempsByDay.get(todayKeyStr) || [];
+        if (todayTemps.length > 0) setMaxTempToday(Math.max(...todayTemps));
+
       } catch (err) {
         console.error(`Erreur historique ${sensor.name}`, err);
       } finally {
@@ -122,29 +135,31 @@ const SensorCard = ({ sensor, token }: { sensor: TemperatureSensor; token: strin
       }
     };
 
-    fetchHistory();
-  }, [sensor.sensor_id, token, sensor.name]);
+    fetchAndProcessData();
+  }, [sensor.sensor_id, token, sensor.name, sensor.displayValue]);
 
-  const currentTemp = parseFloat(sensor.displayValue) || 0;
+  const dataForChart = viewMode === 'current' ? data24h : data7dMax;
+  const tempForCircle = viewMode === 'current' ? currentTemp : (maxTempToday ?? 0);
+  const circleLabel = viewMode === 'current' ? sensor.name : `${sensor.name} (Max)`;
 
   return (
     <div className="bg-white rounded-xl shadow-md p-6 flex flex-col md:flex-row items-center w-full md:w-3/4 animate-in fade-in slide-in-from-bottom-4">
       <div className="w-full md:w-1/3 flex justify-center mb-6 md:mb-0">
-        <TemperatureCircle sensorName={sensor.name} temperature={currentTemp} min={15} max={30} />
+        <TemperatureCircle
+          sensorName={circleLabel}
+          temperature={tempForCircle}
+          min={15}
+          max={30}
+        />
       </div>
-
       <div className="w-full md:w-2/3 h-[250px] md:h-[200px] pl-0 md:pl-6">
         {loading ? (
-          <div className="flex items-center justify-center w-full h-full text-slate-400 text-sm">
-            Chargement...
-          </div>
-        ) : history.length === 0 ? (
-          <div className="flex items-center justify-center w-full h-full text-slate-400 text-sm bg-slate-50 rounded-lg">
-            Aucune donnée disponible
-          </div>
+          <div className="flex items-center justify-center w-full h-full text-slate-400 text-sm">Chargement...</div>
         ) : (
-          // On passe l'heure actuelle au composant graphique
-          <TemperatureDayChart data={history} currentHour={currentHourIndex} />
+          <TemperatureDayChart 
+            data={dataForChart} 
+            currentHour={viewMode === 'current' ? currentHourIndex : null} 
+          />
         )}
       </div>
     </div>
@@ -153,6 +168,8 @@ const SensorCard = ({ sensor, token }: { sensor: TemperatureSensor; token: strin
 
 // --- Composant Principal ---
 export default function TemperatureDashboard({ initialSensors, token }: Props) {
+  const [viewMode, setViewMode] = useState<'current' | 'max'>('current');
+
   if (!initialSensors || initialSensors.length === 0) {
     return (
       <div className="text-center py-12 bg-white rounded-xl shadow-sm">
@@ -163,8 +180,33 @@ export default function TemperatureDashboard({ initialSensors, token }: Props) {
 
   return (
     <div className="flex flex-col gap-8 items-center w-full pb-10">
+      {/* --- BOUTON SWITCH --- */}
+      <div className="flex bg-slate-100 p-1 rounded-lg shadow-inner mb-4">
+        <button
+          onClick={() => setViewMode('current')}
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+            viewMode === 'current' 
+              ? 'bg-white text-blue-600 shadow-sm' 
+              : 'text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          Temps Réel (24h)
+        </button>
+        <button
+          onClick={() => setViewMode('max')}
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+            viewMode === 'max' 
+              ? 'bg-white text-blue-600 shadow-sm' 
+              : 'text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          Max Journalier (7j)
+        </button>
+      </div>
+
+      {/* --- LISTE DES CAPTEURS --- */}
       {initialSensors.map((sensor) => (
-        <SensorCard key={sensor.sensor_id} sensor={sensor} token={token} />
+        <SensorCard key={sensor.sensor_id} sensor={sensor} token={token} viewMode={viewMode} />
       ))}
     </div>
   );

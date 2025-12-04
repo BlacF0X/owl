@@ -44,7 +44,7 @@ export default async function TemperaturesDataPage() {
       <header className="mb-8">
         <h1 className="text-3xl font-bold text-slate-900">Tableau de bord des températures</h1>
         <p className="mt-1 text-slate-600">
-          Voici le résumé de l'état de vos capteurs de température en temps réel.
+          Voici le résumé de l'état de vos capteurs de température.
         </p>
       </header>
 
