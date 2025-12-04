@@ -72,13 +72,13 @@ export default function TemperatureDayChart({ data, currentHour }: ChartProps) {
           },
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           backgroundColor: (ctx: any) => {
-             const context = ctx as SegmentContext;
-             if (!context.p1 || !context.p1.parsed) return `${COLORS.green}33`;
-              const val = context.p1.parsed.y;
-              if (val > 25) return `${COLORS.red}33`;
-              if (val < 20) return `${COLORS.blue}33`;
-              return `${COLORS.green}33`;
-          }
+            const context = ctx as SegmentContext;
+            if (!context.p1 || !context.p1.parsed) return `${COLORS.green}33`;
+            const val = context.p1.parsed.y;
+            if (val > 25) return `${COLORS.red}33`;
+            if (val < 20) return `${COLORS.blue}33`;
+            return `${COLORS.green}33`;
+          },
         },
         fill: true,
         tension: 0.4,
@@ -87,9 +87,9 @@ export default function TemperatureDayChart({ data, currentHour }: ChartProps) {
         pointBackgroundColor: '#fff',
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         pointBorderColor: (context: any) => {
-            const val = context.raw as number | null;
-            if (val === null) return COLORS.green; 
-            return getColor(val);
+          const val = context.raw as number | null;
+          if (val === null) return COLORS.green;
+          return getColor(val);
         },
         pointBorderWidth: 2,
         borderWidth: 2,
@@ -113,40 +113,43 @@ export default function TemperatureDayChart({ data, currentHour }: ChartProps) {
         displayColors: false,
         callbacks: {
           label: (context: TooltipItem<'line'>) => {
-              if (context.parsed.y === null) return '';
-              return `${context.parsed.y.toFixed(1)}°C`;
+            if (context.parsed.y === null) return '';
+            return `${context.parsed.y.toFixed(1)}°C`;
           },
           labelColor: (context: TooltipItem<'line'>) => {
-              const val = context.raw as number | null;
-              if (val === null) return { borderColor: COLORS.green, backgroundColor: COLORS.green };
-              return {
-                  borderColor: getColor(val),
-                  backgroundColor: getColor(val)
-              };
-          }
+            const val = context.raw as number | null;
+            if (val === null) return { borderColor: COLORS.green, backgroundColor: COLORS.green };
+            return {
+              borderColor: getColor(val),
+              backgroundColor: getColor(val),
+            };
+          },
         },
       },
       annotation: {
-        annotations: currentHour !== null && currentHour !== undefined ? {
-          line1: {
-            type: 'line',
-            xMin: currentHour,
-            xMax: currentHour,
-            borderColor: '#94a3b8',
-            borderWidth: 2,
-            borderDash: [5, 5],
-            label: {
-              display: true,
-              content: 'Maintenant',
-              position: 'start',
-              backgroundColor: 'rgba(148, 163, 184, 0.9)',
-              color: 'white',
-              font: { size: 10, weight: 'bold' },
-              yAdjust: 0,
-            },
-          }
-        } : {}
-      }
+        annotations:
+          currentHour !== null && currentHour !== undefined
+            ? {
+                line1: {
+                  type: 'line',
+                  xMin: currentHour,
+                  xMax: currentHour,
+                  borderColor: '#94a3b8',
+                  borderWidth: 2,
+                  borderDash: [5, 5],
+                  label: {
+                    display: true,
+                    content: 'Maintenant',
+                    position: 'start',
+                    backgroundColor: 'rgba(148, 163, 184, 0.9)',
+                    color: 'white',
+                    font: { size: 10, weight: 'bold' },
+                    yAdjust: 0,
+                  },
+                },
+              }
+            : {},
+      },
     },
     scales: {
       x: {
