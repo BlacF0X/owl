@@ -1,14 +1,17 @@
-// src/api/controllers/temperature.controller.ts - PATTERN WINDOWS
+// src/api/controllers/temperature.controller.ts
 import type { Request, Response } from 'express';
 import { AppDataSource } from '../../config/data-source.js';
 import { Sensor as SensorEntity } from '../../entities/Sensor.js';
 import { SensorReading } from '../../entities/SensorReading.js';
-import { Between } from 'typeorm';
+// L'import de 'Between' a été supprimé ici
 
 /**
- * Récupère UNIQUEMENT les capteurs de type température (comme getWindowSensorsForUser)
+ * Récupère UNIQUEMENT les capteurs de type température
  */
-export const getTemperatureSensorsForUser = async (req: Request, res: Response) => {
+export const getTemperatureSensorsForUser = async (
+  req: Request,
+  res: Response
+) => {
   try {
     const userId = req.auth?.userId;
     if (!userId) {
@@ -51,9 +54,12 @@ export const getTemperatureSensorsForUser = async (req: Request, res: Response) 
 };
 
 /**
- * Stats horaires température (comme getWindowsHourlyStats) - 7 derniers jours
+ * Stats horaires température - 7 derniers jours
  */
-export const getTemperatureHourlyStats = async (req: Request, res: Response) => {
+export const getTemperatureHourlyStats = async (
+  req: Request,
+  res: Response
+) => {
   try {
     const userId = req.auth?.userId;
     const refDateQuery = req.query.refDate as string | undefined;
@@ -64,19 +70,19 @@ export const getTemperatureHourlyStats = async (req: Request, res: Response) => 
     let endDate = new Date();
     const isDevelopment = process.env.NODE_ENV !== 'production';
 
-    // LOGIQUE DATE DE REF DEV (IDENTIQUE WINDOWS)
     if (isDevelopment && refDateQuery) {
       const parsedDate = new Date(refDateQuery);
       if (!isNaN(parsedDate.getTime())) {
         endDate = parsedDate;
-        console.log(`[TEMPERATURE STATS DEV] Date référence: ${endDate.toISOString()}`);
+        console.log(
+          `[TEMPERATURE STATS DEV] Date référence: ${endDate.toISOString()}`
+        );
       }
     }
 
     const sevenDaysAgo = new Date(endDate);
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-    // REQUÊTE D'AGRÉGATION (IDENTIQUE WINDOWS)
     const rawStats = await readingRepository
       .createQueryBuilder('reading')
       .leftJoin('reading.sensor', 'sensor')
@@ -95,10 +101,9 @@ export const getTemperatureHourlyStats = async (req: Request, res: Response) => 
 
     const formattedStats = rawStats.map((stat) => ({
       hour: parseInt(stat.hour, 10),
-      count: Math.round(parseFloat(stat.avgTemperature || 0)), // Adapté température
+      count: Math.round(parseFloat(stat.avgTemperature || 0)),
     }));
 
-    // NORMALISATION 0-23h (IDENTIQUE WINDOWS)
     const completeStats = Array.from({ length: 24 }, (_, i) => {
       const found = formattedStats.find((s) => s.hour === i);
       return {

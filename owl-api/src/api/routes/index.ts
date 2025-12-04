@@ -42,7 +42,6 @@ apiRouter.use('/test', testRouter);
 apiRouter.use('/sensors', sensorRouter);
 apiRouter.use('/co2', co2Router);
 apiRouter.use('/humidity', humidityRouter);
-+apiRouter.use('/temperature', temperatureRouter);
-
+apiRouter.use('/temperature', temperatureRouter);
 
 export default apiRouter;

@@ -42,18 +42,18 @@ const SensorCard = ({ sensor, token }: { sensor: TemperatureSensor; token: strin
         setLoading(false);
         return;
       }
-      
+
       try {
         const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-        
+
         // On demande une période large (7 jours)
         const res = await fetch(`${API_URL}/api/sensors/${sensor.sensor_id}/readings?period=7d`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        
+
         if (res.ok) {
           const rawData: HistoryItem[] = await res.json();
-          
+
           if (rawData.length === 0) {
             setHistory([]);
             setLoading(false);
@@ -61,15 +61,15 @@ const SensorCard = ({ sensor, token }: { sensor: TemperatureSensor; token: strin
           }
 
           // 1. Tri chronologique
-          const sortedData = rawData.sort((a, b) => 
-            new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+          const sortedData = rawData.sort(
+            (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
           );
 
           // 2. Détection de la "Dernière Heure Connue" (Maintenant simulé)
           const lastDataPoint = sortedData[sortedData.length - 1];
-          const referenceDate = new Date(lastDataPoint.timestamp); 
+          const referenceDate = new Date(lastDataPoint.timestamp);
           const refHour = referenceDate.getHours();
-          
+
           // On sauvegarde cette heure pour tracer la ligne verticale
           setCurrentHourIndex(refHour);
 
@@ -78,18 +78,18 @@ const SensorCard = ({ sensor, token }: { sensor: TemperatureSensor; token: strin
 
           for (let hour = 0; hour <= 23; hour++) {
             const hourLabel = `${hour.toString().padStart(2, '0')}h`;
-            
+
             // SI FUTUR : On arrête la courbe (null)
             if (hour > refHour) {
-                chartPoints.push({ label: hourLabel, value: null });
-                continue; // On passe à l'heure suivante
+              chartPoints.push({ label: hourLabel, value: null });
+              continue; // On passe à l'heure suivante
             }
 
             // SI PASSÉ OU PRÉSENT : On cherche la donnée
             const targetTime = new Date(referenceDate);
             targetTime.setHours(hour, 0, 0, 0);
 
-            const match = sortedData.find(d => {
+            const match = sortedData.find((d) => {
               const dTime = new Date(d.timestamp);
               return dTime.getDate() === targetTime.getDate() && dTime.getHours() === hour;
             });
@@ -99,14 +99,17 @@ const SensorCard = ({ sensor, token }: { sensor: TemperatureSensor; token: strin
             } else {
               // Si trou dans le passé, on lisse avec la valeur précédente
               if (chartPoints.length > 0) {
-                 chartPoints.push({ 
-                    label: hourLabel, 
-                    value: chartPoints[chartPoints.length - 1].value 
-                 });
+                chartPoints.push({
+                  label: hourLabel,
+                  value: chartPoints[chartPoints.length - 1].value,
+                });
               } else {
-                 // Cas initial (00h) sans donnée : on cherche la 1ère valeur dispo de la journée
-                 const firstVal = sortedData.find(d => new Date(d.timestamp).getDate() === referenceDate.getDate())?.value_num || 0;
-                 chartPoints.push({ label: hourLabel, value: firstVal });
+                // Cas initial (00h) sans donnée : on cherche la 1ère valeur dispo de la journée
+                const firstVal =
+                  sortedData.find(
+                    (d) => new Date(d.timestamp).getDate() === referenceDate.getDate()
+                  )?.value_num || 0;
+                chartPoints.push({ label: hourLabel, value: firstVal });
               }
             }
           }
@@ -127,14 +130,9 @@ const SensorCard = ({ sensor, token }: { sensor: TemperatureSensor; token: strin
   return (
     <div className="bg-white rounded-xl shadow-md p-6 flex flex-col md:flex-row items-center w-full md:w-3/4 animate-in fade-in slide-in-from-bottom-4">
       <div className="w-full md:w-1/3 flex justify-center mb-6 md:mb-0">
-        <TemperatureCircle
-          sensorName={sensor.name}
-          temperature={currentTemp}
-          min={15}
-          max={30}
-        />
+        <TemperatureCircle sensorName={sensor.name} temperature={currentTemp} min={15} max={30} />
       </div>
-      
+
       <div className="w-full md:w-2/3 h-[250px] md:h-[200px] pl-0 md:pl-6">
         {loading ? (
           <div className="flex items-center justify-center w-full h-full text-slate-400 text-sm">
