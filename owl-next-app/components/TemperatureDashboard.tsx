@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import TemperatureCircle from '@/components/TemperatureCircle';
 import TemperatureDayChart from '@/components/TemperatureDayChart';
 import DashboardViewButtons, { ViewMode } from '@/components/TemperatureViewButtons';
+import AlertLog from '@/components/TemperatureAlertLog';
 
 // --- Types ---
 export interface TemperatureSensor {
@@ -57,14 +58,37 @@ const SensorCard = ({ sensor, token, viewMode }: { sensor: TemperatureSensor; to
         setLoading(true);
         const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
         
-        const res = await fetch(`${API_URL}/api/sensors/${sensor.sensor_id}/readings?period=30d`, {
+        // --- MODIFICATION ICI : Système de Fallback ---
+        let rawData: HistoryItem[] = [];
+        
+        // 1. On essaie de récupérer 30 jours
+        let res = await fetch(`${API_URL}/api/sensors/${sensor.sensor_id}/readings?period=30d`, {
           headers: { Authorization: `Bearer ${token}` },
         });
+
+        // 2. Si l'API refuse (ex: erreur 400 car elle ne connait pas "30d"), on tente 7 jours
+        if (!res.ok) {
+            console.warn(`[Dashboard] Echec chargement 30j (${res.status}), tentative sur 7j...`);
+            res = await fetch(`${API_URL}/api/sensors/${sensor.sensor_id}/readings?period=7d`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+        }
+
+        // 3. Si ça échoue encore, là on lance l'erreur
+        if (!res.ok) {
+            const errText = await res.text(); // On lit le message d'erreur du serveur
+            throw new Error(`API fetch failed: ${res.status} ${res.statusText} - ${errText}`);
+        }
         
-        if (!res.ok) throw new Error('API fetch failed');
+        rawData = await res.json();
         
-        const rawData: HistoryItem[] = await res.json();
-        if (rawData.length === 0) return;
+        if (!rawData || rawData.length === 0) {
+            console.log(`Aucune donnée pour le capteur ${sensor.name}`);
+            setLoading(false);
+            return;
+        }
+
+        // --- Fin de la partie fetch, le reste est le traitement habituel ---
 
         const sortedData = rawData.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
         const lastDataPoint = sortedData[sortedData.length - 1];
@@ -155,7 +179,7 @@ const SensorCard = ({ sensor, token, viewMode }: { sensor: TemperatureSensor; to
         }
 
       } catch (err) {
-        console.error(`Erreur historique ${sensor.name}`, err);
+        console.error(`Erreur historique ${sensor.name}:`, err);
       } finally {
         setLoading(false);
       }
@@ -220,12 +244,14 @@ export default function TemperatureDashboard({ initialSensors, token }: Props) {
 
   return (
     <div className="flex flex-col gap-6 w-full pb-10">
-      
       <DashboardViewButtons currentMode={viewMode} onChange={setViewMode} />
 
       {initialSensors.map((sensor) => (
         <SensorCard key={sensor.sensor_id} sensor={sensor} token={token} viewMode={viewMode} />
       ))}
+
+      {/* AJOUT ICI : Le journal d'alertes en bas de page */}
+      <AlertLog sensors={initialSensors} token={token} />
     </div>
-  );
+);
 }

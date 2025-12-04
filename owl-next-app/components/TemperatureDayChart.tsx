@@ -53,6 +53,9 @@ interface SegmentContext {
 
 export default function TemperatureDayChart({ data, currentHour }: ChartProps) {
   const safeData = data && data.length > 0 ? data : [];
+  
+  // On détecte si on est en mode "Temps réel" (vue 24h) grâce à la présence de currentHour
+  const isRealTime = currentHour !== null && currentHour !== undefined;
 
   const chartData = {
     labels: safeData.map((d) => d.label),
@@ -98,7 +101,7 @@ export default function TemperatureDayChart({ data, currentHour }: ChartProps) {
     ],
   };
 
-  const options: ChartOptions<'line'> & { plugins: { annotation?: unknown } } = {
+  const options: ChartOptions<'line'> = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -128,7 +131,7 @@ export default function TemperatureDayChart({ data, currentHour }: ChartProps) {
       },
       annotation: {
         annotations:
-          currentHour !== null && currentHour !== undefined
+          isRealTime
             ? {
                 line1: {
                   type: 'line',
@@ -158,8 +161,9 @@ export default function TemperatureDayChart({ data, currentHour }: ChartProps) {
           color: '#94a3b8',
           font: { size: 10 },
           maxRotation: 0,
-          autoSkip: true, // Important pour la vue 7j
-          maxTicksLimit: 8,
+          // Modification ici : on désactive le saut automatique en mode 24h
+          autoSkip: !isRealTime,
+          maxTicksLimit: isRealTime ? 24 : 8,
         },
         border: { display: false },
       },
