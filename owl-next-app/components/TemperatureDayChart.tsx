@@ -8,92 +8,191 @@ import {
   LinearScale,
   PointElement,
   LineElement,
+  Title,
   Tooltip,
   Legend,
+  Filler,
+  TooltipItem,
+  ChartOptions,
 } from 'chart.js';
-import type { TooltipItem } from 'chart.js';
+import annotationPlugin from 'chartjs-plugin-annotation';
 
-// Chart.js registration
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend);
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
+  annotationPlugin
+);
 
-type TemperatureDayChartProps = {
-  data: number[];
+interface ChartProps {
+  data: { label: string; value: number | null }[];
+  currentHour?: number | null;
+}
+
+const COLORS = {
+  blue: '#3b82f6',
+  green: '#22c55e',
+  red: '#ef4444',
 };
 
-const TemperatureDayChart: React.FC<TemperatureDayChartProps> = ({ data }) => {
-  // Labels horaires : 0h à 23h
-  const labels = Array.from({ length: data.length }, (_, i) => `${i}h`);
+const getColor = (value: number) => {
+  if (value > 25) return COLORS.red;
+  if (value < 20) return COLORS.blue;
+  return COLORS.green;
+};
+
+interface SegmentContext {
+  p0: { parsed: { y: number } };
+  p1: { parsed: { y: number } };
+}
+
+export default function TemperatureDayChart({ data, currentHour }: ChartProps) {
+  const safeData = data && data.length > 0 ? data : [];
 
   const chartData = {
-    labels,
+    labels: safeData.map((d) => d.label),
     datasets: [
       {
         label: 'Température',
-        data,
-        borderColor: '#3b82f6',
-        backgroundColor: 'rgba(59,130,246,0.12)',
+        data: safeData.map((d) => d.value),
+        segment: {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          borderColor: (ctx: any) => {
+            const context = ctx as SegmentContext;
+            if (!context.p1 || !context.p1.parsed) return COLORS.green;
+            const val = context.p1.parsed.y;
+            if (val > 25) return COLORS.red;
+            if (val < 20) return COLORS.blue;
+            return COLORS.green;
+          },
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          backgroundColor: (ctx: any) => {
+            const context = ctx as SegmentContext;
+            if (!context.p1 || !context.p1.parsed) return `${COLORS.green}33`;
+            const val = context.p1.parsed.y;
+            if (val > 25) return `${COLORS.red}33`;
+            if (val < 20) return `${COLORS.blue}33`;
+            return `${COLORS.green}33`;
+          },
+        },
         fill: true,
-        tension: 0.35,
-        pointRadius: 4,
-        pointBackgroundColor: data.map((v) => {
-          if (v <= 18) return '#3b82f6';
-          if (v >= 26) return '#dc2626';
-          return '#22c55e';
-        }),
-        pointBorderColor: '#fff',
+        tension: 0.4,
+        pointRadius: 0,
+        pointHoverRadius: 6,
+        pointBackgroundColor: '#fff',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        pointBorderColor: (context: any) => {
+          const val = context.raw as number | null;
+          if (val === null) return COLORS.green;
+          return getColor(val);
+        },
+        pointBorderWidth: 2,
         borderWidth: 2,
+        spanGaps: false,
       },
     ],
   };
 
-  const chartOptions = {
+  const options: ChartOptions<'line'> & { plugins: { annotation?: unknown } } = {
+    responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: { display: false },
       tooltip: {
-        enabled: true,
+        backgroundColor: '#fff',
+        titleColor: '#1e293b',
+        bodyColor: '#1e293b',
+        borderColor: '#e2e8f0',
+        borderWidth: 1,
+        padding: 10,
+        displayColors: false,
         callbacks: {
-          // Typage précis dans la callback pour éviter l'erreur any et 'is possibly null'
-          label: (ctx: TooltipItem<'line'>) => {
-            const y =
-              typeof ctx.parsed === 'number'
-                ? ctx.parsed
-                : ctx.parsed !== null && ctx.parsed !== undefined
-                  ? ctx.parsed.y
-                  : null;
-            return y !== null && y !== undefined ? `${y.toFixed(1)}°C` : '';
+          label: (context: TooltipItem<'line'>) => {
+            if (context.parsed.y === null) return '';
+            return `${context.parsed.y.toFixed(1)}°C`;
+          },
+          labelColor: (context: TooltipItem<'line'>) => {
+            const val = context.raw as number | null;
+            if (val === null) return { borderColor: COLORS.green, backgroundColor: COLORS.green };
+            return {
+              borderColor: getColor(val),
+              backgroundColor: getColor(val),
+            };
           },
         },
+      },
+      annotation: {
+        annotations:
+          currentHour !== null && currentHour !== undefined
+            ? {
+                line1: {
+                  type: 'line',
+                  xMin: currentHour,
+                  xMax: currentHour,
+                  borderColor: '#94a3b8',
+                  borderWidth: 2,
+                  borderDash: [5, 5],
+                  label: {
+                    display: true,
+                    content: 'Maintenant',
+                    position: 'start',
+                    backgroundColor: 'rgba(148, 163, 184, 0.9)',
+                    color: 'white',
+                    font: { size: 10, weight: 'bold' },
+                    yAdjust: 0,
+                  },
+                },
+              }
+            : {},
       },
     },
     scales: {
       x: {
-        title: { display: true, text: 'Heure', font: { size: 16 } },
-        ticks: {
-          autoSkip: false,
-          font: { size: 14 },
-        },
         grid: { display: false },
+        ticks: {
+          color: '#94a3b8',
+          font: { size: 10 },
+          maxRotation: 0,
+          autoSkip: false,
+          maxTicksLimit: 24,
+        },
+        border: { display: false },
       },
       y: {
         min: 15,
         max: 30,
-        title: { display: true, text: 'Température (°C)', font: { size: 16 } },
-        ticks: {
-          stepSize: 1,
-          font: { size: 14 },
+        grid: {
+          color: '#f1f5f9',
+          tickBorderDash: [5, 5],
         },
-        grid: { color: '#e5e7eb', borderDash: [4, 4] },
+        ticks: {
+          stepSize: 5,
+          color: '#94a3b8',
+          font: { size: 11 },
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          callback: (value: any) => `${value}°`,
+        },
+        border: { display: false },
       },
     },
-    responsive: true,
-    maintainAspectRatio: false,
+    interaction: {
+      mode: 'index',
+      intersect: false,
+    },
   };
 
-  return (
-    <div className="w-full md:w-[600px] h-[300px]">
-      <Line data={chartData} options={chartOptions} />
-    </div>
-  );
-};
+  if (safeData.length === 0) {
+    return (
+      <div className="h-full w-full flex items-center justify-center text-slate-400 text-sm bg-slate-50 rounded-lg">
+        Pas de données disponibles
+      </div>
+    );
+  }
 
-export default TemperatureDayChart;
+  return <Line data={chartData} options={options} />;
+}

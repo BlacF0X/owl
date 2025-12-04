@@ -4,6 +4,8 @@ import clerkWebhookRouter from './clerk.routes.js';
 import sensorRouter from './sensor.routes.js';
 import co2Router from './co2.routes.js';
 import humidityRouter from './humidity.routes.js';
+import temperatureRouter from './temperature.routes.js';
+
 const apiRouter = Router();
 
 /**
@@ -40,5 +42,6 @@ apiRouter.use('/test', testRouter);
 apiRouter.use('/sensors', sensorRouter);
 apiRouter.use('/co2', co2Router);
 apiRouter.use('/humidity', humidityRouter);
+apiRouter.use('/temperature', temperatureRouter);
 
 export default apiRouter;
