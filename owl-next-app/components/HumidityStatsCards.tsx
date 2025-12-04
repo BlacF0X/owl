@@ -1,7 +1,9 @@
+'use client';
+
 import React from 'react';
 import { Activity, AlertTriangle, Clock } from 'lucide-react';
 
-interface HumidityStats {
+export interface HumidityStats {
   averageHumidity: number;
   activeAlerts: number;
   lastUpdate: string;
