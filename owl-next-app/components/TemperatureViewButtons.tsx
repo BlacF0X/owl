@@ -1,7 +1,7 @@
 import React from 'react';
 
-// On garde le type exporté ici, c'est pratique
-export type ViewMode = 'current' | 'max' | 'min' | 'avg';
+// ✅ Ajout de 'comparison' au type ViewMode
+export type ViewMode = 'current' | 'max' | 'min' | 'avg' | 'comparison';
 
 interface DashboardViewButtonsProps {
   currentMode: ViewMode;
@@ -14,6 +14,7 @@ const DashboardViewButtons: React.FC<DashboardViewButtonsProps> = ({ currentMode
     { id: 'avg', label: 'Moyenne (7j)' },
     { id: 'max', label: 'Max (7j)' },
     { id: 'min', label: 'Min (7j)' },
+    { id: 'comparison', label: 'Comparaison' }, // ✅ Nouveau bouton
   ];
 
   return (
