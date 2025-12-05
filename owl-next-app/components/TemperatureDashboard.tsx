@@ -71,26 +71,24 @@ const SensorCard = ({
         });
 
         if (!res.ok) {
-          console.warn(`Échec 30j (${res.status}), tentative 7j...`);
+          console.warn(`Echec 30j, tentative 7j...`);
           res = await fetch(`${API_URL}/api/sensors/${sensor.sensor_id}/readings?period=7d`, {
             headers: { Authorization: `Bearer ${token}` },
           });
         }
 
-        // ✅ Gestion d'erreur améliorée - ne pas throw, juste logger
         if (!res.ok) {
-          const errText = await res.text();
-          console.error(`❌ API fetch failed pour ${sensor.name}: ${res.status} ${res.statusText}`, errText);
+          console.warn(`Echec 7j, pas de donnees historiques`);
           setError(`Erreur de chargement (${res.status})`);
           setLoading(false);
-          return; // ✅ On sort proprement au lieu de throw
+          return;
         }
 
         rawData = await res.json();
 
         if (!rawData || rawData.length === 0) {
-          console.log(`Aucune donnée pour le capteur ${sensor.name}`);
-          setError('Aucune donnée disponible');
+          console.warn(`Aucune donnee pour le capteur ${sensor.name}`);
+          setError('Aucune donnee disponible');
           setLoading(false);
           return;
         }
@@ -192,8 +190,8 @@ const SensorCard = ({
           setAvgTempToday(0);
         }
       } catch (err) {
-        console.error(`Erreur historique ${sensor.name}:`, err);
-        setError('Erreur de traitement des données');
+        console.warn(`Erreur historique ${sensor.name}:`, err);
+        setError('Erreur de traitement des donnees');
       } finally {
         setLoading(false);
       }
@@ -220,7 +218,6 @@ const SensorCard = ({
     statusLabel = 'Température moyenne';
   }
 
-  // ✅ Affichage de l'erreur si nécessaire
   if (error) {
     return (
       <div className="bg-white rounded-xl shadow-md p-6 flex flex-col items-center justify-center w-full h-[280px] animate-in fade-in slide-in-from-bottom-4">
@@ -271,7 +268,6 @@ export default function TemperatureDashboard({ initialSensors, token }: Props) {
   const [comparisonData, setComparisonData] = useState<any[]>([]);
   const [comparisonLoading, setComparisonLoading] = useState(false);
 
-  // ✅ Charger les données de TOUS les capteurs sur 24H
   useEffect(() => {
     if (viewMode === 'comparison' && token) {
       const loadAllSensorsData = async () => {
@@ -297,9 +293,8 @@ export default function TemperatureDashboard({ initialSensors, token }: Props) {
                 );
               }
 
-              // ✅ Si toujours pas OK, on saute ce capteur
               if (!res.ok) {
-                console.warn(`Échec chargement pour ${sensor.name}: ${res.status}`);
+                console.warn(`Echec chargement comparaison: ${sensor.name}`);
                 return null;
               }
 
@@ -345,7 +340,7 @@ export default function TemperatureDashboard({ initialSensors, token }: Props) {
                 data: chartPoints,
               };
             } catch (err) {
-              console.error(`Erreur capteur ${sensor.name}:`, err);
+              console.warn(`Erreur capteur ${sensor.name}:`, err);
               return null;
             }
           });
@@ -353,7 +348,7 @@ export default function TemperatureDashboard({ initialSensors, token }: Props) {
           const results = await Promise.all(promises);
           setComparisonData(results.filter(Boolean));
         } catch (err) {
-          console.error('Erreur chargement comparaison:', err);
+          console.warn('Erreur chargement comparaison:', err);
         } finally {
           setComparisonLoading(false);
         }
