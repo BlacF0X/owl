@@ -3,8 +3,8 @@ import { redirect } from 'next/navigation';
 import { fetchFromApi } from '@/src/lib/apiClient';
 import { Sensor } from '@/src/types';
 import WindowSensorsView from '@/components/WindowSensorsView';
-import ActivityLog from '@/components/ActivityLog';
-import HourlyActivityChart from '@/components/HourlyActivityChart';
+import WindowActivityLog from '@/components/WindowActivityLog';
+import WindowHourlyActivityChart from '@/components/WindowHourlyActivityChart';
 import { AlertTriangle, BarChart3, Info } from 'lucide-react';
 
 interface HourlyStat {
@@ -175,7 +175,7 @@ export default async function WindowSensorsPage() {
 
           {/* Insertion du graphique */}
           <div className="h-48 w-full">
-            <HourlyActivityChart data={hourlyStats} />
+            <WindowHourlyActivityChart data={hourlyStats} />
           </div>
         </div>
       </div>
@@ -202,7 +202,7 @@ export default async function WindowSensorsPage() {
         </div>
       )}
 
-      {!apiError && <ActivityLog initialDate={referenceDate} />}
+      {!apiError && <WindowActivityLog initialDate={referenceDate} />}
     </div>
   );
 }

@@ -1,30 +1,82 @@
-import React from 'react';
+import { currentUser, auth } from '@clerk/nextjs/server';
+import { redirect } from 'next/navigation';
+import { fetchFromApi } from '@/src/lib/apiClient';
+import TemperatureDashboard, { TemperatureSensor } from '@/components/TemperatureDashboard';
 
-const TemperaturesDataPage = () => {
-  // Exemple de données de capteurs de température
-  const temperatureSensors = [
-    { id: 1, name: 'Capteur Salle 1', value: 22.5, unit: '°C' },
-    { id: 2, name: 'Capteur Extérieur', value: 18.0, unit: '°C' },
-    { id: 3, name: 'Capteur Cuisine', value: 25.0, unit: '°C' },
-  ];
+export const dynamic = 'force-dynamic';
 
+interface SensorWithHub extends TemperatureSensor {
+  hub: {
+    hub_id: string;
+    name: string;
+  };
+}
+
+export default async function TemperaturesDataPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ hubId?: string }>;
+}) {
+  // Attente des paramètres (Next.js 15)
+  const resolvedSearchParams = await searchParams;
+  const hubId = resolvedSearchParams.hubId;
+
+  // 1. Authentification
+  let user;
+  let getToken;
+
+  try {
+    user = await currentUser();
+    const authData = await auth();
+    getToken = authData.getToken;
+  } catch (error) {
+    console.error('Auth error:', error);
+    redirect('/connexion');
+  }
+
+  if (!user) redirect('/connexion');
+
+  // 2. Récupération et Filtrage
+  let sensors: SensorWithHub[] = [];
+  let token: string | null = null;
+
+  // Textes par défaut (Vue Globale)
+  let title = 'Tableau de bord des températures';
+  let subtitle = "Vue d'ensemble de tous vos capteurs de température (tous hubs confondus).";
+
+  try {
+    token = await getToken();
+    const allSensors = await fetchFromApi<SensorWithHub[]>('/api/temperature', token);
+
+    if (hubId) {
+      // MODE FILTRÉ (Vue par Hub)
+      sensors = allSensors.filter((s) => s.hub && s.hub.hub_id === hubId);
+
+      if (sensors.length > 0) {
+        const hubName = sensors[0].hub.name;
+        title = `Hub : ${hubName}`;
+        subtitle = `Affichage exclusif des capteurs connectés au ${hubName}.`;
+      } else {
+        title = 'Hub introuvable';
+        subtitle = 'Aucun capteur trouvé pour ce hub.';
+      }
+    } else {
+      // MODE GLOBAL (Voir tout)
+      sensors = allSensors;
+    }
+  } catch (error) {
+    console.error('Erreur chargement capteurs:', error);
+  }
+
+  // 3. Rendu
   return (
-    <div className="flex-1 p-6">
-      <h1 className="text-2xl font-bold mb-4">Capteurs de température</h1>
-      <p className="text-gray-600 mb-6">Page pour les capteurs de température.</p>
+    <div className="mb-10">
+      <header className="mb-8">
+        <h1 className="text-3xl font-bold text-slate-900">{title}</h1>
+        <p className="mt-1 text-slate-600">{subtitle}</p>
+      </header>
 
-      <div className="space-y-4">
-        {temperatureSensors.map((sensor) => (
-          <div key={sensor.id} className="border rounded-lg p-4 shadow-sm">
-            <h2 className="text-lg font-semibold">{sensor.name}</h2>
-            <p className="text-2xl mt-2">
-              {sensor.value} {sensor.unit}
-            </p>
-          </div>
-        ))}
-      </div>
+      <TemperatureDashboard initialSensors={sensors} token={token} />
     </div>
   );
-};
-
-export default TemperaturesDataPage;
+}

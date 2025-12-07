@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Sensor } from '@/src/types';
 import WindowSensorCard from '@/components/WindowSensorCard';
-import SensorDetailsModal from '@/components/SensorDetailsModal';
+import WindowSensorDetailsModal from '@/components/WindowSensorDetailsModal';
 
 interface WindowSensorsViewProps {
   sensorsByHub: Record<string, Sensor[]>;
@@ -38,7 +38,7 @@ export default function WindowSensorsView({ sensorsByHub, referenceDate }: Windo
 
       {/* Affichage conditionnel de la modale */}
       {selectedSensor && (
-        <SensorDetailsModal
+        <WindowSensorDetailsModal
           sensor={selectedSensor}
           onClose={() => setSelectedSensor(null)}
           referenceDate={referenceDate}

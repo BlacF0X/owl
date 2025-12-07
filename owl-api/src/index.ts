@@ -11,6 +11,7 @@ import { AppDataSource } from './config/data-source.js';
 import apiRouter from './api/routes/index.js';
 import swaggerUi from 'swagger-ui-express';
 import { specs } from './config/swagger.js';
+import { apiLimiter } from './api/middlewares/rateLimiter.middleware.js';
 
 // =================================================================
 // Initialisation Globale
@@ -36,12 +37,40 @@ if (!AppDataSource.isInitialized) {
 // =================================================================
 // Configuration de l'application Express
 // =================================================================
+// Définition des origines autorisées selon l'environnement
+const getCorsOrigins = () => {
+  // 1. PRODUCTION
+  if (process.env.NODE_ENV === 'production') {
+    return 'https://project-owl.vercel.app';
+  }
+
+  // 2. PREVIEW
+  if (process.env.NODE_ENV === 'preview') {
+    return 'https://project-owl-preview.vercel.app';
+  }
+
+  // 3. DÉVELOPPEMENT LOCAL
+  return [
+    'http://localhost:3000', // Votre frontend Next.js
+    'http://localhost:8080', // Pour les tests d'API en local
+  ];
+};
+
 const app = express();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: getCorsOrigins(),
+    credentials: true,
+  })
+);
+
+// Appliquer le rate limiting à toutes les requêtes commençant par /api
+app.use('/api', apiLimiter);
+// --------------------
 
 // Route pour la documentation
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV === 'dev') {
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
   console.log('📚 Documentation Swagger activée sur /api-docs');
 }

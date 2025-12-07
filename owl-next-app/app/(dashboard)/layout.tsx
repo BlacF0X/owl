@@ -1,8 +1,8 @@
-// Chemin : app/(dashboard)/layout.tsx
-
 import DashboardSidebar from '@/components/DashboardSidebar';
 import Navbar from '@/components/Navbar';
 import React from 'react';
+
+export const dynamic = 'force-dynamic';
 
 export default function DashboardRootLayout({ children }: { children: React.ReactNode }) {
   return (
