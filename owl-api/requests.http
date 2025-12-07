@@ -49,20 +49,21 @@ Authorization: Bearer {{authToken}}
 
 ###
 
-@sensorId = 2a1a1132-98a7-4a32-8cd5-9a5a6aed7ee3
+@windowId = 2a1a1132-98a7-4a32-8cd5-9a5a6aed7ee3
+@temperatureId = 2396c034-eb47-4b0d-a8b9-4490991f9040
 
 @targetDate = 2025-11-20T11:07:00.000Z
 
 # @name GetLectures24h
 # Récupère les lectures des dernières 24 heures pour un capteur spécifique
-GET {{baseUrl}}/api/sensors/{{sensorId}}/readings?period=24h&refDate={{targetDate}}
+GET {{baseUrl}}/api/sensors/{{temperatureId}}/readings?period=24h&refDate={{targetDate}}
 Authorization: Bearer {{authToken}}
 
 ###
 
 # @name GetLectures7j
 # Récupère les lectures des 7 derniers jours pour un capteur spécifique
-GET {{baseUrl}}/api/sensors/{{sensorId}}/readings?period=7d&refDate={{targetDate}}
+GET {{baseUrl}}/api/sensors/{{windowId}}/readings?period=7d&refDate={{targetDate}}
 Authorization: Bearer {{authToken}}
 
 ###
