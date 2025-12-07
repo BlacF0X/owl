@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ main, develop ]
 
+permissions:
+  contents: read
+
 # Annule les jobs en cours si un nouveau commit est poussé sur la même branche
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

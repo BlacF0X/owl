@@ -26,7 +26,7 @@ def scanning():
 def connect(ssid, password):
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
-    print(ssid, password)
+    print(ssid) # J'ai retirer password pour la sécu. Remets le si besoin pour le dev mais oublie pas de le retirer pour la prod !!!
     wlan.connect(ssid, password)
     while wlan.isconnected() == False:
         if rp2.bootsel_button() == 1:

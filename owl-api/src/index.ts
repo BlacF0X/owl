@@ -11,6 +11,7 @@ import { AppDataSource } from './config/data-source.js';
 import apiRouter from './api/routes/index.js';
 import swaggerUi from 'swagger-ui-express';
 import { specs } from './config/swagger.js';
+import { apiLimiter } from './api/middlewares/rateLimiter.middleware.js';
 
 // =================================================================
 // Initialisation Globale
@@ -63,6 +64,10 @@ app.use(
     credentials: true,
   })
 );
+
+// Appliquer le rate limiting à toutes les requêtes commençant par /api
+app.use('/api', apiLimiter);
+// --------------------
 
 // Route pour la documentation
 if (process.env.NODE_ENV === 'dev') {
