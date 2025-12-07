@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import {
   getWindowSensorsForUser,
   getWindowsHistory,
@@ -8,6 +9,13 @@ import { clerkAuthMiddleware } from '../middlewares/auth.middleware.js';
 
 const router = Router();
 
+// Define rate limiter: max 100 requests per 15 mins (per IP)
+const windowsLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 /**
  * @swagger
  * tags:
@@ -31,7 +39,7 @@ const router = Router();
  *               items:
  *                 $ref: '#/components/schemas/Sensor'
  */
-router.get('/', clerkAuthMiddleware, getWindowSensorsForUser);
+router.get('/', windowsLimiter, clerkAuthMiddleware, getWindowSensorsForUser);
 
 /**
  * @swagger
@@ -64,7 +72,7 @@ router.get('/', clerkAuthMiddleware, getWindowSensorsForUser);
  *                   sensorName: { type: string }
  *                   hubName: { type: string }
  */
-router.get('/history', clerkAuthMiddleware, getWindowsHistory);
+router.get('/history', windowsLimiter, clerkAuthMiddleware, getWindowsHistory);
 
 /**
  * @swagger
@@ -92,6 +100,6 @@ router.get('/history', clerkAuthMiddleware, getWindowsHistory);
  *                   hour: { type: integer, example: 8 }
  *                   count: { type: integer, example: 12 }
  */
-router.get('/stats', clerkAuthMiddleware, getWindowsHourlyStats);
+router.get('/stats', windowsLimiter, clerkAuthMiddleware, getWindowsHourlyStats);
 
 export default router;
