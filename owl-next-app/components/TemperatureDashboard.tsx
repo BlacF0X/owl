@@ -85,12 +85,12 @@ const HubCard = ({ hub, viewMode }: { hub: HubSummary; viewMode: ViewMode }) => 
           subtitle={subtitle}
         />
       </div>
-      
+
       <div className="flex-1 flex flex-col lg:flex-row items-center gap-6">
         <div className="w-full lg:w-1/2 h-[250px]">
           <TemperatureDayChart data={chartData} currentHour={null} />
         </div>
-        
+
         <div className="flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-8 min-w-[200px]">
           <p className="text-5xl font-extrabold text-blue-600">{hub.sensor_count}</p>
           <p className="text-sm font-semibold text-blue-800 mt-2">
@@ -291,13 +291,25 @@ const SensorCard = ({
       <div className="bg-white rounded-xl shadow-md p-6 flex flex-col items-center justify-center w-full h-[280px] animate-in fade-in slide-in-from-bottom-4">
         <div className="text-center">
           <div className="text-orange-500 mb-2">
-            <svg className="h-12 w-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            <svg
+              className="h-12 w-12 mx-auto"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
             </svg>
           </div>
           <p className="text-lg font-semibold text-slate-800">{sensor.name}</p>
           <p className="text-sm text-slate-500 mt-2">{error}</p>
-          <p className="text-xs text-slate-400 mt-1">Température actuelle : {sensor.displayValue}°C</p>
+          <p className="text-xs text-slate-400 mt-1">
+            Température actuelle : {sensor.displayValue}°C
+          </p>
         </div>
       </div>
     );
@@ -331,10 +343,18 @@ const SensorCard = ({
 };
 
 // --- Composant de vue Comparison ---
-const ComparisonView = ({ sensors, token }: { sensors: TemperatureSensor[]; token: string | null }) => {
+const ComparisonView = ({
+  sensors,
+  token,
+}: {
+  sensors: TemperatureSensor[];
+  token: string | null;
+}) => {
   const [loading, setLoading] = useState(true);
   const [labels, setLabels] = useState<string[]>([]);
-  const [sensorsData, setSensorsData] = useState<Array<{ sensorName: string; data: (number | null)[] }>>([]);
+  const [sensorsData, setSensorsData] = useState<
+    Array<{ sensorName: string; data: (number | null)[] }>
+  >([]);
   const [averageData, setAverageData] = useState<(number | null)[]>([]);
 
   useEffect(() => {
@@ -352,9 +372,12 @@ const ComparisonView = ({ sensors, token }: { sensors: TemperatureSensor[]; toke
         const allSensorsData = await Promise.all(
           sensors.map(async (sensor) => {
             try {
-              const res = await fetch(`${API_URL}/api/sensors/${sensor.sensor_id}/readings?period=7d`, {
-                headers: { Authorization: `Bearer ${token}` },
-              });
+              const res = await fetch(
+                `${API_URL}/api/sensors/${sensor.sensor_id}/readings?period=7d`,
+                {
+                  headers: { Authorization: `Bearer ${token}` },
+                }
+              );
 
               if (!res.ok) return null;
 
@@ -450,16 +473,22 @@ const ComparisonView = ({ sensors, token }: { sensors: TemperatureSensor[]; toke
     );
   }
 
-  return <TemperatureComparisonChart labels={labels} sensorsData={sensorsData} averageData={averageData} />;
+  return (
+    <TemperatureComparisonChart
+      labels={labels}
+      sensorsData={sensorsData}
+      averageData={averageData}
+    />
+  );
 };
 
 // --- Composant Principal ---
 export default function TemperatureDashboard({ initialSensors, token }: Props) {
   const searchParams = useSearchParams();
   const hubId = searchParams?.get('hubId');
-  
+
   const [viewMode, setViewMode] = useState<ViewMode>('current');
-  
+
   // États pour le mode "Tous les hubs"
   const [hubSummaries, setHubSummaries] = useState<HubSummary[]>([]);
   const [hubsLoading, setHubsLoading] = useState(false);
@@ -551,7 +580,7 @@ export default function TemperatureDashboard({ initialSensors, token }: Props) {
               // === CALCUL TEMPS RÉEL (24h) ===
               const refHour = referenceDate.getHours();
               const chartData24h: ChartDataPoint[] = [];
-              
+
               for (let hour = 0; hour <= 23; hour++) {
                 const hourLabel = `${hour.toString().padStart(2, '0')}h`;
 
@@ -570,10 +599,12 @@ export default function TemperatureDashboard({ initialSensors, token }: Props) {
                 });
 
                 if (hourData.length > 0) {
-                  const avgHour = hourData.reduce((sum, d) => sum + Number(d.value_num), 0) / hourData.length;
+                  const avgHour =
+                    hourData.reduce((sum, d) => sum + Number(d.value_num), 0) / hourData.length;
                   chartData24h.push({ label: hourLabel, value: avgHour });
                 } else {
-                  const prev = chartData24h.length > 0 ? chartData24h[chartData24h.length - 1].value : null;
+                  const prev =
+                    chartData24h.length > 0 ? chartData24h[chartData24h.length - 1].value : null;
                   chartData24h.push({ label: hourLabel, value: prev });
                 }
               }
@@ -587,9 +618,11 @@ export default function TemperatureDashboard({ initialSensors, token }: Props) {
                   dTime.getHours() === refHour
                 );
               });
-              const currentTemp = lastHourData.length > 0
-                ? lastHourData.reduce((sum, d) => sum + Number(d.value_num), 0) / lastHourData.length
-                : 0;
+              const currentTemp =
+                lastHourData.length > 0
+                  ? lastHourData.reduce((sum, d) => sum + Number(d.value_num), 0) /
+                    lastHourData.length
+                  : 0;
 
               // === CALCUL PAR JOUR (7j) ===
               const tempsByDay = new Map<string, number[]>();
@@ -617,7 +650,7 @@ export default function TemperatureDashboard({ initialSensors, token }: Props) {
               const chartData7dMax: ChartDataPoint[] = [];
               const chartData7dMin: ChartDataPoint[] = [];
               const chartData7dAvg: ChartDataPoint[] = [];
-              
+
               let totalAvg = 0;
               let totalMax = -Infinity;
               let totalMin = Infinity;
@@ -629,11 +662,11 @@ export default function TemperatureDashboard({ initialSensors, token }: Props) {
                   const max = Math.max(...temps);
                   const min = Math.min(...temps);
                   const avg = temps.reduce((a, b) => a + b, 0) / temps.length;
-                  
+
                   chartData7dMax.push({ label: dayKey, value: max });
                   chartData7dMin.push({ label: dayKey, value: min });
                   chartData7dAvg.push({ label: dayKey, value: avg });
-                  
+
                   totalAvg += avg;
                   totalMax = Math.max(totalMax, max);
                   totalMin = Math.min(totalMin, min);
@@ -696,7 +729,11 @@ export default function TemperatureDashboard({ initialSensors, token }: Props) {
   if (!hubId) {
     return (
       <div className="flex flex-col gap-6 w-full pb-10">
-        <DashboardViewButtons currentMode={viewMode} onChange={setViewMode} showComparison={false} />
+        <DashboardViewButtons
+          currentMode={viewMode}
+          onChange={setViewMode}
+          showComparison={false}
+        />
 
         {hubsLoading && (
           <div className="bg-white rounded-xl shadow-sm p-12 text-center">
@@ -709,7 +746,12 @@ export default function TemperatureDashboard({ initialSensors, token }: Props) {
           <div className="bg-white rounded-xl shadow-md p-6 flex items-center justify-center text-center">
             <div>
               <div className="text-red-500 mb-2">
-                <svg className="h-12 w-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="h-12 w-12 mx-auto"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -743,7 +785,9 @@ export default function TemperatureDashboard({ initialSensors, token }: Props) {
         <DashboardViewButtons currentMode={viewMode} onChange={setViewMode} showComparison={true} />
 
         <div className="bg-white rounded-xl shadow-md p-6 w-full animate-in fade-in slide-in-from-bottom-4">
-          <h3 className="text-lg font-bold text-slate-800 mb-4">Comparaison des capteurs (7 derniers jours)</h3>
+          <h3 className="text-lg font-bold text-slate-800 mb-4">
+            Comparaison des capteurs (7 derniers jours)
+          </h3>
           <div className="w-full h-[500px]">
             <ComparisonView sensors={initialSensors} token={token} />
           </div>

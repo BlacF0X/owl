@@ -52,7 +52,7 @@ export default function TemperatureComparisonChart({
   sensorsData,
   averageData,
 }: ComparisonChartProps) {
-  const chartRef = useRef<any>(null);
+  const chartRef = useRef<ChartJS<'line'>>(null);
   const [hiddenDatasets, setHiddenDatasets] = useState<Set<number>>(new Set());
 
   const toggleDataset = (index: number) => {

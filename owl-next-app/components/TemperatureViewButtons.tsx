@@ -11,10 +11,10 @@ interface DashboardViewButtonsProps {
   showComparison?: boolean;
 }
 
-export default function DashboardViewButtons({ 
-  currentMode, 
-  onChange, 
-  showComparison = true 
+export default function DashboardViewButtons({
+  currentMode,
+  onChange,
+  showComparison = true,
 }: DashboardViewButtonsProps) {
   const buttons: { mode: ViewMode; icon: React.ElementType; label: string }[] = [
     { mode: 'current', icon: Activity, label: 'Temps Réel' },

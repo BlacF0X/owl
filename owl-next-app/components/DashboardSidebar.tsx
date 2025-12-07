@@ -4,14 +4,7 @@ import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
-import {
-  LayoutDashboard,
-  DoorOpen,
-  Wind,
-  CloudSun,
-  Thermometer,
-  Router,
-} from 'lucide-react';
+import { LayoutDashboard, DoorOpen, Wind, CloudSun, Thermometer, Router } from 'lucide-react';
 
 interface TempSensor {
   sensor_id: string;
@@ -38,7 +31,7 @@ const DashboardSidebar = () => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const currentHubId = searchParams.get('hubId');
-  
+
   const { getToken } = useAuth();
   const [hubs, setHubs] = useState<Hub[]>([]);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -114,9 +107,7 @@ const DashboardSidebar = () => {
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold transition-colors w-full text-left ${
-                  isTempActive
-                    ? 'bg-slate-900 text-white'
-                    : 'text-slate-700 hover:bg-slate-100'
+                  isTempActive ? 'bg-slate-900 text-white' : 'text-slate-700 hover:bg-slate-100'
                 }`}
               >
                 <Thermometer className="h-5 w-5 flex-shrink-0" />
@@ -154,9 +145,9 @@ const DashboardSidebar = () => {
                       <Link
                         href="/dashboard/temperatures-datas"
                         className={`block px-3 py-2 text-xs text-center border-t border-slate-200 transition-colors ${
-                           !currentHubId 
-                             ? 'font-bold text-slate-800 bg-slate-100' 
-                             : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+                          !currentHubId
+                            ? 'font-bold text-slate-800 bg-slate-100'
+                            : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
                         }`}
                       >
                         Voir tous les Hubs confondus

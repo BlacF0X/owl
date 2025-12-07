@@ -39,32 +39,31 @@ export default async function TemperaturesDataPage({
   // 2. Récupération et Filtrage
   let sensors: SensorWithHub[] = [];
   let token: string | null = null;
-  
+
   // Textes par défaut (Vue Globale)
-  let title = "Tableau de bord des températures";
+  let title = 'Tableau de bord des températures';
   let subtitle = "Vue d'ensemble de tous vos capteurs de température (tous hubs confondus).";
 
   try {
     token = await getToken();
     const allSensors = await fetchFromApi<SensorWithHub[]>('/api/temperature', token);
-    
+
     if (hubId) {
       // MODE FILTRÉ (Vue par Hub)
-      sensors = allSensors.filter(s => s.hub && s.hub.hub_id === hubId);
-      
+      sensors = allSensors.filter((s) => s.hub && s.hub.hub_id === hubId);
+
       if (sensors.length > 0) {
         const hubName = sensors[0].hub.name;
         title = `Hub : ${hubName}`;
         subtitle = `Affichage exclusif des capteurs connectés au ${hubName}.`;
       } else {
-        title = "Hub introuvable";
-        subtitle = "Aucun capteur trouvé pour ce hub.";
+        title = 'Hub introuvable';
+        subtitle = 'Aucun capteur trouvé pour ce hub.';
       }
     } else {
       // MODE GLOBAL (Voir tout)
       sensors = allSensors;
     }
-
   } catch (error) {
     console.error('Erreur chargement capteurs:', error);
   }

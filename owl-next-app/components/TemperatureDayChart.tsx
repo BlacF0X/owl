@@ -53,7 +53,7 @@ interface SegmentContext {
 
 export default function TemperatureDayChart({ data, currentHour }: ChartProps) {
   const safeData = data && data.length > 0 ? data : [];
-  
+
   // On détecte si on est en mode "Temps réel" (vue 24h) grâce à la présence de currentHour
   const isRealTime = currentHour !== null && currentHour !== undefined;
 
@@ -130,28 +130,27 @@ export default function TemperatureDayChart({ data, currentHour }: ChartProps) {
         },
       },
       annotation: {
-        annotations:
-          isRealTime
-            ? {
-                line1: {
-                  type: 'line',
-                  xMin: currentHour,
-                  xMax: currentHour,
-                  borderColor: '#94a3b8',
-                  borderWidth: 2,
-                  borderDash: [5, 5],
-                  label: {
-                    display: true,
-                    content: 'Maintenant',
-                    position: 'start',
-                    backgroundColor: 'rgba(148, 163, 184, 0.9)',
-                    color: 'white',
-                    font: { size: 10, weight: 'bold' },
-                    yAdjust: 0,
-                  },
+        annotations: isRealTime
+          ? {
+              line1: {
+                type: 'line',
+                xMin: currentHour,
+                xMax: currentHour,
+                borderColor: '#94a3b8',
+                borderWidth: 2,
+                borderDash: [5, 5],
+                label: {
+                  display: true,
+                  content: 'Maintenant',
+                  position: 'start',
+                  backgroundColor: 'rgba(148, 163, 184, 0.9)',
+                  color: 'white',
+                  font: { size: 10, weight: 'bold' },
+                  yAdjust: 0,
                 },
-              }
-            : {},
+              },
+            }
+          : {},
       },
     },
     scales: {

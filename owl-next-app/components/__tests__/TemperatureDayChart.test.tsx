@@ -35,33 +35,29 @@ describe('TemperatureDayChart Component', () => {
   // Test 1: Affichage du graphique avec des données
   it('affiche le graphique quand il y a des données', () => {
     render(<TemperatureDayChart data={mockData} />);
-    
+
     expect(screen.getByTestId('mock-line-chart')).toBeInTheDocument();
   });
 
   // Test 2: Message quand pas de données
   it('affiche un message si aucune donnée', () => {
     render(<TemperatureDayChart data={[]} />);
-    
+
     expect(screen.getByText('Pas de données disponibles')).toBeInTheDocument();
     expect(screen.queryByTestId('mock-line-chart')).not.toBeInTheDocument();
   });
 
   // Test 3: Mode Temps Réel (avec currentHour)
   it('affiche une ligne verticale "Maintenant" en mode temps réel', () => {
-    const { container } = render(
-      <TemperatureDayChart data={mockData} currentHour={12} />
-    );
+    const { container } = render(<TemperatureDayChart data={mockData} currentHour={12} />);
 
     // On vérifie que le composant est rendu (le mock ne supporte pas les annotations)
     expect(container.querySelector('[data-testid="mock-line-chart"]')).toBeInTheDocument();
   });
 
   // Test 4: Mode historique (sans currentHour)
-  it('ne crée pas d\'annotation sans currentHour', () => {
-    const { container } = render(
-      <TemperatureDayChart data={mockData} currentHour={null} />
-    );
+  it("ne crée pas d'annotation sans currentHour", () => {
+    const { container } = render(<TemperatureDayChart data={mockData} currentHour={null} />);
 
     expect(container.querySelector('[data-testid="mock-line-chart"]')).toBeInTheDocument();
   });
@@ -81,22 +77,22 @@ describe('TemperatureDayChart Component', () => {
   // Test 6: Classes CSS de conteneur (corrigé)
   it('applique les bonnes classes de style', () => {
     const { container } = render(<TemperatureDayChart data={mockData} />);
-    
+
     // Vérifier qu'un conteneur avec des classes existe
     const chartDiv = container.querySelector('[data-testid="mock-line-chart"]');
     expect(chartDiv).toBeInTheDocument();
-    
+
     // Vérifier la structure générale (le composant est rendu)
     expect(container.firstChild).toBeTruthy();
   });
 
   // Test 7: Message d'erreur stylé (corrigé)
   it('applique les classes au message "pas de données"', () => {
-    const { container } = render(<TemperatureDayChart data={[]} />);
-    
+    render(<TemperatureDayChart data={[]} />);
+
     const message = screen.getByText('Pas de données disponibles');
     expect(message).toBeInTheDocument();
-    
+
     // Vérifier la structure du message (présence d'un conteneur)
     expect(message.closest('div')).toBeInTheDocument();
   });
@@ -123,9 +119,7 @@ describe('TemperatureDayChart Component', () => {
 
   // Test 10: Changement de currentHour
   it('accepte différentes valeurs de currentHour', () => {
-    const { rerender } = render(
-      <TemperatureDayChart data={mockData} currentHour={0} />
-    );
+    const { rerender } = render(<TemperatureDayChart data={mockData} currentHour={0} />);
     expect(screen.getByTestId('mock-line-chart')).toBeInTheDocument();
 
     rerender(<TemperatureDayChart data={mockData} currentHour={23} />);
