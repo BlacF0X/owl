@@ -1,0 +1,40 @@
+name: Simulation Data Cron
+
+on:
+  schedule:
+    # Syntaxe Cron : Toutes les 30 minutes
+    - cron: '*/30 * * * *'
+  # Permet aussi de le lancer manuellement depuis l'interface GitHub pour tester
+  workflow_dispatch:
+
+jobs:
+  simulate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./owl-api
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: owl-api/package-lock.json
+
+      - name: Install dependencies
+        # On installe juste le nécessaire pour lancer le script (tsx, dotenv, etc.)
+        run: npm ci
+
+      - name: Run Simulation Script
+        env:
+          # On récupère l'URL de ton API de PROD (ou Preview)
+          API_URL: ${{ secrets.PROD_API_URL }} 
+          # La clé API secrète
+          OWL_API_KEY: ${{ secrets.OWL_API_KEY_BOT }}
+          # Pour activer le mode "One Shot" qu'on vient de coder
+          SIMULATION_MODE: CRON
+        run: npx tsx scripts/simulate-hub.ts
