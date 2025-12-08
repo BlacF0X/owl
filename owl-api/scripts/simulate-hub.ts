@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+// Construction correcte de l'URL pour éviter les 404
 const API_URL =
   (process.env.API_URL || 'http://localhost:8080') + '/api/ingest';
 const API_KEY = process.env.OWL_API_KEY_BOT;
@@ -23,7 +24,7 @@ const SENSOR_TYPES = [
 const SENSORS_PER_TYPE = 5;
 
 if (!API_KEY) {
-  console.error('❌ Erreur : OWL_API_KEY manquant dans le .env');
+  console.error('❌ Erreur : OWL_API_KEY_BOT manquant dans le .env');
   process.exit(1);
 }
 
@@ -38,16 +39,12 @@ console.log(
 const generateValue = (type: string) => {
   switch (type) {
     case 'window':
-      // 5% de chance d'être ouvert pour ne pas avoir d'alerte partout
       return Math.random() > 0.95 ? 'Ouvert' : 'Fermé';
     case 'temperature':
-      // Entre 19.0 et 24.0 degrés
       return (19 + Math.random() * 5).toFixed(1);
     case 'humidity':
-      // Entre 40 et 65 %
       return Math.floor(40 + Math.random() * 25);
     case 'air_quality':
-      // Entre 400 et 1400 ppm (pics aléatoires)
       return Math.floor(400 + Math.random() * 1000);
     default:
       return 0;
@@ -65,7 +62,6 @@ const generatePayloadForHub = (hubConfig: {
 
   for (const type of SENSOR_TYPES) {
     for (let i = 1; i <= SENSORS_PER_TYPE; i++) {
-      // Nommage : "Maison - temperature 01"
       const sensorName = `${hubConfig.prefix} - ${type} ${i.toString().padStart(2, '0')}`;
 
       readings.push({
@@ -84,9 +80,12 @@ const generatePayloadForHub = (hubConfig: {
 };
 
 /**
- * Envoie les données pour tous les hubs configurés
+ * Envoie les données pour tous les hubs configurés.
+ * Retourne true si succès total, false si au moins une erreur.
  */
-const runSimulationCycle = async () => {
+const runSimulationCycle = async (): Promise<boolean> => {
+  let globalSuccess = true;
+
   for (const hub of HUBS_CONFIG) {
     const payload = generatePayloadForHub(hub);
 
@@ -107,21 +106,30 @@ const runSimulationCycle = async () => {
       } else {
         const txt = await res.text();
         console.error(`❌ Erreur sur ${hub.serial} (${res.status}):`, txt);
+        globalSuccess = false; // On marque l'erreur
       }
     } catch (err) {
       console.error(`❌ Erreur réseau sur ${hub.serial}:`, err);
+      globalSuccess = false; // On marque l'erreur
     }
   }
+
+  return globalSuccess;
 };
 
 const run = async () => {
   // Exécution immédiate
-  await runSimulationCycle();
+  const isSuccess = await runSimulationCycle();
 
-  // Si on est en mode "CRON" (défini dans les variables d'env), on quitte après une exécution
+  // Si on est en mode "CRON" (défini dans les variables d'env)
   if (process.env.SIMULATION_MODE === 'CRON') {
-    console.log('Mode CRON terminé. Arrêt du script.');
-    process.exit(0);
+    if (isSuccess) {
+      console.log('🏁 Mode CRON terminé avec SUCCÈS.');
+      process.exit(0); // GitHub Action Vert ✅
+    } else {
+      console.error('🏁 Mode CRON terminé avec ERREURS.');
+      process.exit(1); // GitHub Action Rouge ❌
+    }
   }
 };
 
@@ -130,6 +138,6 @@ run();
 
 // Si on n'est PAS en mode CRON, on active la boucle infinie
 if (process.env.SIMULATION_MODE !== 'CRON') {
-  console.log('Mode CONTINU activé (Ctrl+C pour arrêter)');
+  console.log('🔄 Mode CONTINU activé (Ctrl+C pour arrêter)');
   setInterval(runSimulationCycle, 10000); // Toutes les 10s en local
 }
