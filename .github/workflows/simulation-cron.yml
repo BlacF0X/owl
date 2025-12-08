@@ -1,5 +1,8 @@
 name: Simulation Data Cron
 
+permissions:
+  contents: read
+
 on:
   schedule:
     # Syntaxe Cron : Toutes les 30 minutes
