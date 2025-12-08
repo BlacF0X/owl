@@ -5,24 +5,31 @@ export const apiAuthMiddleware = (
   res: Response,
   next: NextFunction
 ) => {
-  // 1. Récupération du header
-  // Note: Express met les headers en minuscules
+  // 1. Récupération du header entrant
   const apiKey = req.headers['x-api-key'];
-  const validApiKey = process.env.OWL_API_KEY;
 
-  // 2. Vérification de la configuration serveur
-  if (!validApiKey) {
+  // 2. Récupération des clés valides côté serveur
+  const mainKey = process.env.OWL_API_KEY;
+  const botKey = process.env.OWL_API_KEY_BOT;
+
+  // 3. Vérification de la configuration serveur
+  // Le serveur est mal configuré UNIQUEMENT si AUCUNE des deux clés n'est définie.
+  if (!mainKey && !botKey) {
     console.error(
-      "❌ CRITIQUE : La variable OWL_API_KEY n'est pas définie sur le serveur."
+      "❌ CRITIQUE : Aucune clé API (OWL_API_KEY ou OWL_API_KEY_BOT) n'est définie sur le serveur."
     );
     return res
       .status(500)
       .json({ message: 'Erreur de configuration serveur.' });
   }
 
-  // 3. Comparaison sécurisée
-  // On vérifie si la clé est présente et correspond exactement
-  if (!apiKey || apiKey !== validApiKey) {
+  // 4. Vérification de l'autorisation
+  // On vérifie si la clé fournie correspond à la clé principale OU à la clé du bot
+  // (On s'assure aussi que la clé serveur existe avant de comparer pour éviter undefined === undefined)
+  const isValidMain = mainKey && apiKey === mainKey;
+  const isValidBot = botKey && apiKey === botKey;
+
+  if (!apiKey || (!isValidMain && !isValidBot)) {
     console.warn(
       `⚠️ Tentative d'accès non autorisée à l'API d'ingestion. IP: ${req.ip}`
     );
@@ -31,6 +38,6 @@ export const apiAuthMiddleware = (
       .json({ message: 'Non autorisé : Clé API invalide ou manquante.' });
   }
 
-  // 4. Accès autorisé
+  // 5. Accès autorisé
   next();
 };
