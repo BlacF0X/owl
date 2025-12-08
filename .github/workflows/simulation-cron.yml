@@ -37,7 +37,7 @@ jobs:
           # On récupère l'URL de ton API de PROD (ou Preview)
           API_URL: ${{ secrets.PROD_API_URL }} 
           # La clé API secrète
-          OWL_API_KEY: ${{ secrets.OWL_API_KEY_BOT }}
+          OWL_API_KEY_BOT: ${{ secrets.OWL_API_KEY_BOT }}
           # Pour activer le mode "One Shot" qu'on vient de coder
           SIMULATION_MODE: CRON
         run: npx tsx scripts/simulate-hub.ts
