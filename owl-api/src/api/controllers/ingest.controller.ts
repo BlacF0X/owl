@@ -29,8 +29,9 @@ const normalizeValue = (
 
   // 2. Autres cas (Numérique : Temp, Hum, CO2)
   // On convertit en nombre flottant
-  const num = typeof rawValue === 'string' ? parseFloat(rawValue) : Number(rawValue);
-  
+  const num =
+    typeof rawValue === 'string' ? parseFloat(rawValue) : Number(rawValue);
+
   // Si la conversion échoue (NaN), on renvoie null (ou 0 par défaut selon la stratégie)
   const safeNum = isNaN(num) ? null : num;
 
@@ -44,7 +45,7 @@ export const processIngest = async (req: Request, res: Response) => {
 
   const queryRunner = AppDataSource.createQueryRunner();
   await queryRunner.connect();
-  
+
   // Démarrage de la transaction
   await queryRunner.startTransaction();
 
@@ -57,11 +58,13 @@ export const processIngest = async (req: Request, res: Response) => {
 
     if (!hub) {
       await queryRunner.rollbackTransaction();
-      return res.status(404).json({ message: `Hub introuvable : ${hub_serial}` });
+      return res
+        .status(404)
+        .json({ message: `Hub introuvable : ${hub_serial}` });
     }
 
     // 2. Pré-chargement des données pour optimisation (Évite les requêtes dans la boucle)
-    
+
     // a. Tous les types de capteurs (ex: window, temperature...)
     const allSensorTypes = await queryRunner.manager.find(SensorType);
     const sensorTypesMap = new Map(allSensorTypes.map((t) => [t.type_key, t]));
@@ -113,18 +116,22 @@ export const processIngest = async (req: Request, res: Response) => {
 
       // Détection de changement d'état (pour mettre à jour state_changed_at)
       // On compare la nouvelle valeur avec l'ancienne stockée dans l'objet sensor
-      const hasChangedBool = valueBool !== null && sensor.current_state_bool !== valueBool;
+      const hasChangedBool =
+        valueBool !== null && sensor.current_state_bool !== valueBool;
       // Pour les nombres, on peut tolérer une petite marge (epsilon) mais ici on fait simple
-      const hasChangedNum = valueNum !== null && sensor.current_state_num !== valueNum;
+      const hasChangedNum =
+        valueNum !== null && sensor.current_state_num !== valueNum;
 
       if (hasChangedBool || hasChangedNum) {
-        sensor.state_changed_at = item.timestamp ? new Date(item.timestamp) : now;
+        sensor.state_changed_at = item.timestamp
+          ? new Date(item.timestamp)
+          : now;
       }
 
       // Mise à jour de l'état courant (en mémoire pour l'instant)
       sensor.current_state_bool = valueBool;
       sensor.current_state_num = valueNum;
-      
+
       // On ajoute ce sensor à la liste des updates à faire
       // (Note: save() gère l'upsert, donc pas de souci si ajouté plusieurs fois, mais optimisons)
       if (!sensorsToUpdate.includes(sensor)) {
@@ -143,7 +150,7 @@ export const processIngest = async (req: Request, res: Response) => {
     }
 
     // 4. Persistance en base (Batch)
-    
+
     // a. Mettre à jour les états actuels des capteurs
     if (sensorsToUpdate.length > 0) {
       await queryRunner.manager.save(sensorsToUpdate);
@@ -168,12 +175,13 @@ export const processIngest = async (req: Request, res: Response) => {
         readings_inserted: readingsToInsert.length,
       },
     });
-
   } catch (err) {
     // En cas d'erreur, on annule tout
     await queryRunner.rollbackTransaction();
     console.error('Erreur ingestion :', err);
-    return res.status(500).json({ message: 'Erreur interne lors de l\'ingestion.' });
+    return res
+      .status(500)
+      .json({ message: "Erreur interne lors de l'ingestion." });
   } finally {
     // On libère la connexion
     await queryRunner.release();

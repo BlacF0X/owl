@@ -13,7 +13,12 @@ const HUBS_CONFIG = [
   { serial: 'HUB-SIMU-002', prefix: 'Bureau' },
 ];
 
-const SENSOR_TYPES = ['window', 'temperature', 'humidity', 'air_quality'] as const;
+const SENSOR_TYPES = [
+  'window',
+  'temperature',
+  'humidity',
+  'air_quality',
+] as const;
 const SENSORS_PER_TYPE = 5;
 
 if (!API_KEY) {
@@ -22,7 +27,9 @@ if (!API_KEY) {
 }
 
 console.log(`🚀 Démarrage du simulateur "Project OwL"`);
-console.log(`🎯 Cible : ${HUBS_CONFIG.length} Hubs | ${SENSORS_PER_TYPE} capteurs/type | Total : ${HUBS_CONFIG.length * SENSOR_TYPES.length * SENSORS_PER_TYPE} capteurs`);
+console.log(
+  `🎯 Cible : ${HUBS_CONFIG.length} Hubs | ${SENSORS_PER_TYPE} capteurs/type | Total : ${HUBS_CONFIG.length * SENSOR_TYPES.length * SENSORS_PER_TYPE} capteurs`
+);
 
 /**
  * Génère une valeur réaliste selon le type de capteur
@@ -49,14 +56,17 @@ const generateValue = (type: string) => {
 /**
  * Génère la liste des lectures pour un Hub donné
  */
-const generatePayloadForHub = (hubConfig: { serial: string; prefix: string }) => {
+const generatePayloadForHub = (hubConfig: {
+  serial: string;
+  prefix: string;
+}) => {
   const readings = [];
 
   for (const type of SENSOR_TYPES) {
     for (let i = 1; i <= SENSORS_PER_TYPE; i++) {
       // Nommage : "Maison - temperature 01"
       const sensorName = `${hubConfig.prefix} - ${type} ${i.toString().padStart(2, '0')}`;
-      
+
       readings.push({
         sensor_name: sensorName,
         type: type,
@@ -90,7 +100,6 @@ const runSimulationCycle = async () => {
       });
 
       if (res.ok) {
-        const json = await res.json();
         console.log(
           `✅ [${new Date().toLocaleTimeString()}] ${hub.prefix} (${hub.serial}) : Envoyé ${payload.readings.length} mesures.`
         );
