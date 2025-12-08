@@ -13,4 +13,16 @@ export const apiLimiter = rateLimit({
   handler: (req, res, next, options) => {
     res.status(options.statusCode).json(options.message);
   },
+  skip: (req) => {
+    // Si le header x-api-key est présent et correspond à la clé secrète du serveur,
+    // on ignore le rate limiting pour cette requête.
+    const apiKey = req.headers['x-api-key'];
+    const validApiKey = process.env.OWL_API_KEY_BOT;
+
+    // Comparaison stricte et sécurisée (on s'assure que validApiKey existe)
+    if (validApiKey && apiKey === validApiKey) {
+      return true; // SKIP le limiteur
+    }
+    return false; // APPLIQUE le limiteur
+  },
 });

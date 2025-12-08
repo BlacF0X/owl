@@ -10,7 +10,8 @@
     "dev": "doppler run -- tsx watch src/index.ts",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "simulate": "doppler run -- npx tsx scripts/simulate-hub.ts"
   },
   "dependencies": {
     "@clerk/clerk-sdk-node": "^5.1.6",
