@@ -3,10 +3,12 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import WindowActivityLog from '../WindowActivityLog';
 import { fetchFromApi } from '@/src/lib/apiClient';
 
+const mockGetToken = jest.fn().mockResolvedValue('fake-token');
+
 // 1. Mock de Clerk (useAuth)
 jest.mock('@clerk/nextjs', () => ({
   useAuth: () => ({
-    getToken: jest.fn().mockResolvedValue('fake-token'), // Simule un token valide
+    getToken: mockGetToken, // Simule un token valide
   }),
 }));
 
@@ -82,7 +84,9 @@ describe('WindowActivityLog Component', () => {
     render(<WindowActivityLog />);
 
     await waitFor(() => {
-      expect(screen.getByText('Aucune activité enregistrée pour cette date.')).toBeInTheDocument();
+      expect(
+        screen.getByText("Aucun changement d'état enregistré pour cette date.")
+      ).toBeInTheDocument();
     });
   });
 
