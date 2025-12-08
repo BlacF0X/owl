@@ -25,6 +25,7 @@
     "express": "^4.19.2",
     "express-rate-limit": "^8.2.1",
     "pg": "^8.16.3",
+    "pusher": "^5.2.0",
     "reflect-metadata": "^0.2.2",
     "svix": "^1.81.0",
     "swagger-jsdoc": "^6.2.8",
