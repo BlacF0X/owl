@@ -4,7 +4,8 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const API_URL = process.env.API_URL || 'http://localhost:8080/api/ingest';
+const API_URL =
+  (process.env.API_URL || 'http://localhost:8080') + '/api/ingest';
 const API_KEY = process.env.OWL_API_KEY_BOT;
 
 // Configuration de la simulation
