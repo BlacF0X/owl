@@ -179,23 +179,23 @@ export const processIngest = async (req: Request, res: Response) => {
         
         // On prépare un payload léger pour le front
         const eventsPayload = readingsToInsert.map((reading) => {
-            // Petite astuce : on récupère le nom du capteur via l'objet sensor qu'on a déjà
-            return {
-                sensor_id: reading.sensor.sensor_id,
-                name: reading.sensor.name,
-                // On renvoie la valeur "humaine" (bool ou num)
-                value: reading.value_bool !== null 
-                    ? (reading.value_bool ? 'Ouvert' : 'Fermé') 
-                    : reading.value_num,
-                type: reading.sensor.sensorType.type_key, // Si sensorType est chargé dans sensor
-                timestamp: reading.timestamp,
-                hub_id: hub.hub_id
-            };
+          // Petite astuce : on récupère le nom du capteur via l'objet sensor qu'on a déjà
+          return {
+            sensor_id: reading.sensor.sensor_id,
+            name: reading.sensor.name,
+            // On renvoie la valeur "humaine" (bool ou num)
+            value: reading.value_bool !== null 
+              ? (reading.value_bool ? 'Ouvert' : 'Fermé') 
+              : reading.value_num,
+            type: reading.sensor.sensorType.type_key, // Si sensorType est chargé dans sensor
+            timestamp: reading.timestamp,
+            hub_id: hub.hub_id
+          };
         });
 
         // Envoi asynchrone (on n'attend pas la réponse pour répondre au hub)
         pusher.trigger(channelName, 'sensors:update', eventsPayload)
-            .catch(err => console.error('Erreur Pusher Trigger:', err));
+          .catch(err => console.error('Erreur Pusher Trigger:', err));
             
         console.log(`📡 Pusher: ${eventsPayload.length} updates envoyés à ${channelName}`);
       }
