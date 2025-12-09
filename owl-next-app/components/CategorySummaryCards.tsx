@@ -1,7 +1,7 @@
 'use client';
 
 import { Sensor } from '@/src/types';
-import { Thermometer, Wind, Droplets, Square, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { Thermometer, Wind, Droplets, Square } from 'lucide-react';
 
 interface Props {
   sensors: Sensor[];
@@ -21,6 +21,78 @@ export default function CategorySummaryCards({
   co2Unit 
 }: Props) {
 
+  // --- LOGIQUE COULEURS DYNAMIQUES ---
+
+  // 1. Température
+  let tempColor = 'emerald'; // Default Vert (18-23)
+  let tempLabel = 'Idéale';
+  if (avgTemp !== null) {
+    if (avgTemp < 18) {
+      tempColor = 'blue';
+      tempLabel = 'Fraiche';
+    } else if (avgTemp > 23) {
+      tempColor = 'red';
+      tempLabel = 'Chaude';
+    }
+  }
+
+  // 2. CO2
+  let co2Color = 'emerald'; // Default Vert (< 800)
+  let co2Label = 'Excellente';
+  if (avgCo2 !== null) {
+    if (avgCo2 >= 800 && avgCo2 <= 1200) {
+      co2Color = 'orange';
+      co2Label = 'Moyenne';
+    } else if (avgCo2 > 1200) {
+      co2Color = 'red';
+      co2Label = 'Médiocre';
+    }
+  }
+
+  // 3. Humidité
+  let humidityColor = 'emerald'; // Default Vert (40-60)
+  let humidityLabel = 'Idéale';
+  if (avgHumidity !== null) {
+    if (avgHumidity >= 60 && avgHumidity <= 70) {
+      humidityColor = 'orange';
+      humidityLabel = 'Élevée';
+    } else if (avgHumidity < 40 || avgHumidity > 70) {
+      humidityColor = 'red';
+      humidityLabel = avgHumidity < 40 ? 'Trop sec' : 'Trop humide';
+    }
+  }
+
+  // Helpers pour générer les classes CSS dynamiquement
+  // (Note: Tailwind a besoin de classes complètes pour purger le CSS, 
+  // mais ici on utilise des noms standards red/blue/orange/emerald qui fonctionnent souvent si configurés en safelist ou utilisés ailleurs)
+  // Pour être sûr à 100%, on fait un switch simple.
+  
+  const getColorClasses = (color: string) => {
+    switch (color) {
+      case 'red': return {
+        border: 'border-red-100', shadow: 'shadow-red-500/10', gradient: 'from-red-500 to-rose-500', 
+        bgIcon: 'bg-red-50', textIcon: 'text-red-600', bgBadge: 'bg-red-100', textBadge: 'text-red-700', textValue: 'text-red-500'
+      };
+      case 'orange': return {
+        border: 'border-orange-100', shadow: 'shadow-orange-500/10', gradient: 'from-orange-500 to-amber-500',
+        bgIcon: 'bg-orange-50', textIcon: 'text-orange-600', bgBadge: 'bg-orange-100', textBadge: 'text-orange-700', textValue: 'text-orange-500'
+      };
+      case 'blue': return {
+        border: 'border-blue-100', shadow: 'shadow-blue-500/10', gradient: 'from-blue-500 to-cyan-500',
+        bgIcon: 'bg-blue-50', textIcon: 'text-blue-600', bgBadge: 'bg-blue-100', textBadge: 'text-blue-700', textValue: 'text-blue-500'
+      };
+      case 'emerald': 
+      default: return {
+        border: 'border-emerald-100', shadow: 'shadow-emerald-500/10', gradient: 'from-emerald-500 to-green-500',
+        bgIcon: 'bg-emerald-50', textIcon: 'text-emerald-600', bgBadge: 'bg-emerald-100', textBadge: 'text-emerald-700', textValue: 'text-emerald-500'
+      };
+    }
+  };
+
+  const tempStyles = getColorClasses(tempColor);
+  const co2Styles = getColorClasses(co2Color);
+  const humStyles = getColorClasses(humidityColor);
+
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:gap-8">
       
@@ -29,14 +101,12 @@ export default function CategorySummaryCards({
          openWindowsCount > 0 ? 'border-red-100 shadow-red-500/10' : 'border-emerald-100 shadow-emerald-500/10'
       }`}>
         <div className={`absolute top-0 right-0 h-full w-2 bg-gradient-to-b ${
-            openWindowsCount > 0 ? 'from-red-500 to-orange-500' : 'from-emerald-500 to-green-500'
+            openWindowsCount > 0 ? 'from-red-500 to-rose-500' : 'from-emerald-500 to-green-500'
         }`} />
         
         <div className="relative z-10">
           <div className="flex items-center justify-between mb-8">
-             <div className={`rounded-2xl p-3 ${
-                 openWindowsCount > 0 ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'
-             }`}>
+             <div className={`rounded-2xl p-3 ${openWindowsCount > 0 ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'}`}>
                 <Square className="h-8 w-8" />
              </div>
              <div className="text-right">
@@ -48,37 +118,33 @@ export default function CategorySummaryCards({
                 </span>
              </div>
           </div>
-
           <div className="text-center py-4">
-             <span className="text-7xl font-black tracking-tighter text-slate-800">
-               {openWindowsCount}
-             </span>
+             <span className="text-7xl font-black tracking-tighter text-slate-800">{openWindowsCount}</span>
              <p className="text-sm font-bold text-slate-400 uppercase mt-1">Fenêtres Ouvertes</p>
           </div>
         </div>
       </div>
 
       {/* --- 2. TEMPÉRATURE --- */}
-      <div className="group relative overflow-hidden rounded-[2rem] bg-white p-8 shadow-xl border border-orange-100 shadow-orange-500/10 transition-all duration-500 hover:scale-[1.02]">
-         <div className="absolute top-0 right-0 h-full w-2 bg-gradient-to-b from-orange-500 to-amber-500" />
+      <div className={`group relative overflow-hidden rounded-[2rem] bg-white p-8 shadow-xl border transition-all duration-500 hover:scale-[1.02] ${tempStyles.border} ${tempStyles.shadow}`}>
+         <div className={`absolute top-0 right-0 h-full w-2 bg-gradient-to-b ${tempStyles.gradient}`} />
          
          <div className="relative z-10">
             <div className="flex items-center justify-between mb-8">
-               <div className="rounded-2xl p-3 bg-orange-50 text-orange-600">
+               <div className={`rounded-2xl p-3 ${tempStyles.bgIcon} ${tempStyles.textIcon}`}>
                   <Thermometer className="h-8 w-8" />
                </div>
                <div className="text-right">
                   <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400">Température</h3>
-                  <span className="text-xs font-bold uppercase px-2 py-1 rounded-md bg-orange-100 text-orange-700">
-                     Moyenne
+                  <span className={`text-xs font-bold uppercase px-2 py-1 rounded-md ${tempStyles.bgBadge} ${tempStyles.textBadge}`}>
+                     {tempLabel}
                   </span>
                </div>
             </div>
-
             <div className="text-center py-4">
                <div className="flex items-center justify-center gap-1">
                   <span className="text-7xl font-black tracking-tighter text-slate-800">{avgTemp ?? '-'}</span>
-                  <span className="text-3xl font-bold text-orange-500 mb-6">°</span>
+                  <span className={`text-3xl font-bold mb-6 ${tempStyles.textValue}`}>°</span>
                </div>
                <p className="text-sm font-bold text-slate-400 uppercase mt-1">Globale</p>
             </div>
@@ -86,51 +152,47 @@ export default function CategorySummaryCards({
       </div>
 
       {/* --- 3. HUMIDITÉ --- */}
-      <div className="group relative overflow-hidden rounded-[2rem] bg-white p-8 shadow-xl border border-blue-100 shadow-blue-500/10 transition-all duration-500 hover:scale-[1.02]">
-         <div className="absolute top-0 right-0 h-full w-2 bg-gradient-to-b from-blue-500 to-cyan-500" />
+      <div className={`group relative overflow-hidden rounded-[2rem] bg-white p-8 shadow-xl border transition-all duration-500 hover:scale-[1.02] ${humStyles.border} ${humStyles.shadow}`}>
+         <div className={`absolute top-0 right-0 h-full w-2 bg-gradient-to-b ${humStyles.gradient}`} />
 
          <div className="relative z-10">
             <div className="flex items-center justify-between mb-8">
-               <div className="rounded-2xl p-3 bg-blue-50 text-blue-600">
+               <div className={`rounded-2xl p-3 ${humStyles.bgIcon} ${humStyles.textIcon}`}>
                   <Droplets className="h-8 w-8" />
                </div>
                <div className="text-right">
                   <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400">Humidité</h3>
-                  <span className="text-xs font-bold uppercase px-2 py-1 rounded-md bg-blue-100 text-blue-700">
-                     Moyenne
+                  <span className={`text-xs font-bold uppercase px-2 py-1 rounded-md ${humStyles.bgBadge} ${humStyles.textBadge}`}>
+                     {humidityLabel}
                   </span>
                </div>
             </div>
-
             <div className="text-center py-4">
                <div className="flex items-center justify-center gap-1">
                   <span className="text-7xl font-black tracking-tighter text-slate-800">{avgHumidity ?? '-'}</span>
-                  <span className="text-3xl font-bold text-blue-500 mb-6">%</span>
+                  <span className={`text-3xl font-bold mb-6 ${humStyles.textValue}`}>%</span>
                </div>
                <p className="text-sm font-bold text-slate-400 uppercase mt-1">Saturation</p>
             </div>
          </div>
       </div>
 
-      {/* --- 4. CO2 (Déjà validé, on garde le même style) --- */}
-      <div className={`group relative overflow-hidden rounded-[2rem] bg-white p-8 shadow-xl border transition-all duration-500 hover:scale-[1.02] ${
-         avgCo2 && avgCo2 > 1000 ? 'border-red-100 shadow-red-500/10' : 'border-green-100 shadow-green-500/10'
-      }`}>
-         <div className={`absolute top-0 right-0 h-full w-2 bg-gradient-to-b ${avgCo2 && avgCo2 > 1000 ? 'from-red-500 to-orange-500' : 'from-green-500 to-emerald-500'}`} />
+      {/* --- 4. CO2 --- */}
+      <div className={`group relative overflow-hidden rounded-[2rem] bg-white p-8 shadow-xl border transition-all duration-500 hover:scale-[1.02] ${co2Styles.border} ${co2Styles.shadow}`}>
+         <div className={`absolute top-0 right-0 h-full w-2 bg-gradient-to-b ${co2Styles.gradient}`} />
          
          <div className="relative z-10">
             <div className="flex items-center justify-between mb-8">
-               <div className={`rounded-2xl p-3 ${avgCo2 && avgCo2 > 1000 ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
+               <div className={`rounded-2xl p-3 ${co2Styles.bgIcon} ${co2Styles.textIcon}`}>
                   <Wind className="h-8 w-8" />
                </div>
                <div className="text-right">
                   <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400">Qualité Air</h3>
-                  <span className={`text-xs font-bold uppercase px-2 py-1 rounded-md ${avgCo2 && avgCo2 > 1000 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
-                     {avgCo2 && avgCo2 > 1000 ? 'Médiocre' : 'Excellente'}
+                  <span className={`text-xs font-bold uppercase px-2 py-1 rounded-md ${co2Styles.bgBadge} ${co2Styles.textBadge}`}>
+                     {co2Label}
                   </span>
                </div>
             </div>
-
             <div className="text-center py-4">
                <span className="text-7xl font-black tracking-tighter text-slate-800">
                   {avgCo2 ?? '-'}
