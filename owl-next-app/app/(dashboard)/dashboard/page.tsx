@@ -73,8 +73,7 @@ export default async function DashboardPage() {
         )
       : null;
 
-  // 4. Qualité de l'Air (CO2) - Option 2 : Moyenne
-  // On filtre proprement avec le type 'air_quality' uniquement
+  // 4. Qualité de l'Air (CO2)
   const co2Sensors = sensors.filter((s) => s.type.type_key === 'air_quality');
   
   const avgCo2 =
@@ -102,7 +101,7 @@ export default async function DashboardPage() {
       </header>
 
       {/* GRILLE DE STATS (KPIs) */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5 mb-8">
         {/* Carte 1 : Fenêtres */}
         <div className="rounded-lg bg-white p-5 shadow border border-slate-100">
           <p className="text-sm font-medium text-slate-500">Fenêtres Ouvertes</p>
@@ -125,7 +124,7 @@ export default async function DashboardPage() {
           </p>
         </div>
 
-        {/* Carte 4 : Qualité de l'air (Moyenne) */}
+        {/* Carte 4 : Qualité de l'air */}
         <div className="rounded-lg bg-white p-5 shadow border border-slate-100">
           <p className="text-sm font-medium text-slate-500">Qualité de l'air (Moy.)</p>
           <p className="mt-2 text-3xl font-bold text-slate-900">
@@ -143,19 +142,16 @@ export default async function DashboardPage() {
 
       {/* Gestion des erreurs API */}
       {apiError && (
-        <div className="mt-6 rounded-lg bg-red-100 p-4 text-red-700">
+        <div className="mb-6 rounded-lg bg-red-100 p-4 text-red-700">
           <p className="font-bold">Erreur de chargement :</p>
           <p className="text-sm">{apiError}</p>
         </div>
       )}
 
-      {/* Widget : Liste de TOUS les capteurs (Tableau Générique) */}
-      <div className="mt-8 rounded-lg bg-white p-6 shadow border border-slate-100">
+      {/* Widget : Liste de TOUS les capteurs (Nouvelle Grille) */}
+      <div className="mt-8">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-slate-800">État de tous les capteurs</h2>
-          <span className="inline-flex items-center rounded-md bg-slate-50 px-2 py-1 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-500/10">
-            {sensors.length} capteurs
-          </span>
+          <h2 className="text-lg font-semibold text-slate-800">Détails par catégorie</h2>
         </div>
         
         <GenericSensorsTable sensors={sensors} />
