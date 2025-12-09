@@ -1,6 +1,7 @@
 import React from 'react';
 import { BarChart2 } from 'lucide-react';
 import { RoomData } from './Co2Types';
+import { useRealtimeSensor } from '@/src/hooks/useRealtimeSensor';
 
 interface SensorCardProps {
   room: RoomData;
@@ -17,36 +18,52 @@ export const SensorCard: React.FC<SensorCardProps> = ({
   onHistory,
   loadingHistory,
 }) => {
+  // Hook Realtime
+  // room.id correspond bien au sensor_id du capteur CO2 principal de la pièce
+  const { value, isLive } = useRealtimeSensor(room.id, room.value, null);
+  
+  const numericValue = Number(value);
+
+  let computedStatus: 'good' | 'medium' | 'bad' = 'good';
+  
+  if (numericValue >= 800 && numericValue < 1200) {
+    computedStatus = 'medium';
+  } else if (numericValue >= 1200) {
+    computedStatus = 'bad';
+  }
+
+  // 3. Définir les variables de style basées sur 'computedStatus'
   let colorClass = 'bg-emerald-500';
   let textClass = 'text-emerald-700';
   let bgClass = 'bg-emerald-50';
   let label = 'Excellent';
 
-  const maxScale = 2000;
-  const percentage = Math.min((room.value / maxScale) * 100, 100);
-
-  if (room.status === 'medium') {
+  if (computedStatus === 'medium') {
     colorClass = 'bg-amber-500';
     textClass = 'text-amber-700';
     bgClass = 'bg-amber-50';
     label = 'Moyen';
-  } else if (room.status === 'bad') {
+  } else if (computedStatus === 'bad') {
     colorClass = 'bg-rose-500';
     textClass = 'text-rose-700';
     bgClass = 'bg-rose-50';
     label = 'Critique';
   }
 
+  const maxScale = 2000;
+  const percentage = Math.min((numericValue / maxScale) * 100, 100);
+
   return (
     <div
       onClick={onSelect}
       className={`
-        relative flex flex-col justify-between p-5 rounded-xl border transition-all duration-200 cursor-pointer overflow-hidden
+        relative flex flex-col justify-between p-5 rounded-xl border transition-all duration-300 cursor-pointer overflow-hidden
         ${
           isSelected
             ? 'bg-white border-blue-500 shadow-[0_4px_20px_-4px_rgba(59,130,246,0.15)] ring-1 ring-blue-500'
             : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-md'
         }
+        ${isLive ? 'ring-4 ring-blue-200 scale-[1.02]' : ''}
       `}
     >
       <div className="flex justify-between items-start mb-4">
@@ -83,8 +100,8 @@ export const SensorCard: React.FC<SensorCardProps> = ({
 
       <div className="mb-4">
         <div className="flex items-baseline gap-1.5">
-          <span className="text-3xl font-extrabold text-slate-900 tracking-tight font-mono">
-            {room.value}
+          <span className="text-3xl font-extrabold text-slate-900 tracking-tight font-mono transition-all duration-300">
+            {numericValue}
           </span>
           <span className="text-sm font-semibold text-slate-400">ppm</span>
         </div>
@@ -92,7 +109,7 @@ export const SensorCard: React.FC<SensorCardProps> = ({
 
       <div className="mb-4">
         <div className="flex justify-between items-end mb-1.5">
-          <span className={`text-xs font-bold ${textClass} uppercase tracking-wide`}>{label}</span>
+          <span className={`text-xs font-bold ${textClass} uppercase tracking-wide transition-colors duration-300`}>{label}</span>
           <span className="text-[10px] text-slate-400 font-medium">
             {percentage.toFixed(0)}% Saturation
           </span>
