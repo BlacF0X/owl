@@ -23,7 +23,7 @@ const navLinks = [
   { name: 'Général', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Fenêtres', href: '/dashboard/windows', icon: DoorOpen },
   // Température géré manuellement
-  { name: "Humidité", href: '/dashboard/humidity-sensors', icon: Droplets },
+  { name: 'Humidité', href: '/dashboard/humidity-sensors', icon: Droplets },
   { name: 'CO2', href: '/dashboard/co2-sensors', icon: Wind },
 ];
 

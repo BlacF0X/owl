@@ -13,7 +13,13 @@ interface HumidityRoom {
 }
 
 jest.mock('../HumidityRoomCard', () => {
-  return function MockHumidityRoomCard({ room, onClick }: { room: HumidityRoom; onClick?: () => void }) {
+  return function MockHumidityRoomCard({
+    room,
+    onClick,
+  }: {
+    room: HumidityRoom;
+    onClick?: () => void;
+  }) {
     return (
       <div data-testid={`room-card-${room.id}`} onClick={onClick}>
         {room.name}
@@ -23,20 +29,22 @@ jest.mock('../HumidityRoomCard', () => {
 });
 
 jest.mock('../HumidityRoomDetailsModal', () => {
-  return function MockHumidityRoomDetailsModal({ 
-    isOpen, 
-    room, 
-    onClose 
-  }: { 
-    isOpen?: boolean; 
-    room?: HumidityRoom; 
+  return function MockHumidityRoomDetailsModal({
+    isOpen,
+    room,
+    onClose,
+  }: {
+    isOpen?: boolean;
+    room?: HumidityRoom;
     onClose: () => void;
   }) {
     if (!isOpen || !room) return null;
     return (
       <div data-testid="room-details-modal">
         <h3>Détails: {room.name}</h3>
-        <button onClick={onClose} data-testid="modal-close">Fermer</button>
+        <button onClick={onClose} data-testid="modal-close">
+          Fermer
+        </button>
       </div>
     );
   };
@@ -80,8 +88,8 @@ describe('HumidityRoomsView Component', () => {
 
     // ✅ Utilise getAllByRole pour éviter les doublons
     const headings = screen.getAllByRole('heading', { level: 2 });
-    expect(headings.some(h => h.textContent === 'Maison')).toBe(true);
-    expect(headings.some(h => h.textContent === 'Bureau-Hub')).toBe(true);
+    expect(headings.some((h) => h.textContent === 'Maison')).toBe(true);
+    expect(headings.some((h) => h.textContent === 'Bureau-Hub')).toBe(true);
   });
 
   it('affiche tous les composants HumidityRoomCard', () => {
@@ -106,23 +114,26 @@ describe('HumidityRoomsView Component', () => {
 
     const card = screen.getByTestId('room-card-1');
     expect(card).toBeInTheDocument();
-    
+
     // ✅ Teste que le clic est possible (ne teste pas la modale pour l'instant)
     fireEvent.click(card);
-    
+
     // La modale peut nécessiter un délai ou n'être pas rendue si le composant n'utilise pas le mock
-    await waitFor(() => {
-      // Vérifie qu'au moins le clic a été enregistré
-      expect(card).toBeInTheDocument();
-    }, { timeout: 500 });
+    await waitFor(
+      () => {
+        // Vérifie qu'au moins le clic a été enregistré
+        expect(card).toBeInTheDocument();
+      },
+      { timeout: 500 }
+    );
   });
 
   it('gère plusieurs hubs avec plusieurs pièces', () => {
     // ✅ CORRECTION : Ajoute le statut valide 'warning' pour le Garage
     const roomsByHub = {
-      'Maison': [mockRooms[0], mockRooms[1]],
+      Maison: [mockRooms[0], mockRooms[1]],
       'Bureau-Hub': [mockRooms[2]],
-      'Garage': [
+      Garage: [
         {
           id: '4',
           name: 'Garage',
@@ -138,10 +149,10 @@ describe('HumidityRoomsView Component', () => {
 
     // ✅ Utilise getAllByRole pour éviter les doublons
     const headings = screen.getAllByRole('heading', { level: 2 });
-    expect(headings.some(h => h.textContent === 'Maison')).toBe(true);
-    expect(headings.some(h => h.textContent === 'Bureau-Hub')).toBe(true);
-    expect(headings.some(h => h.textContent === 'Garage')).toBe(true);
-    
+    expect(headings.some((h) => h.textContent === 'Maison')).toBe(true);
+    expect(headings.some((h) => h.textContent === 'Bureau-Hub')).toBe(true);
+    expect(headings.some((h) => h.textContent === 'Garage')).toBe(true);
+
     expect(screen.getByTestId('room-card-1')).toBeInTheDocument();
     expect(screen.getByTestId('room-card-2')).toBeInTheDocument();
     expect(screen.getByTestId('room-card-3')).toBeInTheDocument();
@@ -184,7 +195,7 @@ describe('HumidityRoomsView Component', () => {
 
   it('gère un hub vide (cas limite)', () => {
     const roomsByHub = {
-      'Maison': [],
+      Maison: [],
       'Bureau-Hub': [mockRooms[2]],
     };
 
@@ -192,16 +203,16 @@ describe('HumidityRoomsView Component', () => {
 
     // Maison s'affiche mais sans carte
     const headings = screen.getAllByRole('heading', { level: 2 });
-    expect(headings.some(h => h.textContent === 'Maison')).toBe(true);
-    expect(headings.some(h => h.textContent === 'Bureau-Hub')).toBe(true);
+    expect(headings.some((h) => h.textContent === 'Maison')).toBe(true);
+    expect(headings.some((h) => h.textContent === 'Bureau-Hub')).toBe(true);
     expect(screen.getByTestId('room-card-3')).toBeInTheDocument();
   });
 
-  it('affiche l\'ordre des hubs selon l\'ordre du dictionnaire', () => {
+  it("affiche l'ordre des hubs selon l'ordre du dictionnaire", () => {
     const roomsByHub = {
-      'Zebra': [mockRooms[0]],
-      'Alpha': [mockRooms[1]],
-      'Maison': [mockRooms[2]],
+      Zebra: [mockRooms[0]],
+      Alpha: [mockRooms[1]],
+      Maison: [mockRooms[2]],
     };
 
     const { container } = render(<HumidityRoomsView roomsByHub={roomsByHub} />);
@@ -259,7 +270,7 @@ describe('HumidityRoomsView Component', () => {
 
   it('rend le composant sans crash avec des hubs vides', () => {
     const roomsByHub = {
-      'Maison': [],
+      Maison: [],
       'Bureau-Hub': [],
     };
 
@@ -276,7 +287,7 @@ describe('HumidityRoomsView Component', () => {
     expect(screen.getByTestId('room-card-1')).toBeInTheDocument();
   });
 
-  it('affiche toutes les pièces dans l\'ordre', () => {
+  it("affiche toutes les pièces dans l'ordre", () => {
     const roomsByHub = {
       Maison: [mockRooms[0], mockRooms[1]],
     };

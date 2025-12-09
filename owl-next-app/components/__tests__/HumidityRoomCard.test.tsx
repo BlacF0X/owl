@@ -22,7 +22,7 @@ describe('HumidityRoomCard Component', () => {
   it('affiche les infos de la pièce (Cas Optimal)', () => {
     const mockOnClick = jest.fn();
     render(<HumidityRoomCard room={mockRoom} onClick={mockOnClick} />);
-    
+
     expect(screen.getByText('Chambre Bébé')).toBeInTheDocument();
     // ✅ Utilise getAllByText et prends le premier résultat
     const humidityElements = screen.getAllByText(/50%/);
@@ -37,7 +37,7 @@ describe('HumidityRoomCard Component', () => {
       status: 'danger' as const,
     };
     render(<HumidityRoomCard room={dangerRoom} />);
-    
+
     // ✅ Utilise getAllByText pour gérer les doublons
     const humidityElements = screen.getAllByText(/80%/);
     expect(humidityElements.length).toBeGreaterThan(0);
@@ -70,9 +70,11 @@ describe('HumidityRoomCard Component', () => {
   it('gère le clic sur la carte', () => {
     const mockOnClick = jest.fn();
     render(<HumidityRoomCard room={mockRoom} onClick={mockOnClick} />);
-    
+
     // ✅ CORRECTION : Utilise fireEvent et cast en HTMLElement
-    const card = screen.getByText('Chambre Bébé').closest('div[class*="rounded-lg"]') as HTMLElement;
+    const card = screen
+      .getByText('Chambre Bébé')
+      .closest('div[class*="rounded-lg"]') as HTMLElement;
     if (card) {
       fireEvent.click(card);
       expect(mockOnClick).toHaveBeenCalled();

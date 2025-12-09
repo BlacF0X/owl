@@ -17,14 +17,14 @@ describe('HumidityStatsCards Component', () => {
     lastUpdate: '14:30',
   };
 
-  it('affiche la moyenne d\'humidité correctement', () => {
+  it("affiche la moyenne d'humidité correctement", () => {
     render(<HumidityStatsCards stats={mockStats} />);
     // ✅ Utilise une regex pour gérer le texte fragmenté (55 et %)
     expect(screen.getByText(/55/)).toBeInTheDocument();
     expect(screen.getByText(/Humidité moyenne/i)).toBeInTheDocument();
   });
 
-  it('affiche le nombre d\'alertes actives', () => {
+  it("affiche le nombre d'alertes actives", () => {
     render(<HumidityStatsCards stats={mockStats} />);
     expect(screen.getByText(/Alertes actives/i)).toBeInTheDocument();
     expect(screen.getByText('2')).toBeInTheDocument();
@@ -36,7 +36,7 @@ describe('HumidityStatsCards Component', () => {
     expect(screen.getByText('14:30')).toBeInTheDocument();
   });
 
-  it('affiche un badge vert si pas d\'alertes', () => {
+  it("affiche un badge vert si pas d'alertes", () => {
     const noAlertsStats: HumidityStats = {
       averageHumidity: 50,
       activeAlerts: 0,
@@ -46,7 +46,7 @@ describe('HumidityStatsCards Component', () => {
     expect(screen.getByText('0')).toBeInTheDocument();
   });
 
-  it('affiche un badge rouge s\'il y a des alertes', () => {
+  it("affiche un badge rouge s'il y a des alertes", () => {
     const withAlertsStats: HumidityStats = {
       averageHumidity: 80,
       activeAlerts: 3,

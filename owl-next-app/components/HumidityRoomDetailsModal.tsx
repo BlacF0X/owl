@@ -10,25 +10,24 @@ interface HumidityRoomDetailsModalProps {
 }
 
 export default function HumidityRoomDetailsModal({ room, onClose }: HumidityRoomDetailsModalProps) {
-  
   // Fonction pour formater la date proprement en FR
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'N/A';
     // Si c'est déjà une heure simple (ex: "16:47"), on la retourne telle quelle
-    if (dateString.length < 10) return dateString; 
-    
+    if (dateString.length < 10) return dateString;
+
     // Sinon on essaie de parser la date ISO
     try {
-        return new Date(dateString).toLocaleString('fr-FR', {
-            timeZone: 'Europe/Paris',
-            day: '2-digit', 
-            month: '2-digit', 
-            year: 'numeric', 
-            hour: '2-digit', 
-            minute: '2-digit'
-        });
-    } catch (e) {
-        return dateString;
+      return new Date(dateString).toLocaleString('fr-FR', {
+        timeZone: 'Europe/Paris',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch {
+      return dateString;
     }
   };
 
@@ -72,14 +71,14 @@ export default function HumidityRoomDetailsModal({ room, onClose }: HumidityRoom
           </div>
 
           <div className="text-sm text-slate-600">
-             <p>
-               <span className="font-semibold">Dernier relevé:</span> {formatDate(room.lastUpdate)}
-             </p>
-             {room.hubName && (
-               <p>
-                 <span className="font-semibold">Boîtier:</span> {room.hubName}
-               </p>
-             )}
+            <p>
+              <span className="font-semibold">Dernier relevé:</span> {formatDate(room.lastUpdate)}
+            </p>
+            {room.hubName && (
+              <p>
+                <span className="font-semibold">Boîtier:</span> {room.hubName}
+              </p>
+            )}
           </div>
         </div>
 

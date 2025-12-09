@@ -27,14 +27,14 @@ jest.mock('recharts', () => {
     Tooltip: ({ content }: any) => {
       const mockPayload = [{ value: 55 }];
       const mockLabel = 14;
-      
+
       if (OriginalModule.isValidElement(content)) {
         return (
           <div data-testid="tooltip">
-            {OriginalModule.cloneElement(content as React.ReactElement, { 
-              active: true, 
-              payload: mockPayload, 
-              label: mockLabel 
+            {OriginalModule.cloneElement(content as React.ReactElement, {
+              active: true,
+              payload: mockPayload,
+              label: mockLabel,
             })}
           </div>
         );
@@ -58,12 +58,12 @@ describe('HumidityEvolutionChart Component', () => {
     expect(screen.getByTestId('responsive')).toBeInTheDocument();
   });
 
-  it('affiche un message si aucune donnée n\'est disponible', () => {
+  it("affiche un message si aucune donnée n'est disponible", () => {
     render(<HumidityEvolutionChart data={[]} />);
     expect(screen.getByTestId('responsive')).toBeInTheDocument();
   });
 
-  it('affiche l\'icône Activity', () => {
+  it("affiche l'icône Activity", () => {
     render(<HumidityEvolutionChart data={mockData} />);
     expect(screen.getByTestId('icon-activity')).toBeInTheDocument();
   });
@@ -90,7 +90,7 @@ describe('HumidityEvolutionChart Component', () => {
   });
 
   // ✅ Test spécifique pour vérifier que formatXAxis est appelé (via le mock)
-  it('formate correctement les ticks de l\'axe X', () => {
+  it("formate correctement les ticks de l'axe X", () => {
     render(<HumidityEvolutionChart data={mockData} />);
     // Le mock XAxis rend tickFormatter(12) -> "12h"
     expect(screen.getByTestId('xaxis-tick')).toHaveTextContent('12h');

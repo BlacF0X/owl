@@ -30,19 +30,23 @@ const HumidityStatsCards: React.FC<HumidityStatsCardsProps> = ({ stats }) => {
       </div>
 
       {/* Active Alerts Card (Devient ROUGE si alerte) */}
-      <div className={`rounded-xl border bg-white p-6 shadow-sm transition-shadow hover:shadow-md ${hasAlerts ? 'border-red-200 bg-red-50/30' : 'border-slate-200'}`}>
-        <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-lg ${hasAlerts ? 'bg-red-100' : 'bg-emerald-100'}`}>
+      <div
+        className={`rounded-xl border bg-white p-6 shadow-sm transition-shadow hover:shadow-md ${hasAlerts ? 'border-red-200 bg-red-50/30' : 'border-slate-200'}`}
+      >
+        <div
+          className={`mb-3 flex h-10 w-10 items-center justify-center rounded-lg ${hasAlerts ? 'bg-red-100' : 'bg-emerald-100'}`}
+        >
           {hasAlerts ? (
-             <AlertTriangle className="h-5 w-5 text-red-600" />
+            <AlertTriangle className="h-5 w-5 text-red-600" />
           ) : (
-             <CheckCircle className="h-5 w-5 text-emerald-600" />
+            <CheckCircle className="h-5 w-5 text-emerald-600" />
           )}
         </div>
         <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">
           Alertes actives
         </p>
         <p className={`text-3xl font-semibold ${hasAlerts ? 'text-red-600' : 'text-slate-900'}`}>
-            {stats.activeAlerts}
+          {stats.activeAlerts}
         </p>
       </div>
 

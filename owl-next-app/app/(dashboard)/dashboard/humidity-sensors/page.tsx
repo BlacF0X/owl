@@ -76,16 +76,15 @@ export default function HumiditySensorsPage() {
 
         // 3. Dernière mise à jour (La plus récente parmi tous les capteurs)
         const timestamps = sensorsData
-            .map((s) => (s.state_changed_at ? new Date(s.state_changed_at).getTime() : 0))
-            .filter((t) => t > 0);
+          .map((s) => (s.state_changed_at ? new Date(s.state_changed_at).getTime() : 0))
+          .filter((t) => t > 0);
 
         if (timestamps.length > 0) {
-            const last = new Date(Math.max(...timestamps));
-            setLastUpdate(last.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }));
+          const last = new Date(Math.max(...timestamps));
+          setLastUpdate(last.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }));
         } else {
-            setLastUpdate('N/A');
+          setLastUpdate('N/A');
         }
-
       } catch (err) {
         console.error('Erreur chargement humidité:', err);
         setError(err instanceof Error ? err.message : 'Erreur inconnue');
@@ -118,9 +117,9 @@ export default function HumiditySensorsPage() {
     (acc, sensor) => {
       const hubName = sensor.hub.name;
       if (!acc[hubName]) acc[hubName] = [];
-      
+
       const value = parseInt(sensor.displayValue) || 0;
-      
+
       acc[hubName].push({
         id: sensor.sensor_id,
         name: sensor.name,
