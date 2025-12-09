@@ -4,7 +4,7 @@ import { fetchFromApi } from '@/src/lib/apiClient';
 import { Sensor } from '@/src/types';
 import ApiStatusIndicator from '@/components/ApiStatusIndicator';
 import Link from 'next/link';
-import { calculateDuration } from '@/src/utils/formatters';
+import GenericSensorsTable from '@/components/GenericSensorsTable';
 
 export default async function DashboardPage() {
   let user;
