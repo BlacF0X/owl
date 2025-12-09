@@ -5,7 +5,7 @@ export const authPusher = async (req: Request, res: Response) => {
   try {
     const socketId = req.body.socket_id;
     const channel = req.body.channel_name;
-    
+
     // L'ID utilisateur vient du middleware Clerk (clerkAuthMiddleware)
     const userId = req.auth?.userId;
 
@@ -18,7 +18,9 @@ export const authPusher = async (req: Request, res: Response) => {
     const expectedChannel = `private-user-${userId}`;
 
     if (channel !== expectedChannel) {
-      console.warn(`⛔ Tentative d'accès non autorisé Pusher. User: ${userId}, Channel demandé: ${channel}`);
+      console.warn(
+        `⛔ Tentative d'accès non autorisé Pusher. User: ${userId}, Channel demandé: ${channel}`
+      );
       return res.status(403).json({ message: 'Accès au canal refusé.' });
     }
 

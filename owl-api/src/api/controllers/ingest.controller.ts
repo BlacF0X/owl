@@ -176,7 +176,7 @@ export const processIngest = async (req: Request, res: Response) => {
       if (readingsToInsert.length > 0 && hub.user) {
         const userId = hub.user.clerk_user_id;
         const channelName = `private-user-${userId}`;
-        
+
         // On prépare un payload léger pour le front
         const eventsPayload = readingsToInsert.map((reading) => {
           // Petite astuce : on récupère le nom du capteur via l'objet sensor qu'on a déjà
@@ -184,23 +184,29 @@ export const processIngest = async (req: Request, res: Response) => {
             sensor_id: reading.sensor.sensor_id,
             name: reading.sensor.name,
             // On renvoie la valeur "humaine" (bool ou num)
-            value: reading.value_bool !== null 
-              ? (reading.value_bool ? 'Ouvert' : 'Fermé') 
-              : reading.value_num,
+            value:
+              reading.value_bool !== null
+                ? reading.value_bool
+                  ? 'Ouvert'
+                  : 'Fermé'
+                : reading.value_num,
             type: reading.sensor.sensorType.type_key, // Si sensorType est chargé dans sensor
             timestamp: reading.timestamp,
-            hub_id: hub.hub_id
+            hub_id: hub.hub_id,
           };
         });
 
         // Envoi asynchrone (on n'attend pas la réponse pour répondre au hub)
-        pusher.trigger(channelName, 'sensors:update', eventsPayload)
-          .catch(err => console.error('Erreur Pusher Trigger:', err));
-            
-        console.log(`📡 Pusher: ${eventsPayload.length} updates envoyés à ${channelName}`);
+        pusher
+          .trigger(channelName, 'sensors:update', eventsPayload)
+          .catch((err) => console.error('Erreur Pusher Trigger:', err));
+
+        console.log(
+          `📡 Pusher: ${eventsPayload.length} updates envoyés à ${channelName}`
+        );
       }
     } catch (pusherErr) {
-        console.error("Erreur lors de l'envoi Pusher (non bloquant):", pusherErr);
+      console.error("Erreur lors de l'envoi Pusher (non bloquant):", pusherErr);
     }
     // ============================================================
     //  FIN LOGIQUE PUSHER
