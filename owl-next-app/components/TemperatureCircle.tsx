@@ -25,14 +25,14 @@ const TemperatureCircle: React.FC<TemperatureCircleProps> = ({
 
   // Définition des couleurs dynamiques
   const getStrokeColor = () => {
-    if (temperature > 25) return 'stroke-red-500';
-    if (temperature < 19) return 'stroke-blue-500';
-    return 'stroke-green-500';
+    if (temperature >= 23) return 'stroke-red-500'; // Trop chaud
+    if (temperature <= 18) return 'stroke-blue-500'; // Trop froid
+    return 'stroke-green-500'; // Confort 18–22
   };
 
   const getTextColor = () => {
-    if (temperature > 25) return 'text-red-500';
-    if (temperature < 19) return 'text-blue-500';
+    if (temperature >= 23) return 'text-red-500';
+    if (temperature <= 18) return 'text-blue-500';
     return 'text-green-500';
   };
 
