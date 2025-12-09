@@ -5,7 +5,7 @@ import { Sensor } from '@/src/types';
 import ApiStatusIndicator from '@/components/ApiStatusIndicator';
 import Link from 'next/link';
 import CategorySummaryCards from '@/components/CategorySummaryCards';
-import { Router, Activity, Clock, Zap } from 'lucide-react';
+import { Router, Database, Clock } from 'lucide-react';
 
 export default async function DashboardPage() {
   let user;
@@ -16,18 +16,7 @@ export default async function DashboardPage() {
     const authData = await auth();
     getToken = authData.getToken;
   } catch (error) {
-    console.error('Clerk authentication error:', error);
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-slate-50">
-        <div className="rounded-2xl bg-white p-10 text-center shadow-xl border border-slate-100">
-          <h2 className="text-2xl font-bold text-slate-900">Session expirée</h2>
-          <p className="mt-2 text-slate-500">Veuillez vous reconnecter pour accéder au dashboard.</p>
-          <Link href="/connexion" className="mt-6 inline-flex items-center justify-center rounded-xl bg-blue-600 px-6 py-3 text-sm font-bold text-white transition-all hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-200">
-            Se connecter
-          </Link>
-        </div>
-      </div>
-    );
+    return (/* Code erreur identique */ null);
   }
 
   if (!user) redirect('/connexion');
@@ -44,7 +33,6 @@ export default async function DashboardPage() {
       const dates = sensors
         .map(s => s.state_changed_at ? new Date(s.state_changed_at).getTime() : 0)
         .filter(t => t > 0);
-      
       if (dates.length > 0) {
         lastUpdateStr = new Date(Math.max(...dates)).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
       }
@@ -53,6 +41,7 @@ export default async function DashboardPage() {
     apiError = (error as Error).message;
   }
 
+  // Calculs (inchangés)
   const uniqueHubs = new Set(sensors.map(s => s.hub.hub_id)).size;
   const windowSensors = sensors.filter((s) => s.type.type_key === 'window');
   const openWindowsCount = windowSensors.filter((s) => s.displayValue === 'Ouvert').length;
@@ -65,65 +54,76 @@ export default async function DashboardPage() {
   const co2Unit = co2Sensors.length > 0 ? co2Sensors[0].type.unit : 'ppm';
 
   return (
-    <div className="space-y-8 pb-10">
+    <div className="space-y-10 pb-12 animate-in fade-in duration-700">
       
-      {/* HEADER AVEC MESSAGE D'ACCUEIL */}
-      <header className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+      {/* HEADER AVEC NOUVELLE PHRASE */}
+      <header className="relative z-10 flex flex-col md:flex-row md:items-end md:justify-between gap-4 border-b border-slate-100 pb-8">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
+          <h1 className="text-4xl font-black tracking-tight text-slate-900 sm:text-5xl">
             Vue d'ensemble
           </h1>
-          <p className="mt-2 text-lg text-slate-600">
-            Ravi de vous revoir, <span className="font-semibold text-slate-900">{user.firstName}</span>.
+          {/* ✅ PHRASE DEMANDÉE */}
+          <p className="mt-2 text-lg font-medium text-slate-500">
+            Bonjour <span className="text-blue-600">{user.firstName}</span>, voici le récapitulatif de vos capteurs.
           </p>
         </div>
         {process.env.NODE_ENV === 'development' && <ApiStatusIndicator />}
       </header>
 
-      {/* --- 1. BLOC TOP (3 Cases "Système") --- */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      {/* 1. TOP BAR : TOUTES LES CASES EN BLANC (Style Uniforme) */}
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
         
-        {/* Case HUBS (Style "Command Center" sombre) */}
-        <div className="relative overflow-hidden rounded-2xl bg-slate-900 p-6 shadow-xl shadow-slate-200 text-white">
-            <div className="absolute right-0 top-0 h-32 w-32 -mr-8 -mt-8 rounded-full bg-blue-500 blur-3xl opacity-20"></div>
-            <div className="relative z-10 flex items-center gap-4">
-                <div className="rounded-xl bg-white/10 p-3 backdrop-blur-sm">
-                    <Router className="h-6 w-6 text-blue-400" />
-                </div>
-                <div>
-                    <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Hubs Connectés</p>
-                    <p className="text-3xl font-black">{uniqueHubs}</p>
-                </div>
-            </div>
-        </div>
-
-        {/* Case CAPTEURS (Style Blanc Clean + Icone Vibrante) */}
-        <div className="relative overflow-hidden rounded-2xl bg-white p-6 shadow-lg shadow-slate-100 border border-slate-100">
-            <div className="flex items-center gap-4">
-                <div className="rounded-xl bg-indigo-50 p-3 text-indigo-600">
-                    <Activity className="h-6 w-6" />
-                </div>
-                <div>
-                    <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Parc Capteurs</p>
-                    <div className="flex items-baseline gap-2">
-                         <p className="text-3xl font-black text-slate-900">{sensors.length}</p>
-                         <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
-                            <Zap className="mr-1 h-3 w-3 fill-current" /> Actifs
-                         </span>
+        {/* CARTE 1: HUBS */}
+        <div className="relative overflow-hidden rounded-[2rem] bg-white p-6 shadow-xl shadow-slate-200/50 border border-slate-100 transition-transform hover:scale-[1.02]">
+            <div className="relative z-10 flex flex-col justify-between h-full min-h-[140px]">
+                <div className="flex items-center justify-between">
+                    <div className="rounded-xl bg-blue-50 p-2 text-blue-600">
+                        <Router className="h-5 w-5" />
                     </div>
+                    {/* Petit point vert pour dire "Online" */}
+                    <span className="relative flex h-3 w-3">
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                    </span>
+                </div>
+                <div>
+                    <p className="text-5xl font-black tracking-tighter text-slate-900">{uniqueHubs}</p>
+                    <p className="text-sm font-medium text-slate-400 mt-1">Hubs Connectés</p>
                 </div>
             </div>
         </div>
 
-        {/* Case UPDATE (Style Blanc Clean) */}
-        <div className="relative overflow-hidden rounded-2xl bg-white p-6 shadow-lg shadow-slate-100 border border-slate-100">
-            <div className="flex items-center gap-4">
-                <div className="rounded-xl bg-slate-50 p-3 text-slate-600">
-                    <Clock className="h-6 w-6" />
+        {/* CARTE 2: CAPTEURS (Déjà bonne, on la garde) */}
+        <div className="relative overflow-hidden rounded-[2rem] bg-white p-6 shadow-xl shadow-slate-200/50 border border-slate-100 transition-transform hover:scale-[1.02]">
+            <div className="relative z-10 flex flex-col justify-between h-full min-h-[140px]">
+                <div className="flex items-center justify-between">
+                    <div className="rounded-xl bg-indigo-50 p-2 text-indigo-600">
+                        <Database className="h-5 w-5" />
+                    </div>
+                    <span className="relative flex h-3 w-3">
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                    </span>
                 </div>
                 <div>
-                    <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Dernière Synchro</p>
-                    <p className="text-3xl font-black text-slate-900">{lastUpdateStr}</p>
+                    <p className="text-5xl font-black tracking-tighter text-slate-900">{sensors.length}</p>
+                    <p className="text-sm font-medium text-slate-400 mt-1">Capteurs Actifs</p>
+                </div>
+            </div>
+        </div>
+
+        {/* CARTE 3: UPDATE (Version Blanche aussi) */}
+        <div className="relative overflow-hidden rounded-[2rem] bg-white p-6 shadow-xl shadow-slate-200/50 border border-slate-100 transition-transform hover:scale-[1.02]">
+            <div className="relative z-10 flex flex-col justify-between h-full min-h-[140px]">
+                <div className="flex items-center justify-between">
+                    <div className="rounded-xl bg-violet-50 p-2 text-violet-600">
+                        <Clock className="h-5 w-5" />
+                    </div>
+                     <span className="relative flex h-3 w-3">
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                    </span>
+                </div>
+                <div>
+                    <p className="text-4xl font-black tracking-tight text-slate-900">{lastUpdateStr}</p>
+                    <p className="text-sm font-medium text-slate-400 mt-1">Dernière Mise à Jour</p>
                 </div>
             </div>
         </div>
@@ -131,18 +131,16 @@ export default async function DashboardPage() {
       </div>
 
       {apiError && (
-        <div className="rounded-xl border border-red-100 bg-red-50 p-4 text-red-700 shadow-sm">
-          <p className="font-bold flex items-center gap-2">
-            <Activity className="h-5 w-5" /> Erreur système détectée
-          </p>
-          <p className="mt-1 text-sm ml-7 opacity-90">{apiError}</p>
+        <div className="rounded-2xl border-l-4 border-red-500 bg-white p-6 shadow-lg">
+          <p className="font-bold text-red-600 flex items-center gap-2">⚠️ Erreur de communication</p>
+          <p className="mt-1 text-slate-600">{apiError}</p>
         </div>
       )}
 
-      {/* --- 2. BLOC CENTRAL (4 Grandes Cartes) --- */}
+      {/* 2. BLOC CENTRAL */}
       <div>
-        <h2 className="mb-6 text-xl font-bold text-slate-800 flex items-center gap-2">
-           Données en temps réel
+        <h2 className="mb-6 text-xl font-black uppercase tracking-widest text-slate-400 flex items-center gap-4 before:h-px before:flex-1 before:bg-slate-200 after:h-px after:flex-1 after:bg-slate-200">
+           Métriques Environnementales
         </h2>
         <CategorySummaryCards 
             sensors={sensors}

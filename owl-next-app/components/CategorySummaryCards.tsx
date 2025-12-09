@@ -1,7 +1,7 @@
 'use client';
 
 import { Sensor } from '@/src/types';
-import { Thermometer, Wind, Droplets, Square, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Thermometer, Wind, Droplets, Square, AlertTriangle, ShieldCheck } from 'lucide-react';
 
 interface Props {
   sensors: Sensor[];
@@ -21,111 +21,123 @@ export default function CategorySummaryCards({
   co2Unit 
 }: Props) {
 
-  const countByType = (key: string) => sensors.filter(s => s.type.type_key === key).length;
-
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:gap-8">
       
-      {/* --- 1. CARTE FENÊTRES (Style Alerte ou Sécurité) --- */}
-      <div className={`group relative overflow-hidden rounded-3xl border p-8 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${
-        openWindowsCount > 0 
-          ? 'bg-gradient-to-br from-red-50 to-white border-red-100' 
-          : 'bg-gradient-to-br from-emerald-50 to-white border-emerald-100'
+      {/* --- 1. SÉCURITÉ (FENÊTRES) --- */}
+      <div className={`group relative overflow-hidden rounded-[2rem] bg-white p-8 shadow-xl border transition-all duration-500 hover:scale-[1.02] ${
+         openWindowsCount > 0 ? 'border-red-100 shadow-red-500/10' : 'border-emerald-100 shadow-emerald-500/10'
       }`}>
-        <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full opacity-10 blur-2xl group-hover:opacity-20 transition-opacity duration-500 bg-current" />
+        <div className={`absolute top-0 right-0 h-full w-2 bg-gradient-to-b ${
+            openWindowsCount > 0 ? 'from-red-500 to-orange-500' : 'from-emerald-500 to-green-500'
+        }`} />
         
-        <div className="relative z-10 flex justify-between items-start">
-          <div>
-             <div className="flex items-center gap-2 mb-2">
-                <div className={`p-2 rounded-xl ${openWindowsCount > 0 ? 'bg-red-100/50 text-red-600' : 'bg-emerald-100/50 text-emerald-600'}`}>
-                    <Square className="h-5 w-5" />
-                </div>
-                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500">Sécurité</h3>
+        <div className="relative z-10">
+          <div className="flex items-center justify-between mb-8">
+             <div className={`rounded-2xl p-3 ${
+                 openWindowsCount > 0 ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'
+             }`}>
+                <Square className="h-8 w-8" />
              </div>
-             <p className="mt-4 text-5xl font-black text-slate-800 tracking-tight">
+             <div className="text-right">
+                <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400">Sécurité</h3>
+                <span className={`text-xs font-bold uppercase px-2 py-1 rounded-md ${
+                    openWindowsCount > 0 ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'
+                }`}>
+                   {openWindowsCount > 0 ? 'Attention' : 'Sécurisé'}
+                </span>
+             </div>
+          </div>
+
+          <div className="text-center py-4">
+             <span className="text-7xl font-black tracking-tighter text-slate-800">
                {openWindowsCount}
-             </p>
-             <p className={`mt-2 font-medium flex items-center gap-1.5 ${openWindowsCount > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
-                {openWindowsCount > 0 ? <AlertTriangle className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
-                {openWindowsCount > 0 ? 'Fenêtres ouvertes' : 'Tout est fermé'}
-             </p>
+             </span>
+             <p className="text-sm font-bold text-slate-400 uppercase mt-1">Fenêtres Ouvertes</p>
           </div>
-          {/* Icône Géante Décorative */}
-          <Square className={`absolute right-4 top-1/2 -translate-y-1/2 h-24 w-24 opacity-5 stroke-1 ${openWindowsCount > 0 ? 'text-red-900' : 'text-emerald-900'}`} />
         </div>
       </div>
 
-      {/* --- 2. CARTE TEMPÉRATURE (Style Chaleureux) --- */}
-      <div className="group relative overflow-hidden rounded-3xl border border-orange-100 bg-white p-8 transition-all duration-300 hover:shadow-xl hover:shadow-orange-100/50 hover:-translate-y-1">
-        <div className="absolute top-0 right-0 h-32 w-32 bg-gradient-to-bl from-orange-100 to-transparent opacity-50 rounded-bl-full" />
-        
-        <div className="relative z-10">
-          <div className="flex items-center gap-2 mb-4">
-             <div className="p-2 rounded-xl bg-orange-50 text-orange-600 shadow-sm shadow-orange-100">
-                <Thermometer className="h-5 w-5" />
-             </div>
-             <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500">Température</h3>
-          </div>
-          
-          <div className="flex items-baseline gap-1">
-            <span className="text-5xl font-black text-slate-800 tracking-tight">
-                {avgTemp !== null ? avgTemp : '-'}
-            </span>
-            <span className="text-xl font-bold text-orange-500">°C</span>
-          </div>
-          <p className="mt-2 text-sm text-slate-400 font-medium">Moyenne globale</p>
-        </div>
-        <Thermometer className="absolute right-4 bottom-4 h-20 w-20 text-orange-500 opacity-5 stroke-1 -rotate-12 group-hover:rotate-0 transition-transform duration-500" />
+      {/* --- 2. TEMPÉRATURE --- */}
+      <div className="group relative overflow-hidden rounded-[2rem] bg-white p-8 shadow-xl border border-orange-100 shadow-orange-500/10 transition-all duration-500 hover:scale-[1.02]">
+         <div className="absolute top-0 right-0 h-full w-2 bg-gradient-to-b from-orange-500 to-amber-500" />
+         
+         <div className="relative z-10">
+            <div className="flex items-center justify-between mb-8">
+               <div className="rounded-2xl p-3 bg-orange-50 text-orange-600">
+                  <Thermometer className="h-8 w-8" />
+               </div>
+               <div className="text-right">
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400">Température</h3>
+                  <span className="text-xs font-bold uppercase px-2 py-1 rounded-md bg-orange-100 text-orange-700">
+                     Moyenne
+                  </span>
+               </div>
+            </div>
+
+            <div className="text-center py-4">
+               <div className="flex items-center justify-center gap-1">
+                  <span className="text-7xl font-black tracking-tighter text-slate-800">{avgTemp ?? '-'}</span>
+                  <span className="text-3xl font-bold text-orange-500 mb-6">°</span>
+               </div>
+               <p className="text-sm font-bold text-slate-400 uppercase mt-1">Globale</p>
+            </div>
+         </div>
       </div>
 
-      {/* --- 3. CARTE HUMIDITÉ (Style Eau/Frais) --- */}
-      <div className="group relative overflow-hidden rounded-3xl border border-blue-100 bg-white p-8 transition-all duration-300 hover:shadow-xl hover:shadow-blue-100/50 hover:-translate-y-1">
-        <div className="absolute top-0 right-0 h-32 w-32 bg-gradient-to-bl from-blue-100 to-transparent opacity-50 rounded-bl-full" />
-        
-        <div className="relative z-10">
-          <div className="flex items-center gap-2 mb-4">
-             <div className="p-2 rounded-xl bg-blue-50 text-blue-600 shadow-sm shadow-blue-100">
-                <Droplets className="h-5 w-5" />
-             </div>
-             <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500">Humidité</h3>
-          </div>
-          
-          <div className="flex items-baseline gap-1">
-            <span className="text-5xl font-black text-slate-800 tracking-tight">
-                {avgHumidity !== null ? avgHumidity : '-'}
-            </span>
-            <span className="text-xl font-bold text-blue-500">%</span>
-          </div>
-          <p className="mt-2 text-sm text-slate-400 font-medium">Zone de confort : 40-60%</p>
-        </div>
-        <Droplets className="absolute right-4 bottom-4 h-20 w-20 text-blue-500 opacity-5 stroke-1 group-hover:scale-110 transition-transform duration-500" />
+      {/* --- 3. HUMIDITÉ --- */}
+      <div className="group relative overflow-hidden rounded-[2rem] bg-white p-8 shadow-xl border border-blue-100 shadow-blue-500/10 transition-all duration-500 hover:scale-[1.02]">
+         <div className="absolute top-0 right-0 h-full w-2 bg-gradient-to-b from-blue-500 to-cyan-500" />
+
+         <div className="relative z-10">
+            <div className="flex items-center justify-between mb-8">
+               <div className="rounded-2xl p-3 bg-blue-50 text-blue-600">
+                  <Droplets className="h-8 w-8" />
+               </div>
+               <div className="text-right">
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400">Humidité</h3>
+                  <span className="text-xs font-bold uppercase px-2 py-1 rounded-md bg-blue-100 text-blue-700">
+                     Moyenne
+                  </span>
+               </div>
+            </div>
+
+            <div className="text-center py-4">
+               <div className="flex items-center justify-center gap-1">
+                  <span className="text-7xl font-black tracking-tighter text-slate-800">{avgHumidity ?? '-'}</span>
+                  <span className="text-3xl font-bold text-blue-500 mb-6">%</span>
+               </div>
+               <p className="text-sm font-bold text-slate-400 uppercase mt-1">Saturation</p>
+            </div>
+         </div>
       </div>
 
-      {/* --- 4. CARTE QUALITÉ AIR (Style Organique) --- */}
-      <div className={`group relative overflow-hidden rounded-3xl border p-8 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${
-         avgCo2 && avgCo2 > 1000 ? 'border-red-100 bg-red-50/30' : 'border-green-100 bg-white'
+      {/* --- 4. CO2 (Déjà validé, on garde le même style) --- */}
+      <div className={`group relative overflow-hidden rounded-[2rem] bg-white p-8 shadow-xl border transition-all duration-500 hover:scale-[1.02] ${
+         avgCo2 && avgCo2 > 1000 ? 'border-red-100 shadow-red-500/10' : 'border-green-100 shadow-green-500/10'
       }`}>
-        <div className="absolute top-0 right-0 h-32 w-32 bg-gradient-to-bl from-green-100 to-transparent opacity-50 rounded-bl-full" />
-        
-        <div className="relative z-10">
-          <div className="flex items-center gap-2 mb-4">
-             <div className={`p-2 rounded-xl shadow-sm ${avgCo2 && avgCo2 > 1000 ? 'bg-red-100 text-red-600' : 'bg-green-50 text-green-600'}`}>
-                <Wind className="h-5 w-5" />
-             </div>
-             <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500">Qualité de l'air</h3>
-          </div>
-          
-          <div className="flex items-baseline gap-1">
-            <span className={`text-5xl font-black tracking-tight ${avgCo2 && avgCo2 > 1000 ? 'text-red-700' : 'text-slate-800'}`}>
-                {avgCo2 !== null ? avgCo2 : '-'}
-            </span>
-            <span className={`text-sm font-bold uppercase ${avgCo2 && avgCo2 > 1000 ? 'text-red-500' : 'text-green-500'}`}>{co2Unit}</span>
-          </div>
-          <p className={`mt-2 text-sm font-medium ${avgCo2 && avgCo2 > 1000 ? 'text-red-500' : 'text-green-600'}`}>
-            {avgCo2 && avgCo2 > 1000 ? 'Attention : Aérez la pièce !' : 'Air sain'}
-          </p>
-        </div>
-        <Wind className="absolute right-4 bottom-4 h-20 w-20 text-green-500 opacity-5 stroke-1 -translate-x-2 group-hover:translate-x-0 transition-transform duration-500" />
+         <div className={`absolute top-0 right-0 h-full w-2 bg-gradient-to-b ${avgCo2 && avgCo2 > 1000 ? 'from-red-500 to-orange-500' : 'from-green-500 to-emerald-500'}`} />
+         
+         <div className="relative z-10">
+            <div className="flex items-center justify-between mb-8">
+               <div className={`rounded-2xl p-3 ${avgCo2 && avgCo2 > 1000 ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
+                  <Wind className="h-8 w-8" />
+               </div>
+               <div className="text-right">
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400">Qualité Air</h3>
+                  <span className={`text-xs font-bold uppercase px-2 py-1 rounded-md ${avgCo2 && avgCo2 > 1000 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                     {avgCo2 && avgCo2 > 1000 ? 'Médiocre' : 'Excellente'}
+                  </span>
+               </div>
+            </div>
+
+            <div className="text-center py-4">
+               <span className="text-7xl font-black tracking-tighter text-slate-800">
+                  {avgCo2 ?? '-'}
+               </span>
+               <p className="text-sm font-bold text-slate-400 uppercase mt-1">{co2Unit}</p>
+            </div>
+         </div>
       </div>
 
     </div>
