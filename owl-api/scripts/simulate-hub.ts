@@ -37,10 +37,7 @@ console.log(
  * Génère une valeur réaliste selon le type de capteur
  * CORRECTION : Suppression de 'iteration', utilisation du temps réel pour le cycle
  */
-const generateValue = (
-  type: string,
-  timestamp?: Date
-): string | number => {
+const generateValue = (type: string, timestamp?: Date): string | number => {
   const now = timestamp || new Date();
   const hour = now.getHours() + now.getMinutes() / 60;
   const minuteOfDay = hour * 60;
@@ -82,9 +79,7 @@ const generateValue = (
     case 'humidity': {
       // Calculer température d'abord pour corrélation
       // Note: Cela génère une nouvelle valeur aléatoire de temp pour le calcul
-      const tempValue = parseFloat(
-        generateValue('temperature', now) as string
-      );
+      const tempValue = parseFloat(generateValue('temperature', now) as string);
       return (
         tempValue < 18 ? 65 + Math.random() * 15 : 40 + Math.random() * 20
       ).toFixed(0);
