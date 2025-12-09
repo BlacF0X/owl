@@ -2,6 +2,14 @@ import '@testing-library/jest-dom';
 import { render, screen, fireEvent } from '@testing-library/react';
 import HumidityRoomCard from '../HumidityRoomCard';
 
+jest.mock('@/src/hooks/useRealtimeSensor', () => ({
+  useRealtimeSensor: jest.fn().mockImplementation((id, initialValue, initialDate) => ({
+    value: initialValue,
+    lastUpdate: initialDate, // On retourne la date passée en prop
+    isLive: false,
+  })),
+}));
+
 jest.mock('lucide-react', () => ({
   Droplets: () => <div data-testid="icon-droplets" />,
   AlertTriangle: () => <div data-testid="icon-alert" />,
@@ -16,7 +24,7 @@ describe('HumidityRoomCard Component', () => {
     humidity: 50,
     status: 'optimal' as const,
     hubName: 'Maison',
-    lastUpdate: '09/12/2023 11:00',
+    lastUpdate: '2023-12-09T11:00:00', // Format ISO valide pour être sûr
   };
 
   it('affiche les infos de la pièce (Cas Optimal)', () => {
@@ -24,7 +32,6 @@ describe('HumidityRoomCard Component', () => {
     render(<HumidityRoomCard room={mockRoom} onClick={mockOnClick} />);
 
     expect(screen.getByText('Chambre Bébé')).toBeInTheDocument();
-    // ✅ Utilise getAllByText et prends le premier résultat
     const humidityElements = screen.getAllByText(/50%/);
     expect(humidityElements.length).toBeGreaterThan(0);
     expect(screen.getByText(/Humidité optimale/i)).toBeInTheDocument();
@@ -38,7 +45,6 @@ describe('HumidityRoomCard Component', () => {
     };
     render(<HumidityRoomCard room={dangerRoom} />);
 
-    // ✅ Utilise getAllByText pour gérer les doublons
     const humidityElements = screen.getAllByText(/80%/);
     expect(humidityElements.length).toBeGreaterThan(0);
     expect(screen.getByText(/Hors zone de confort/i)).toBeInTheDocument();
@@ -63,7 +69,6 @@ describe('HumidityRoomCard Component', () => {
 
   it('affiche le taux actuel', () => {
     render(<HumidityRoomCard room={mockRoom} />);
-    // ✅ CORRECTION : Remplace le test du hubName par le taux actuel qui existe
     expect(screen.getByText(/Taux actuel/i)).toBeInTheDocument();
   });
 
@@ -71,7 +76,6 @@ describe('HumidityRoomCard Component', () => {
     const mockOnClick = jest.fn();
     render(<HumidityRoomCard room={mockRoom} onClick={mockOnClick} />);
 
-    // ✅ CORRECTION : Utilise fireEvent et cast en HTMLElement
     const card = screen
       .getByText('Chambre Bébé')
       .closest('div[class*="rounded-lg"]') as HTMLElement;
