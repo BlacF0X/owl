@@ -1,80 +1,167 @@
-# **Project OwL - API Backend**
+# Project OwL - API Backend
 
-Ceci est le README pour l'API Backend du Project OwL, construite avec [Node.js](https://nodejs.org), [Express](https://expressjs.com) et [TypeScript](https://www.typescriptlang.org). Ce document contient les instructions pour configurer et lancer le serveur dans un environnement de développement local.
+Bienvenue sur la documentation de l'API Backend du Project OwL. Construite avec Node.js, Express et TypeScript, cette application gère l'ingestion des données capteurs, la logique métier et la communication avec la base de données et les services tiers.
+
+![Node.js](https://img.shields.io/badge/Node.js-20-339933?style=for-the-badge&logo=nodedotjs)
+![Express](https://img.shields.io/badge/Express-4.19-000000?style=for-the-badge&logo=express)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=for-the-badge&logo=typescript)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=for-the-badge&logo=postgresql)
+![TypeORM](https://img.shields.io/badge/TypeORM-0.3-FE0803?style=for-the-badge&logo=typeorm)
 
 ---
 
-## **Démarrage**
+## Stack Technique
 
-Cette section vous guidera pour mettre en place l'environnement de développement. Ce projet utilise [Doppler](https://doppler.com) pour gérer les variables d'environnement de manière sécurisée (Base de données, Clés API, etc.).
+- **Serveur** : Node.js & Express.
+- **Langage** : TypeScript.
+- **Base de données** : PostgreSQL (hébergé sur Supabase).
+- **ORM** : TypeORM.
+- **Temps Réel** : Pusher (WebSockets).
+- **Authentification** : Clerk (Webhooks & Middleware).
+- **Documentation** : Swagger (OpenAPI).
+- **Qualité** : ESLint, Prettier.
+- **Gestion des Secrets** : Doppler (optionnel).
+
+---
+
+## Démarrage Rapide
 
 ### Prérequis
 
-Avant de commencer, assurez-vous d'avoir installé les outils suivants sur votre machine :
-
-- [Node.js](https://nodejs.org) (v20 ou supérieure recommandée)
-- [npm](https://www.npmjs.com) ou [yarn](https://yarnpkg.com)
-- L'interface de commande (CLI) de [Doppler](https://docs.doppler.com/reference/install-cli)
+- Node.js (v20+ recommandé).
+- npm ou yarn.
 
 ### Installation
 
-1. **Cloner le dépôt :**
+1. Cloner le dépôt et accéder au dossier :
 
    ```bash
-   git clone https://github.com/your-repo/owl-api-ts.git
-   cd owl-api-ts
+   cd owl-api
    ```
 
-2. **Installer les dépendances du projet :**
+2. Installer les dépendances :
 
    ```bash
    npm install
-   # ou
-   # yarn install
    ```
 
-3. **Se connecter à Doppler pour récupérer les variables d'environnement :**
+### Configuration des Variables d'Environnement
 
-   > Demander les informations de login à Clément [c.vier@students.ephec.be](mailto:c.vier@students.ephec.be)
+Vous avez deux options pour configurer les secrets du projet.
+
+#### Option 1 : Via Doppler (Recommandé pour l'équipe)
+
+Si vous avez accès au projet Doppler de l'équipe :
+
+1. Authentifiez-vous :
 
    ```bash
-   # Ceci ouvrira une fenêtre de navigateur pour vous authentifier
    doppler login
+   ```
 
-   # Ceci liera votre dossier local au projet distant sur Doppler
+2. Sélectionnez le projet `owl-api` et la configuration `dev` :
+
+   ```bash
    doppler setup
    ```
 
-   Suivez les instructions interactives pour sélectionner le projet `owl-api` et la configuration `dev`.
-
-4. **Lancer le serveur de développement :**
-   Pour lancer l'API, vous devez utiliser la commande `npm run dev`. Cela va exécuter `doppler run -- tsx watch src/index.ts` qui injecte les secrets et lance le serveur avec rechargement automatique (hot-reload).
+3. Lancez le serveur (la commande injecte automatiquement les variables) :
 
    ```bash
    npm run dev
-   # ou
-   # yarn dev
    ```
 
-5. **Accéder à l'API et à la Documentation :**
-   Le serveur démarrera par défaut sur le port **8080**.
-   - **URL de base :** [http://localhost:8080](http://localhost:8080)
-   - **Documentation Swagger :** [http://localhost:8080/api-docs](http://localhost:8080/api-docs)
+#### Option 2 : Via un fichier .env (Méthode manuelle)
 
-   Vous pouvez utiliser l'interface Swagger pour visualiser les routes disponibles et tester les endpoints directement depuis votre navigateur.
+Si vous n'utilisez pas Doppler, vous pouvez configurer les variables manuellement.
+
+1. Dupliquez le fichier d'exemple présent à la racine :
+
+   ```bash
+   cp .env.example .env
+   # Sur Windows : copy .env.example .env
+   ```
+
+2. Ouvrez le fichier `.env` et renseignez les valeurs pour la base de données, Clerk et Pusher.
+3. Lancez le serveur de développement avec le script local :
+
+   ```bash
+   npm run dev:local
+   ```
+
+   > [!NOTE]
+   > N'utilisez pas `npm run dev` dans ce cas, car cette commande est préconfigurée pour utiliser Doppler.*
+
+Le serveur démarrera par défaut sur le port 8080.
+
+- **API Root** : <http://localhost:8080/api>
+- **Documentation** : <http://localhost:8080/api-docs>
 
 ---
 
-## **Tester les Endpoints**
+## Structure du Projet
 
-Pour tester l'API, vous avez deux options recommandées :
+L'architecture suit une approche en couches (Controller-Service-Repository) adaptée à Express.
 
-1. **Swagger UI :** Accessible via `/api-docs`, c'est l'interface visuelle idéale pour découvrir l'API.
-2. **Fichier `requests.http` :** Si vous utilisez VS Code, vous pouvez installer l'extension "REST Client" et utiliser le fichier `requests.http` présent à la racine du projet pour lancer des requêtes directement depuis votre éditeur.
+```text
+owl-api/
+├── scripts/            # Scripts utilitaires (Simulation, Sync)
+├── src/
+│   ├── api/
+│   │   ├── controllers/    # Logique métier des endpoints
+│   │   ├── middlewares/    # Auth, Validation, Rate Limiting
+│   │   └── routes/         # Définition des routes Express
+│   ├── config/         # Configuration des services (DB, Pusher, Swagger)
+│   ├── entities/       # Modèles de base de données TypeORM
+│   ├── types/          # Définitions TypeScript partagées
+│   └── index.ts        # Point d'entrée de l'application
+├── requests.http       # Fichier de test pour client REST VS Code
+└── ...                 # Fichiers de configuration (TS, ESLint, Vercel)
+```
 
-## **Base de Données**
+---
 
-Ce projet utilise **TypeORM** connecté à une base de données **PostgreSQL** (Supabase).
-Le schéma de la base de données est géré via des entités TypeScript situées dans `src/entities`.
+## Scripts Utilitaires
 
-> **Note :** La synchronisation automatique (`synchronize`) est désactivée par sécurité.
+Le projet inclut des scripts TypeScript exécutables directement pour faciliter le développement et les tests.
+
+### Simulateur de Hub IoT
+
+Génère des données réalistes (température, CO2, fenêtres) et les envoie à l'API pour tester l'ingestion et le temps réel.
+
+```bash
+# Avec Doppler
+npm run simulate
+
+# Sans Doppler
+npx tsx scripts/simulate-hub.ts
+```
+
+### Synchronisation des Utilisateurs
+
+Récupère les utilisateurs depuis Clerk et met à jour la base de données locale pour assurer la cohérence.
+
+```bash
+npx tsx scripts/sync-clerk-users.ts
+```
+
+---
+
+## Documentation de l'API
+
+### Swagger UI
+
+Une interface interactive est disponible en environnement de développement pour explorer et tester les endpoints.
+Accès : [http://localhost:8080/api-docs](http://localhost:8080/api-docs)
+
+### Fichier requests.http
+
+Un fichier `requests.http` est disponible à la racine pour tester l'API directement depuis VS Code (nécessite l'extension "REST Client"). Il contient des exemples pour l'authentification et la récupération des données.
+
+---
+
+## Base de Données
+
+Ce projet utilise TypeORM avec une base PostgreSQL. Les entités sont définies dans `src/entities`.
+
+> **Note de sécurité** : La synchronisation automatique (`synchronize: true`) est désactivée par défaut pour éviter toute perte de données accidentelle en production. Les migrations de schéma doivent être gérées avec prudence.
