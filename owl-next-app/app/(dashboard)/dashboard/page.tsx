@@ -92,24 +92,45 @@ export default async function DashboardPage() {
         </div>
       </header>
 
-      {/* Cartes de statistiques basées sur les données de l'API */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        <div className="rounded-lg bg-white p-5 shadow">
-          <p className="text-sm font-medium text-slate-500">Fenêtres Ouvertes</p>
-          <p className="mt-2 text-3xl font-bold text-slate-900">{openWindowsCount}</p>
+              {/* Cartes de statistiques (KPIs) */}
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
+          {/* Carte 1 : Fenêtres */}
+          <div className="rounded-lg bg-white p-5 shadow border border-slate-100">
+            <p className="text-sm font-medium text-slate-500">Fenêtres Ouvertes</p>
+            <p className="mt-2 text-3xl font-bold text-slate-900">{openWindowsCount}</p>
+          </div>
+
+          {/* Carte 2 : Température */}
+          <div className="rounded-lg bg-white p-5 shadow border border-slate-100">
+            <p className="text-sm font-medium text-slate-500">Température Moy.</p>
+            <p className="mt-2 text-3xl font-bold text-slate-900">
+              {avgTemp !== null ? avgTemp : '-'} <span className="text-sm font-normal text-slate-500">°C</span>
+            </p>
+          </div>
+
+          {/* Carte 3 : Humidité */}
+          <div className="rounded-lg bg-white p-5 shadow border border-slate-100">
+            <p className="text-sm font-medium text-slate-500">Humidité Moy.</p>
+            <p className="mt-2 text-3xl font-bold text-slate-900">
+              {avgHumidity !== null ? avgHumidity : '-'} <span className="text-sm font-normal text-slate-500">%</span>
+            </p>
+          </div>
+
+          {/* Carte 4 : CO2 */}
+          <div className="rounded-lg bg-white p-5 shadow border border-slate-100">
+            <p className="text-sm font-medium text-slate-500">Qualité de l'air</p>
+            <p className="mt-2 text-3xl font-bold text-slate-900">
+              {co2Sensor?.displayValue || '-'}
+            </p>
+            <span className="text-xs text-slate-500">{co2Sensor ? co2Sensor.type.unit : ''}</span>
+          </div>
+
+          {/* Carte 5 : Total Capteurs */}
+          <div className="rounded-lg bg-white p-5 shadow border border-slate-100">
+            <p className="text-sm font-medium text-slate-500">Capteurs Actifs</p>
+            <p className="mt-2 text-3xl font-bold text-slate-900">{sensors.length}</p>
+          </div>
         </div>
-        <div className="rounded-lg bg-white p-5 shadow">
-          <p className="text-sm font-medium text-slate-500">Qualité de l'air</p>
-          <p className="mt-2 text-3xl font-bold text-slate-900">
-            {co2Sensor?.displayValue || 'N/A'}
-          </p>
-          <span className="text-xs text-slate-500">{co2Sensor ? co2Sensor.type.unit : ''}</span>
-        </div>
-        <div className="rounded-lg bg-white p-5 shadow">
-          <p className="text-sm font-medium text-slate-500">Capteurs Actifs</p>
-          <p className="mt-2 text-3xl font-bold text-slate-900">{sensors.length}</p>
-        </div>
-      </div>
 
       {/* Widget pour la liste des capteurs de fenêtre, basé sur les données de l'API */}
       <div className="mt-8 rounded-lg bg-white p-6 shadow">
