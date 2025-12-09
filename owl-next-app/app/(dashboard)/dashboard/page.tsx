@@ -132,73 +132,19 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-      {/* Widget pour la liste des capteurs de fenêtre, basé sur les données de l'API */}
-      <div className="mt-8 rounded-lg bg-white p-6 shadow">
-        <h2 className="text-lg font-semibold text-slate-800">État des capteurs de fenêtre</h2>
-        <div className="mt-4 flow-root">
-          <div className="-mx-6 -my-2 overflow-x-auto">
-            <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-              <table className="min-w-full divide-y divide-slate-200">
-                <thead>
-                  <tr>
-                    <th
-                      scope="col"
-                      className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-slate-900"
-                    >
-                      Identifiant
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-3 py-3.5 text-left text-sm font-semibold text-slate-900"
-                    >
-                      État
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-3 py-3.5 text-left text-sm font-semibold text-slate-900"
-                    >
-                      Durée d'ouverture
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {windowSensors.length > 0 ? (
-                    windowSensors.map((sensor) => (
-                      <tr key={sensor.sensor_id}>
-                        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-slate-900">
-                          {sensor.name}
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm">
-                          <span
-                            className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-                              sensor.displayValue === 'Ouvert'
-                                ? 'bg-orange-100 text-orange-800'
-                                : 'bg-green-100 text-green-800'
-                            }`}
-                          >
-                            {sensor.displayValue}
-                          </span>
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-slate-500">
-                          {sensor.displayValue === 'Ouvert'
-                            ? calculateDuration(sensor.state_changed_at)
-                            : '-'}
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={3} className="text-center py-6 text-slate-500">
-                        Aucun capteur de fenêtre trouvé.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+      {/* Widget : Liste de TOUS les capteurs */}
+      <div className="mt-8 rounded-lg bg-white p-6 shadow border border-slate-100">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-slate-800">État de tous les capteurs</h2>
+          <span className="inline-flex items-center rounded-md bg-slate-50 px-2 py-1 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-500/10">
+            {sensors.length} capteurs
+          </span>
         </div>
+        
+        {/* Le nouveau tableau générique */}
+        <GenericSensorsTable sensors={sensors} />
       </div>
+
     </div>
   );
 }
