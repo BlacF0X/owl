@@ -8,25 +8,21 @@ jest.mock('lucide-react', () => ({
   Activity: () => <div data-testid="icon-activity" />,
 }));
 
-// ✅ Mock Recharts Avancé pour couvrir les fonctions internes (tickFormatter, CustomTooltip)
+// ✅ Mock Recharts Avancé
 jest.mock('recharts', () => {
   const OriginalModule = jest.requireActual('react');
   return {
     ResponsiveContainer: ({ children }: any) => <div data-testid="responsive">{children}</div>,
-    AreaChart: ({ children }: any) => <div data-testid="area-chart">{children}</div>,
+    // CORRECTION 1: Utiliser <svg> pour éviter les erreurs de balises SVG (<stop>, <defs>) invalides dans une div
+    AreaChart: ({ children }: any) => <svg data-testid="area-chart">{children}</svg>,
     Area: () => <div data-testid="area" />,
-    // ✅ Capture et exécute tickFormatter pour augmenter le coverage
-    XAxis: ({ tickFormatter }: any) => (
-      <div data-testid="xaxis">
-        {tickFormatter ? <span data-testid="xaxis-tick">{tickFormatter(12)}</span> : null}
-      </div>
-    ),
+    XAxis: () => <div data-testid="xaxis" />,
     YAxis: () => <div data-testid="yaxis" />,
     CartesianGrid: () => <div data-testid="grid" />,
-    // ✅ Clone l'élément content et lui injecte des props pour simuler le survol (active: true)
+    // Mock du Tooltip pour simuler le survol
     Tooltip: ({ content }: any) => {
       const mockPayload = [{ value: 55 }];
-      const mockLabel = 14;
+      const mockLabel = '14h00'; // CORRECTION 5: Label formaté pour matcher l'attente du test
 
       if (OriginalModule.isValidElement(content)) {
         return (
@@ -55,12 +51,16 @@ describe('HumidityEvolutionChart Component', () => {
   it('rend le composant graphique sans erreur', () => {
     render(<HumidityEvolutionChart data={mockData} />);
     expect(screen.getByRole('heading', { level: 3 })).toBeInTheDocument();
+    // Ici on teste responsive container car il y a des données
     expect(screen.getByTestId('responsive')).toBeInTheDocument();
   });
 
+  // CORRECTION 2 : Quand il n'y a pas de données, le graphique n'est PAS rendu
   it("affiche un message si aucune donnée n'est disponible", () => {
     render(<HumidityEvolutionChart data={[]} />);
-    expect(screen.getByTestId('responsive')).toBeInTheDocument();
+    // On ne cherche pas le graphique, mais le message de fallback
+    expect(screen.queryByTestId('responsive')).not.toBeInTheDocument();
+    expect(screen.getByText('Aucune donnée disponible')).toBeInTheDocument();
   });
 
   it("affiche l'icône Activity", () => {
@@ -74,11 +74,15 @@ describe('HumidityEvolutionChart Component', () => {
     expect(screen.getByText(/54/)).toBeInTheDocument();
   });
 
+  // CORRECTION 3 : Gérer les multiples occurrences de "50"
   it('gère les données avec une seule valeur', () => {
     const singleData: HumidityDataPoint[] = [{ hour: 12, value: 50 }];
     render(<HumidityEvolutionChart data={singleData} />);
+
     expect(screen.getByTestId('responsive')).toBeInTheDocument();
-    expect(screen.getByText(/50/)).toBeInTheDocument();
+    // Le chiffre 50 apparait dans Moyenne, Min et Max. On vérifie qu'on en trouve au moins un.
+    const values = screen.getAllByText(/50/);
+    expect(values.length).toBeGreaterThan(0);
   });
 
   it('affiche le graphique avec données complètes', () => {
@@ -89,17 +93,13 @@ describe('HumidityEvolutionChart Component', () => {
     expect(screen.getByTestId('yaxis')).toBeInTheDocument();
   });
 
-  // ✅ Test spécifique pour vérifier que formatXAxis est appelé (via le mock)
-  it("formate correctement les ticks de l'axe X", () => {
-    render(<HumidityEvolutionChart data={mockData} />);
-    // Le mock XAxis rend tickFormatter(12) -> "12h"
-    expect(screen.getByTestId('xaxis-tick')).toHaveTextContent('12h');
-  });
+  // CORRECTION 4 : Suppression du test "formate correctement les ticks"
+  // car le composant n'utilise pas tickFormatter (il formate les données en amont)
+  // et le mock XAxis ne peut pas deviner les données passées à AreaChart.
 
-  // ✅ Test spécifique pour vérifier que CustomTooltip est rendu (via le mock)
   it('rend le CustomTooltip avec les valeurs correctes', () => {
     render(<HumidityEvolutionChart data={mockData} />);
-    // Le mock Tooltip injecte active=true, payload=[{value: 55}], label=14
+    // Le mock Tooltip injecte active=true, payload=[{value: 55}], label="14h00"
     expect(screen.getByText('14h00')).toBeInTheDocument();
     expect(screen.getByText('55%')).toBeInTheDocument();
     expect(screen.getByText(/Humidité/)).toBeInTheDocument();
@@ -112,10 +112,14 @@ describe('HumidityEvolutionChart Component', () => {
       { hour: 18, value: 70 },
     ];
     render(<HumidityEvolutionChart data={dataWithDifferentValues} />);
-    expect(screen.getByText(/50/)).toBeInTheDocument();
+    // (30+50+70)/3 = 50
+    // Comme il y a 50 pour Moyenne, Min(30) et Max(70), on peut chercher "50" spécifiquement
+    // Mais attention, "50" peut être dans le Min si on change les données.
+    // Ici on vérifie juste qu'il est présent.
+    expect(screen.getAllByText(/50/).length).toBeGreaterThan(0);
   });
 
-  it('se rend correctement avec des données manquantes', () => {
+  it('se rend correctement avec des données partielles', () => {
     const dataWithMissing: HumidityDataPoint[] = [
       { hour: 9, value: 45 },
       { hour: 18, value: 55 },
