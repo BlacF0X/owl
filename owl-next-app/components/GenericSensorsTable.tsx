@@ -10,43 +10,23 @@ interface GenericSensorsTableProps {
 
 export default function GenericSensorsTable({ sensors }: GenericSensorsTableProps) {
   
-  // 1. Logique de regroupement par type
+  // 1. Groupement
   const groupedSensors = sensors.reduce((groups, sensor) => {
-    const category = sensor.type.name; // ex: "Température", "Fenêtre"
-    if (!groups[category]) {
-      groups[category] = [];
-    }
-    groups[category].push(sensor);
+    const key = sensor.type.type_key; // 'window', 'temperature', etc.
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(sensor);
     return groups;
   }, {} as Record<string, Sensor[]>);
 
-  // Ordre d'affichage souhaité des catégories
-  const categoryOrder = ['Fenêtre', 'Température', 'Humidité', 'Qualité de l\'air'];
+  // Ordre et configuration des blocs
+  const sections = [
+    { key: 'window', title: 'Fenêtres', icon: Square, color: 'text-slate-500' },
+    { key: 'temperature', title: 'Température', icon: Thermometer, color: 'text-orange-500' },
+    { key: 'humidity', title: 'Humidité', icon: Droplets, color: 'text-blue-500' },
+    { key: 'air_quality', title: 'Qualité de l\'air', icon: Wind, color: 'text-green-500' },
+  ];
 
-  // Récupérer les clés triées selon l'ordre défini + les autres à la fin
-  const sortedCategories = Object.keys(groupedSensors).sort((a, b) => {
-    const indexA = categoryOrder.indexOf(a);
-    const indexB = categoryOrder.indexOf(b);
-    // Si les deux sont dans la liste, on respecte l'ordre
-    if (indexA !== -1 && indexB !== -1) return indexA - indexB;
-    // Si un seul est dans la liste, il passe devant
-    if (indexA !== -1) return -1;
-    if (indexB !== -1) return 1;
-    // Sinon ordre alphabétique
-    return a.localeCompare(b);
-  });
-
-  // --- Helpers d'affichage (Identiques à avant) ---
-  const getIcon = (typeKey: string) => {
-    switch (typeKey) {
-      case 'temperature': return <Thermometer className="h-4 w-4 text-orange-500" />;
-      case 'humidity': return <Droplets className="h-4 w-4 text-blue-500" />;
-      case 'air_quality': return <Wind className="h-4 w-4 text-green-500" />;
-      case 'window': return <Square className="h-4 w-4 text-slate-500" />;
-      default: return <Activity className="h-4 w-4 text-slate-400" />;
-    }
-  };
-
+  // Helpers d'affichage
   const renderValue = (sensor: Sensor) => {
     if (sensor.type.type_key === 'window') {
       const isOpen = sensor.displayValue === 'Ouvert';
@@ -61,87 +41,68 @@ export default function GenericSensorsTable({ sensors }: GenericSensorsTableProp
       );
     }
     return (
-      <span className="text-sm font-medium text-slate-900">
-        {sensor.displayValue}{' '}
-        <span className="text-xs text-slate-500">{sensor.type.unit}</span>
+      <span className="text-sm font-mono font-medium text-slate-700">
+        {sensor.displayValue} <span className="text-xs text-slate-400">{sensor.type.unit}</span>
       </span>
     );
   };
 
-  const renderExtraInfo = (sensor: Sensor) => {
+  const renderExtra = (sensor: Sensor) => {
     if (sensor.type.type_key === 'window' && sensor.displayValue === 'Ouvert') {
-      if (sensor.state_changed_at) {
-        return (
-          <span className="text-sm text-red-600 font-medium">
-             {calculateDuration(sensor.state_changed_at)}
-          </span>
-        );
-      }
+       if(sensor.state_changed_at) {
+         return <span className="text-xs text-red-600 font-medium ml-2">({calculateDuration(sensor.state_changed_at)})</span>;
+       }
     }
-    return <span className="text-sm text-slate-400">-</span>;
+    return null;
   };
 
-  if (sensors.length === 0) {
-    return (
-      <div className="text-center py-12 bg-white rounded-lg border border-slate-200">
-        <p className="text-slate-500">Aucun capteur trouvé.</p>
-      </div>
-    );
-  }
+  if (sensors.length === 0) return <div className="text-center py-8 text-slate-500">Aucun capteur.</div>;
 
   return (
-    <div className="flow-root">
-      <div className="-mx-6 -my-2 overflow-x-auto">
-        <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-          <table className="min-w-full divide-y divide-slate-200">
-            <thead className="bg-slate-50">
-              <tr>
-                <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-slate-900 sm:pl-0">
-                  Identifiant
-                </th>
-                {/* On enlève la colonne Type puisqu'elle sera en titre de section */}
-                <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-slate-900">
-                  État / Valeur
-                </th>
-                <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-slate-900">
-                  Info
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white">
-              {sortedCategories.map((category) => (
-                <>
-                  {/* Ligne de séparation / Titre de catégorie */}
-                  <tr key={`header-${category}`} className="bg-slate-50/80">
-                    <td colSpan={3} className="py-2 pl-4 pr-3 text-xs font-bold uppercase tracking-wider text-slate-500 sm:pl-0 border-t border-b border-slate-100">
-                      <div className="flex items-center gap-2">
-                        {getIcon(groupedSensors[category][0].type.type_key)}
-                        {category} ({groupedSensors[category].length})
-                      </div>
-                    </td>
-                  </tr>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {sections.map((section) => {
+        const categorySensors = groupedSensors[section.key] || [];
+        const Icon = section.icon;
 
-                  {/* Liste des capteurs de cette catégorie */}
-                  {groupedSensors[category].map((sensor) => (
-                    <tr key={sensor.sensor_id} className="hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-none">
-                      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-0">
+        if (categorySensors.length === 0) return null; // On cache les blocs vides
+
+        return (
+          <div key={section.key} className="flex flex-col rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden h-full">
+            {/* Header du bloc */}
+            <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 px-4 py-3">
+              <div className="flex items-center gap-2">
+                <Icon className={`h-4 w-4 ${section.color}`} />
+                <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide">
+                  {section.title}
+                </h3>
+              </div>
+              <span className="rounded-full bg-white px-2 py-0.5 text-xs font-medium text-slate-500 shadow-sm border border-slate-100">
+                {categorySensors.length}
+              </span>
+            </div>
+
+            {/* Contenu liste déroulante */}
+            <div className="flex-1 overflow-y-auto max-h-[300px] p-0">
+              <table className="min-w-full divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-50">
+                  {categorySensors.map((sensor) => (
+                    <tr key={sensor.sensor_id} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-4 py-3 text-sm">
                         <div className="font-medium text-slate-900">{sensor.name}</div>
-                        <div className="text-xs text-slate-500">{sensor.hub.name}</div>
+                        <div className="text-[10px] text-slate-400">{sensor.hub.name}</div>
                       </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-slate-500">
+                      <td className="px-4 py-3 text-right text-sm">
                         {renderValue(sensor)}
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-slate-500">
-                        {renderExtraInfo(sensor)}
+                        {renderExtra(sensor)}
                       </td>
                     </tr>
                   ))}
-                </>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
