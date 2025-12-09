@@ -16,7 +16,11 @@ export interface RealtimeUpdate {
  * @param initialValue La valeur initiale (venant du Server Component)
  * @returns La valeur actuelle (initiale ou mise à jour) et le timestamp
  */
-export const useRealtimeSensor = (sensorId: string, initialValue: string | number, initialDate: string | null) => {
+export const useRealtimeSensor = (
+  sensorId: string,
+  initialValue: string | number,
+  initialDate: string | null
+) => {
   const { channel } = usePusher();
   const [value, setValue] = useState(initialValue);
   const [lastUpdate, setLastUpdate] = useState<string | null>(initialDate);
@@ -34,7 +38,7 @@ export const useRealtimeSensor = (sensorId: string, initialValue: string | numbe
         console.log(`⚡️ Update reçu pour ${update.name}:`, update.value);
         setValue(update.value);
         setLastUpdate(update.timestamp);
-        
+
         // Petit effet "flash"
         setIsLive(true);
         setTimeout(() => setIsLive(false), 2000);

@@ -78,15 +78,23 @@ const HumidityRoomCard: React.FC<HumidityRoomCardProps> = ({ room, onClick }) =>
     >
       <div className="flex items-start justify-between mb-4">
         <h3 className="text-xl font-bold text-slate-800">{room.name}</h3>
-        <StatusIcon className={`h-8 w-8 flex-shrink-0 ${statusColor} transition-colors duration-300`} />
+        <StatusIcon
+          className={`h-8 w-8 flex-shrink-0 ${statusColor} transition-colors duration-300`}
+        />
       </div>
 
       <div className="mt-4 text-center">
-        <p className={`text-3xl font-extrabold ${statusColor} transition-colors duration-300`}>{numericValue}%</p>
+        <p className={`text-3xl font-extrabold ${statusColor} transition-colors duration-300`}>
+          {numericValue}%
+        </p>
       </div>
 
       <div className="mt-2">
-        <p className={`text-xs font-medium ${statusColor} text-center transition-colors duration-300`}>{statusMessage}</p>
+        <p
+          className={`text-xs font-medium ${statusColor} text-center transition-colors duration-300`}
+        >
+          {statusMessage}
+        </p>
       </div>
 
       <div className="mt-6 border-t pt-4 text-slate-600">

@@ -1,4 +1,4 @@
-'use client'; 
+'use client';
 
 import React from 'react';
 import { Sensor } from '@/src/types';
@@ -18,7 +18,7 @@ const WindowSensorCard: React.FC<{ sensor: Sensor; referenceDate?: Date }> = ({
   );
 
   const isOpen = value === 'Ouvert';
-  
+
   let statusColor: string;
   let borderColor: string;
   let StatusIcon: React.ElementType;
@@ -57,11 +57,15 @@ const WindowSensorCard: React.FC<{ sensor: Sensor; referenceDate?: Date }> = ({
       <div>
         <div className="flex items-start justify-between mb-4">
           <h3 className="text-xl font-bold text-slate-800">{sensor.name}</h3>
-          <StatusIcon className={`h-8 w-8 flex-shrink-0 ${statusColor} transition-colors duration-300`} />
+          <StatusIcon
+            className={`h-8 w-8 flex-shrink-0 ${statusColor} transition-colors duration-300`}
+          />
         </div>
 
         <div className="mt-4 text-center">
-          <p className={`text-3xl font-extrabold ${statusColor} transition-colors duration-300`}>{value}</p>
+          <p className={`text-3xl font-extrabold ${statusColor} transition-colors duration-300`}>
+            {value}
+          </p>
 
           {isOpen && lastUpdate ? (
             <>
@@ -85,8 +89,7 @@ const WindowSensorCard: React.FC<{ sensor: Sensor; referenceDate?: Date }> = ({
         <div className="flex items-center gap-3 text-sm">
           <Clock className="h-5 w-5 text-slate-400" />
           <p>
-            Dernier changement :{' '}
-            <span className="font-semibold">{formatDateTime(lastUpdate)}</span>
+            Dernier changement : <span className="font-semibold">{formatDateTime(lastUpdate)}</span>
           </p>
         </div>
       </div>

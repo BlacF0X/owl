@@ -7,7 +7,7 @@ import { useAuth, useUser } from '@clerk/nextjs';
 // Configuration (à mettre dans .env.local côté front aussi idéalement)
 // NEXT_PUBLIC_PUSHER_KEY="<TA_CLE_PUBLIQUE>"
 // NEXT_PUBLIC_PUSHER_CLUSTER="eu"
-const PUSHER_KEY = process.env.NEXT_PUBLIC_PUSHER_KEY || 'TA_CLE_PUSHER_ICI'; 
+const PUSHER_KEY = process.env.NEXT_PUBLIC_PUSHER_KEY || 'TA_CLE_PUSHER_ICI';
 const PUSHER_CLUSTER = process.env.NEXT_PUBLIC_PUSHER_CLUSTER || 'eu';
 
 interface PusherContextType {
@@ -37,7 +37,7 @@ export const PusherProvider = ({ children }: { children: React.ReactNode }) => {
       cluster: PUSHER_CLUSTER,
       authEndpoint: `${process.env.NEXT_PUBLIC_API_URL}/api/pusher/auth`,
       // C'est ici qu'on injecte le token Clerk
-      authorizer: (channel, options) => {
+      authorizer: (channel) => {
         return {
           authorize: async (socketId, callback) => {
             try {

@@ -21,11 +21,11 @@ export const SensorCard: React.FC<SensorCardProps> = ({
   // Hook Realtime
   // room.id correspond bien au sensor_id du capteur CO2 principal de la pièce
   const { value, isLive } = useRealtimeSensor(room.id, room.value, null);
-  
+
   const numericValue = Number(value);
 
   let computedStatus: 'good' | 'medium' | 'bad' = 'good';
-  
+
   if (numericValue >= 800 && numericValue < 1200) {
     computedStatus = 'medium';
   } else if (numericValue >= 1200) {
@@ -109,7 +109,11 @@ export const SensorCard: React.FC<SensorCardProps> = ({
 
       <div className="mb-4">
         <div className="flex justify-between items-end mb-1.5">
-          <span className={`text-xs font-bold ${textClass} uppercase tracking-wide transition-colors duration-300`}>{label}</span>
+          <span
+            className={`text-xs font-bold ${textClass} uppercase tracking-wide transition-colors duration-300`}
+          >
+            {label}
+          </span>
           <span className="text-[10px] text-slate-400 font-medium">
             {percentage.toFixed(0)}% Saturation
           </span>
