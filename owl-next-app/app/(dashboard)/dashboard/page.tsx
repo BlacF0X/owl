@@ -4,7 +4,7 @@ import { fetchFromApi } from '@/src/lib/apiClient';
 import { Sensor } from '@/src/types';
 import ApiStatusIndicator from '@/components/ApiStatusIndicator';
 import Link from 'next/link';
-import GenericSensorsTable from '@/components/GenericSensorsTable'; // ✅ Import du nouveau tableau
+import GenericSensorsTable from '@/components/GenericSensorsTable';
 
 export default async function DashboardPage() {
   let user;
@@ -42,7 +42,6 @@ export default async function DashboardPage() {
 
   try {
     const token = await getToken();
-    // Appel à l'API pour récupérer les données réelles
     sensors = await fetchFromApi<Sensor[]>('/api/sensors', token);
   } catch (error) {
     console.error('Failed to fetch sensor data:', error);
@@ -50,17 +49,13 @@ export default async function DashboardPage() {
   }
 
   // --- CALCULS ET FILTRES (KPIs) ---
+  
+  // 1. Fenêtres
   const windowSensors = sensors.filter((s) => s.type.type_key === 'window');
   const openWindowsCount = windowSensors.filter((s) => s.displayValue === 'Ouvert').length;
 
-  const co2Sensor = sensors.find(
-    (s) => s.type.type_key === 'air_quality' || s.type.type_key === 'co2'
-  );
-
-  // ✅ Calculs ajoutés pour Température et Humidité
+  // 2. Température
   const tempSensors = sensors.filter((s) => s.type.type_key === 'temperature');
-  const humiditySensors = sensors.filter((s) => s.type.type_key === 'humidity');
-
   const avgTemp =
     tempSensors.length > 0
       ? Math.round(
@@ -68,6 +63,8 @@ export default async function DashboardPage() {
         )
       : null;
 
+  // 3. Humidité
+  const humiditySensors = sensors.filter((s) => s.type.type_key === 'humidity');
   const avgHumidity =
     humiditySensors.length > 0
       ? Math.round(
@@ -75,6 +72,19 @@ export default async function DashboardPage() {
             humiditySensors.length
         )
       : null;
+
+  // 4. Qualité de l'Air (CO2) - Option 2 : Moyenne
+  // On filtre proprement avec le type 'air_quality' uniquement
+  const co2Sensors = sensors.filter((s) => s.type.type_key === 'air_quality');
+  
+  const avgCo2 =
+    co2Sensors.length > 0
+      ? Math.round(
+          co2Sensors.reduce((acc, s) => acc + Number(s.displayValue || 0), 0) / co2Sensors.length
+        )
+      : null;
+
+  const co2Unit = co2Sensors.length > 0 ? co2Sensors[0].type.unit : 'ppm';
 
   return (
     <div>
@@ -87,12 +97,11 @@ export default async function DashboardPage() {
             </h1>
             <p className="mt-1 text-slate-600">Voici le résumé de l'état de vos capteurs.</p>
           </div>
-          {/* Indicateur de statut API (dev only) */}
           {process.env.NODE_ENV === 'development' && <ApiStatusIndicator />}
         </div>
       </header>
 
-      {/* ✅ NOUVELLE GRILLE DE STATS (KPIs) */}
+      {/* GRILLE DE STATS (KPIs) */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
         {/* Carte 1 : Fenêtres */}
         <div className="rounded-lg bg-white p-5 shadow border border-slate-100">
@@ -100,7 +109,7 @@ export default async function DashboardPage() {
           <p className="mt-2 text-3xl font-bold text-slate-900">{openWindowsCount}</p>
         </div>
 
-        {/* Carte 2 : Température Moyenne */}
+        {/* Carte 2 : Température */}
         <div className="rounded-lg bg-white p-5 shadow border border-slate-100">
           <p className="text-sm font-medium text-slate-500">Température Moy.</p>
           <p className="mt-2 text-3xl font-bold text-slate-900">
@@ -108,7 +117,7 @@ export default async function DashboardPage() {
           </p>
         </div>
 
-        {/* Carte 3 : Humidité Moyenne */}
+        {/* Carte 3 : Humidité */}
         <div className="rounded-lg bg-white p-5 shadow border border-slate-100">
           <p className="text-sm font-medium text-slate-500">Humidité Moy.</p>
           <p className="mt-2 text-3xl font-bold text-slate-900">
@@ -116,16 +125,16 @@ export default async function DashboardPage() {
           </p>
         </div>
 
-        {/* Carte 4 : Qualité de l'air */}
+        {/* Carte 4 : Qualité de l'air (Moyenne) */}
         <div className="rounded-lg bg-white p-5 shadow border border-slate-100">
-          <p className="text-sm font-medium text-slate-500">Qualité de l'air</p>
+          <p className="text-sm font-medium text-slate-500">Qualité de l'air (Moy.)</p>
           <p className="mt-2 text-3xl font-bold text-slate-900">
-            {co2Sensor?.displayValue || '-'}
+            {avgCo2 !== null ? avgCo2 : '-'}
           </p>
-          <span className="text-xs text-slate-500">{co2Sensor ? co2Sensor.type.unit : ''}</span>
+          <span className="text-xs text-slate-500">{co2Unit}</span>
         </div>
 
-        {/* Carte 5 : Capteurs Actifs */}
+        {/* Carte 5 : Total Capteurs */}
         <div className="rounded-lg bg-white p-5 shadow border border-slate-100">
           <p className="text-sm font-medium text-slate-500">Capteurs Actifs</p>
           <p className="mt-2 text-3xl font-bold text-slate-900">{sensors.length}</p>
@@ -140,7 +149,7 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* ✅ Widget : Liste de TOUS les capteurs (Nouveau Tableau) */}
+      {/* Widget : Liste de TOUS les capteurs (Tableau Générique) */}
       <div className="mt-8 rounded-lg bg-white p-6 shadow border border-slate-100">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-slate-800">État de tous les capteurs</h2>
@@ -149,7 +158,6 @@ export default async function DashboardPage() {
           </span>
         </div>
         
-        {/* Intégration du composant GenericSensorsTable */}
         <GenericSensorsTable sensors={sensors} />
       </div>
     </div>
