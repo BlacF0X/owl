@@ -35,13 +35,13 @@ const HumidityRoomCard: React.FC<HumidityRoomCardProps> = ({ room, onClick }) =>
       statusColor = 'text-amber-600';
       borderColor = 'border-l-4 border-amber-500';
       StatusIcon = AlertTriangle;
-      statusMessage = 'Surveillance recommandée (60-70%)';
+      statusMessage = 'Surveillance recommandée';
       break;
     case 'danger':
       statusColor = 'text-red-600';
       borderColor = 'border-l-4 border-red-500';
       StatusIcon = AlertTriangle;
-      statusMessage = 'Action nécessaire (>70%)';
+      statusMessage = 'Hors zone de confort (<40% ou >60%)';
       break;
   }
 
@@ -67,6 +67,7 @@ const HumidityRoomCard: React.FC<HumidityRoomCardProps> = ({ room, onClick }) =>
 
       <div className="mt-6 border-t pt-4 text-slate-600">
         <div className="flex items-center gap-3 text-sm">
+          {/* ✅ CORRECTION ICI : Pas de backslash */}
           <Droplets className="h-5 w-5 text-slate-400" />
           <div>
             <p className="font-medium">

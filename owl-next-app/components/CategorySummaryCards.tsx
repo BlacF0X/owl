@@ -22,7 +22,9 @@ export default function CategorySummaryCards({
   co2Unit 
 }: Props) {
 
-  // --- LOGIQUE COULEURS (Inchangée) ---
+  // --- LOGIQUE COULEURS ---
+
+  // 1. Température
   let tempColor = 'emerald'; 
   let tempLabel = 'Idéale';
   if (avgTemp !== null) {
@@ -30,6 +32,7 @@ export default function CategorySummaryCards({
     else if (avgTemp > 23) { tempColor = 'red'; tempLabel = 'Chaude'; }
   }
 
+  // 2. CO2
   let co2Color = 'emerald'; 
   let co2Label = 'Excellente';
   if (avgCo2 !== null) {
@@ -37,11 +40,14 @@ export default function CategorySummaryCards({
     else if (avgCo2 > 1200) { co2Color = 'red'; co2Label = 'Médiocre'; }
   }
 
+  // 3. Humidité (LOGIQUE STRICTE : Rouge si hors 40-60)
   let humidityColor = 'emerald'; 
   let humidityLabel = 'Idéale';
   if (avgHumidity !== null) {
-    if (avgHumidity >= 60 && avgHumidity <= 70) { humidityColor = 'orange'; humidityLabel = 'Élevée'; }
-    else if (avgHumidity < 40 || avgHumidity > 70) { humidityColor = 'red'; humidityLabel = avgHumidity < 40 ? 'Trop sec' : 'Trop humide'; }
+    if (avgHumidity < 40 || avgHumidity > 60) { 
+        humidityColor = 'red'; 
+        humidityLabel = avgHumidity < 40 ? 'Trop sec' : 'Trop humide'; 
+    }
   }
   
   const getColorClasses = (color: string) => {
@@ -73,7 +79,7 @@ export default function CategorySummaryCards({
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:gap-8">
       
-      {/* --- 1. SÉCURITÉ -> Link to /dashboard/windows --- */}
+      {/* --- 1. SÉCURITÉ --- */}
       <Link href="/dashboard/windows">
         <div className={`flex flex-col group relative overflow-hidden rounded-[2rem] bg-white p-8 shadow-xl border transition-all duration-500 hover:scale-[1.02] cursor-pointer ${
            openWindowsCount > 0 ? 'border-red-100 shadow-red-500/10' : 'border-emerald-100 shadow-emerald-500/10'
@@ -104,7 +110,7 @@ export default function CategorySummaryCards({
         </div>
       </Link>
 
-      {/* --- 2. TEMPÉRATURE -> Link to /dashboard/temperatures-datas --- */}
+      {/* --- 2. TEMPÉRATURE --- */}
       <Link href="/dashboard/temperatures-datas">
         <div className={`flex flex-col group relative overflow-hidden rounded-[2rem] bg-white p-8 shadow-xl border transition-all duration-500 hover:scale-[1.02] cursor-pointer ${tempStyles.border} ${tempStyles.shadow}`}>
            <div className={`absolute top-0 right-0 h-full w-2 bg-gradient-to-b ${tempStyles.gradient}`} />
@@ -132,7 +138,7 @@ export default function CategorySummaryCards({
         </div>
       </Link>
 
-      {/* --- 3. HUMIDITÉ -> Link to /dashboard/humidity-sensors --- */}
+      {/* --- 3. HUMIDITÉ --- */}
       <Link href="/dashboard/humidity-sensors">
         <div className={`flex flex-col group relative overflow-hidden rounded-[2rem] bg-white p-8 shadow-xl border transition-all duration-500 hover:scale-[1.02] cursor-pointer ${humStyles.border} ${humStyles.shadow}`}>
            <div className={`absolute top-0 right-0 h-full w-2 bg-gradient-to-b ${humStyles.gradient}`} />
@@ -160,7 +166,7 @@ export default function CategorySummaryCards({
         </div>
       </Link>
 
-      {/* --- 4. CO2 -> Link to /dashboard/co2-sensors --- */}
+      {/* --- 4. CO2 --- */}
       <Link href="/dashboard/co2-sensors">
         <div className={`flex flex-col group relative overflow-hidden rounded-[2rem] bg-white p-8 shadow-xl border transition-all duration-500 hover:scale-[1.02] cursor-pointer ${co2Styles.border} ${co2Styles.shadow}`}>
            <div className={`absolute top-0 right-0 h-full w-2 bg-gradient-to-b ${co2Styles.gradient}`} />
