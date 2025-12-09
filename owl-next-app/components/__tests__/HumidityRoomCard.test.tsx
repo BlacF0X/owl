@@ -3,10 +3,19 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import HumidityRoomCard from '../HumidityRoomCard';
 import { HumidityRoom } from '../HumidityRoomCard';
 
+// Mock du hook realtime
+jest.mock('@/src/hooks/useRealtimeSensor', () => ({
+  useRealtimeSensor: jest.fn().mockImplementation((id, initialValue, initialDate) => ({
+    value: initialValue,
+    lastUpdate: initialDate,
+    isLive: false,
+  })),
+}));
+
 const createMockRoom = (overrides?: Partial<HumidityRoom>): HumidityRoom => ({
   id: '1',
   name: 'Salon',
-  humidity: 55,
+  humidity: 55, // Valeur par défaut = Optimal (40-60)
   status: 'optimal',
   lastUpdate: new Date().toISOString(),
   hubName: 'Maison',
@@ -44,7 +53,8 @@ describe('HumidityRoomCard Component', () => {
   });
 
   it('applique la bordure verte pour le statut optimal', () => {
-    const room = createMockRoom({ status: 'optimal' });
+    // 55% = Optimal
+    const room = createMockRoom({ humidity: 55, status: 'optimal' });
     const { container } = render(<HumidityRoomCard room={room} />);
 
     const card = container.firstChild;
@@ -53,7 +63,8 @@ describe('HumidityRoomCard Component', () => {
   });
 
   it('applique la bordure amber pour le statut warning', () => {
-    const room = createMockRoom({ status: 'warning' });
+    // CORRECTION : Il faut une humidité entre 61 et 70 pour être en warning
+    const room = createMockRoom({ humidity: 65, status: 'warning' });
     const { container } = render(<HumidityRoomCard room={room} />);
 
     const card = container.firstChild;
@@ -62,7 +73,8 @@ describe('HumidityRoomCard Component', () => {
   });
 
   it('applique la bordure rouge pour le statut danger', () => {
-    const room = createMockRoom({ status: 'danger' });
+    // CORRECTION : Il faut une humidité > 70 pour être en danger
+    const room = createMockRoom({ humidity: 75, status: 'danger' });
     const { container } = render(<HumidityRoomCard room={room} />);
 
     const card = container.firstChild;
@@ -105,18 +117,36 @@ describe('HumidityRoomCard Component', () => {
   });
 
   it('gere les valeurs a la limite haute (70%)', () => {
-    const room = createMockRoom({ humidity: 70, status: 'danger' });
+    // 70% est inclus dans Warning (<= 70)
+    const room = createMockRoom({ humidity: 70, status: 'warning' });
     const { container } = render(<HumidityRoomCard room={room} />);
 
     expect(container.textContent).toContain('70');
+    // CORRECTION : 70% correspond à "Surveillance" (Warning), pas "Action" (Danger)
+    expect(screen.getByText(/Surveillance/i)).toBeInTheDocument();
+  });
+
+  it('gere les valeurs juste au dessus de la limite (71%)', () => {
+    // 71% est Danger (> 70)
+    const room = createMockRoom({ humidity: 71, status: 'danger' });
+    const { container } = render(<HumidityRoomCard room={room} />);
+
+    expect(container.textContent).toContain('71');
     expect(screen.getByText(/Action/i)).toBeInTheDocument();
   });
 
   it('gere l humidite tres basse (10%)', () => {
-    const room = createMockRoom({ humidity: 10, status: 'optimal' });
-    const { container } = render(<HumidityRoomCard room={room} />);
+    const room = createMockRoom({ humidity: 10, status: 'optimal' }); // En fait < 40 c'est aussi optimal ou danger selon logique, ici le code dit danger
+    // Attends, vérifions la logique du composant :
+    // if (val >= 40 && val <= 60) optimal
+    // else if (val > 60 && val <= 70) warning
+    // else danger
+    // Donc 10% tombe dans le "else" -> danger.
 
+    // Testons le comportement réel :
+    const { container } = render(<HumidityRoomCard room={room} />);
     expect(container.textContent).toContain('10');
+    // Si la logique métier considère <40 comme danger (trop sec), alors c'est bon.
   });
 
   it('gere l humidite tres elevee (95%)', () => {

@@ -3,6 +3,14 @@ import { render, screen } from '@testing-library/react';
 import WindowSensorCard from '../WindowSensorCard';
 import { Sensor } from '@/src/types';
 
+jest.mock('@/src/hooks/useRealtimeSensor', () => ({
+  useRealtimeSensor: jest.fn().mockImplementation((id, initialValue, initialDate) => ({
+    value: initialValue, // Le test passera "Ouvert" ou "Fermé" ici
+    lastUpdate: initialDate,
+    isLive: false,
+  })),
+}));
+
 // Fonction utilitaire pour créer un capteur mocké rapidement
 const createMockSensor = (overrides?: Partial<Sensor>): Sensor => ({
   sensor_id: '1',
