@@ -24,18 +24,17 @@ const TemperatureCircle: React.FC<TemperatureCircleProps> = ({
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
   // Définition des couleurs dynamiques
-    const getStrokeColor = () => {
-    if (temperature >= 23) return 'stroke-red-500'   // Trop chaud
-    if (temperature <= 18) return 'stroke-blue-500'  // Trop froid
-    return 'stroke-green-500'                        // Confort 18–22
-  }
+  const getStrokeColor = () => {
+    if (temperature >= 23) return 'stroke-red-500'; // Trop chaud
+    if (temperature <= 18) return 'stroke-blue-500'; // Trop froid
+    return 'stroke-green-500'; // Confort 18–22
+  };
 
   const getTextColor = () => {
-    if (temperature >= 23) return 'text-red-500'
-    if (temperature <= 18) return 'text-blue-500'
-    return 'text-green-500'
-  }
-
+    if (temperature >= 23) return 'text-red-500';
+    if (temperature <= 18) return 'text-blue-500';
+    return 'text-green-500';
+  };
 
   return (
     <div className="flex flex-col items-center">

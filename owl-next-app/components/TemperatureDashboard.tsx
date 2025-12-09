@@ -136,15 +136,15 @@ const SensorCard = ({
         setLoading(true);
         setError(null);
         const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-        
+
         const res = await fetch(`${API_URL}/api/sensors/${sensor.sensor_id}/readings?period=7d`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
+          headers: { Authorization: `Bearer ${token}` },
+        });
         if (!res.ok) {
-          console.warn(`❌ Échec 7j pour ${sensor.name}: ${res.status}`)
-          setError("Données indisponibles")
-          setLoading(false)
-          return
+          console.warn(`❌ Échec 7j pour ${sensor.name}: ${res.status}`);
+          setError('Données indisponibles');
+          setLoading(false);
+          return;
         }
 
         const rawData: HistoryItem[] = await res.json();
@@ -516,7 +516,7 @@ export default function TemperatureDashboard({ initialSensors, token }: Props) {
               // Charger les données de tous les capteurs du hub
               const sensorDataPromises = sensors.map(async (sensor) => {
                 try {
-                  let res = await fetch(
+                  const res = await fetch(
                     `${API_URL}/api/sensors/${sensor.sensor_id}/readings?period=7d`,
                     {
                       headers: { Authorization: `Bearer ${token}` },
