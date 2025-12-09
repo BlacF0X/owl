@@ -137,20 +137,12 @@ const SensorCard = ({
         setError(null);
         const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
-        let res = await fetch(`${API_URL}/api/sensors/${sensor.sensor_id}/readings?period=30d`, {
+        const res = await fetch(`${API_URL}/api/sensors/${sensor.sensor_id}/readings?period=7d`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-
         if (!res.ok) {
-          console.warn('Echec 30j, tentative 7j...');
-          res = await fetch(`${API_URL}/api/sensors/${sensor.sensor_id}/readings?period=7d`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-        }
-
-        if (!res.ok) {
-          console.warn('Echec 7j, pas de donnees historiques');
-          setError(`Erreur de chargement (${res.status})`);
+          console.warn(`❌ Échec 7j pour ${sensor.name}: ${res.status}`);
+          setError('Données indisponibles');
           setLoading(false);
           return;
         }
@@ -524,21 +516,12 @@ export default function TemperatureDashboard({ initialSensors, token }: Props) {
               // Charger les données de tous les capteurs du hub
               const sensorDataPromises = sensors.map(async (sensor) => {
                 try {
-                  let res = await fetch(
-                    `${API_URL}/api/sensors/${sensor.sensor_id}/readings?period=30d`,
+                  const res = await fetch(
+                    `${API_URL}/api/sensors/${sensor.sensor_id}/readings?period=7d`,
                     {
                       headers: { Authorization: `Bearer ${token}` },
                     }
                   );
-
-                  if (!res.ok) {
-                    res = await fetch(
-                      `${API_URL}/api/sensors/${sensor.sensor_id}/readings?period=7d`,
-                      {
-                        headers: { Authorization: `Bearer ${token}` },
-                      }
-                    );
-                  }
 
                   if (!res.ok) return null;
 

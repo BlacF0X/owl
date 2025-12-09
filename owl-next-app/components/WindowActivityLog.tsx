@@ -7,7 +7,7 @@ import { WindowActivityEvent } from '@/src/types';
 import { DoorOpen, DoorClosed, Calendar, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface ActivityLogProps {
-  initialDate?: Date; // Pour le mode DEV
+  initialDate?: Date;
 }
 
 export default function ActivityLog({ initialDate = new Date() }: ActivityLogProps) {
@@ -23,18 +23,53 @@ export default function ActivityLog({ initialDate = new Date() }: ActivityLogPro
     setCurrentDate(newDate);
   };
 
+  // --- NOUVELLE FONCTION : Filtrage des changements d'état ---
+  const filterStateChanges = (rawData: WindowActivityEvent[]): WindowActivityEvent[] => {
+    // 1. On crée une copie et on trie du plus ANCIEN au plus RÉCENT
+    // Cela permet de parcourir l'histoire dans l'ordre chronologique
+    const chronologicallySorted = [...rawData].sort(
+      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    );
+
+    const lastKnownState: Record<string, string> = {};
+    const keptEvents: WindowActivityEvent[] = [];
+
+    chronologicallySorted.forEach((event) => {
+      // On crée une clé unique par capteur (Nom + Hub pour éviter les collisions)
+      // Idéalement on utiliserait sensor_id s'il était dispo dans ce type, mais sensorName + hubName suffit ici
+      const sensorKey = `${event.hubName}-${event.sensorName}`;
+
+      // Si l'état actuel est différent du dernier état connu pour ce capteur
+      if (lastKnownState[sensorKey] !== event.state) {
+        keptEvents.push(event);
+        // On met à jour l'état connu
+        lastKnownState[sensorKey] = event.state;
+      }
+    });
+
+    // 2. On retourne le tableau filtré, trié du plus RÉCENT au plus ANCIEN pour l'affichage
+    return keptEvents.sort(
+      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+  };
+
   useEffect(() => {
     const loadEvents = async () => {
       setLoading(true);
       try {
         const token = await getToken();
-        // Format YYYY-MM-DD pour l'API
         const dateString = currentDate.toISOString().split('T')[0];
-        const data = await fetchFromApi<WindowActivityEvent[]>(
+
+        // Récupération des données brutes (toutes les lectures)
+        const rawData = await fetchFromApi<WindowActivityEvent[]>(
           `/api/sensors/windows/history?date=${dateString}`,
           token
         );
-        setEvents(data);
+
+        // Application du filtre pour ne garder que les changements
+        const filteredData = filterStateChanges(rawData);
+
+        setEvents(filteredData);
       } catch (error) {
         console.error('Erreur chargement historique:', error);
       } finally {
@@ -44,7 +79,6 @@ export default function ActivityLog({ initialDate = new Date() }: ActivityLogPro
     loadEvents();
   }, [currentDate, getToken]);
 
-  // Formatage pour l'affichage
   const dateLabel = currentDate.toLocaleDateString('fr-FR', {
     weekday: 'long',
     day: 'numeric',
@@ -73,8 +107,6 @@ export default function ActivityLog({ initialDate = new Date() }: ActivityLogPro
           <button
             onClick={() => changeDate(1)}
             className="p-2 rounded-md hover:bg-white hover:shadow-sm transition-all text-slate-600"
-            // Désactiver "demain" si on est "aujourd'hui" (optionnel, dépend si on a des données futures)
-            // disabled={currentDate.toDateString() === new Date().toDateString()}
           >
             <ChevronRight className="h-5 w-5" />
           </button>
@@ -89,22 +121,23 @@ export default function ActivityLog({ initialDate = new Date() }: ActivityLogPro
           </div>
         ) : events.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-10 text-slate-400">
-            <p>Aucune activité enregistrée pour cette date.</p>
+            <p>Aucun changement d'état enregistré pour cette date.</p>
           </div>
         ) : (
           <div className="max-h-[500px] overflow-y-auto pl-4 pr-2">
-            {/* Le conteneur de la timeline (la ligne verticale) est à l'intérieur */}
             <div className="relative border-l-2 border-slate-200 space-y-6 py-2 ml-2">
               {events.map((event) => (
-                <div key={event.id} className="relative flex items-center pl-6 group">
-                  {/* Point sur la timeline (ne sera plus coupé grâce au pl-4 du parent) */}
+                <div
+                  key={event.id}
+                  className="relative flex items-center pl-6 group animate-in slide-in-from-left-2 duration-300"
+                >
+                  {/* Point sur la timeline */}
                   <div
                     className={`absolute -left-[9px] h-4 w-4 rounded-full border-2 border-white ${
                       event.state === 'Ouvert' ? 'bg-orange-500' : 'bg-green-500'
                     } shadow-sm`}
                   ></div>
 
-                  {/* ... le reste de la carte (inchangé) ... */}
                   <div className="flex flex-1 items-center justify-between rounded-lg border border-slate-100 bg-slate-50 p-3 transition-colors hover:border-slate-200 hover:bg-slate-100">
                     <div className="flex items-center gap-3">
                       {event.state === 'Ouvert' ? (

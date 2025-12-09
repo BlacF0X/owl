@@ -2,7 +2,7 @@ import rateLimit from 'express-rate-limit';
 
 // Configuration du limiteur
 export const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // Fenêtre de 15 minutes
+  windowMs: 5 * 60 * 1000, // Fenêtre de 5 minutes
   max: 100, // Limite chaque IP à 100 requêtes par fenêtre de 15min
   standardHeaders: true, // Retourne les infos de limite dans les headers `RateLimit-*`
   legacyHeaders: false, // Désactive les headers `X-RateLimit-*`

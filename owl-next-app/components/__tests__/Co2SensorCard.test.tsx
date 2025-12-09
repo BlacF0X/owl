@@ -3,6 +3,14 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { SensorCard } from '../Co2SensorCard';
 import { RoomData } from '../Co2Types';
 
+jest.mock('@/src/hooks/useRealtimeSensor', () => ({
+  useRealtimeSensor: jest.fn().mockImplementation((id, initialValue) => ({
+    value: initialValue,
+    lastUpdate: null,
+    isLive: false,
+  })),
+}));
+
 const mockRoom: RoomData = {
   id: '1',
   name: 'Salon',

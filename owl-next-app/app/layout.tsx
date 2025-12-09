@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { ClerkProvider } from '@clerk/nextjs';
 import { frFR } from '@clerk/localizations';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import { PusherProvider } from '@/components/providers/PusherProvider';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -18,8 +19,10 @@ export default function RootLayout({
     <ClerkProvider localization={frFR}>
       <html lang="fr">
         <body>
-          {children}
-          <SpeedInsights />
+          <PusherProvider>
+            {children}
+            <SpeedInsights />
+          </PusherProvider>
         </body>
       </html>
     </ClerkProvider>

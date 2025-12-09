@@ -5,7 +5,7 @@ import { Sensor } from '@/src/types';
 import WindowSensorsView from '@/components/WindowSensorsView';
 import WindowActivityLog from '@/components/WindowActivityLog';
 import WindowHourlyActivityChart from '@/components/WindowHourlyActivityChart';
-import { AlertTriangle, BarChart3, Info } from 'lucide-react';
+import { AlertTriangle, BarChart3 } from 'lucide-react';
 
 interface HourlyStat {
   hour: number;
@@ -48,19 +48,8 @@ export default async function WindowSensorsPage() {
     apiError = (error as Error).message;
   }
 
-  // --- LOGIQUE DATE DE REF (DEV) ---
-  let referenceDate = new Date();
-  let isDevTime = false;
-  if (process.env.NODE_ENV === 'development' && windowSensors.length > 0) {
-    const timestamps = windowSensors
-      .map((s) => s.state_changed_at)
-      .filter((t): t is string => !!t)
-      .map((t) => new Date(t).getTime());
-    if (timestamps.length > 0) {
-      referenceDate = new Date(Math.max(...timestamps));
-      isDevTime = true;
-    }
-  }
+  // --- TEMPS RÉEL ---
+  const referenceDate = new Date();
 
   // --- RÉCUPÉRATION DES STATS ---
   if (!apiError) {
@@ -81,8 +70,10 @@ export default async function WindowSensorsPage() {
   const totalSensors = windowSensors.length;
   const openSensors = windowSensors.filter((sensor) => sensor.displayValue === 'Ouvert');
   const openSensorsCount = openSensors.length;
+
   const LONG_PERIOD_THRESHOLD_MINUTES = 60;
   const thresholdInMs = LONG_PERIOD_THRESHOLD_MINUTES * 60 * 1000;
+
   const longOpenSensors = openSensors.filter((sensor) => {
     if (!sensor.state_changed_at) return false;
     const openDate = new Date(sensor.state_changed_at).getTime();
@@ -112,13 +103,6 @@ export default async function WindowSensorsPage() {
               Vue détaillée de tous vos capteurs de fenêtre, groupés par boîtier central.
             </p>
           </div>
-          {/* Petit indicateur visuel en mode DEV */}
-          {isDevTime && (
-            <div className="flex items-center gap-2 text-xs text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-200">
-              <Info className="h-3 w-3" />
-              <span>Temps simulé : {referenceDate.toLocaleTimeString()}</span>
-            </div>
-          )}
         </div>
       </header>
 
