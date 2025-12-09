@@ -36,18 +36,59 @@ console.log(
 /**
  * Génère une valeur réaliste selon le type de capteur
  */
-const generateValue = (type: string) => {
+const generateValue = (
+  type: string,
+  timestamp?: Date,
+  iteration: number = 0
+): string | number => {
+  const now = timestamp || new Date();
+  const hour = now.getHours() + now.getMinutes() / 60;
+  const minuteOfDay = hour * 60;
+
   switch (type) {
     case 'window':
-      return Math.random() > 0.95 ? 'Ouvert' : 'Fermé';
-    case 'temperature':
-      return (19 + Math.random() * 5).toFixed(1);
-    case 'humidity':
-      return Math.floor(40 + Math.random() * 25);
+      return minuteOfDay > 480 && minuteOfDay < 1080 && Math.random() > 0.85
+        ? 'Ouvert'
+        : 'Fermé';
+
+    case 'temperature': {
+      let baseTemp = 20.5;
+
+      const cycle = iteration % 720;
+
+      if (cycle < 60) {
+        baseTemp = 15.2; // ALERTE FROID
+      } else if (cycle > 660) {
+        baseTemp = 26.8; // ALERTE CHAUD
+      } else if (minuteOfDay > 840 && Math.random() > 0.9) {
+        baseTemp -= 3.5; // Fenêtre ouverte
+      }
+
+      const dailyVariation = 1.2 * Math.sin((2 * Math.PI * (hour - 6)) / 24);
+      const noise = (Math.random() - 0.5) * 0.8;
+      const temperatureValue = Math.max(
+        10,
+        Math.min(35, baseTemp + dailyVariation + noise)
+      );
+
+      return temperatureValue.toFixed(1);
+    }
+
+    case 'humidity': {
+      // Calculer température d'abord pour corrélation
+      const tempValue = parseFloat(
+        generateValue('temperature', now, iteration) as string
+      );
+      return (
+        tempValue < 18 ? 65 + Math.random() * 15 : 40 + Math.random() * 20
+      ).toFixed(0);
+    }
+
     case 'air_quality':
-      return Math.floor(400 + Math.random() * 1000);
+      return Math.floor(350 + Math.random() * 800).toString();
+
     default:
-      return 0;
+      return '0';
   }
 };
 
