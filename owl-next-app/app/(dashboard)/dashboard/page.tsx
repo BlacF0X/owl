@@ -4,7 +4,8 @@ import { fetchFromApi } from '@/src/lib/apiClient';
 import { Sensor } from '@/src/types';
 import ApiStatusIndicator from '@/components/ApiStatusIndicator';
 import Link from 'next/link';
-import GenericSensorsTable from '@/components/GenericSensorsTable';
+import CategorySummaryCards from '@/components/CategorySummaryCards';
+import { Router, Activity, Clock } from 'lucide-react';
 
 export default async function DashboardPage() {
   let user;
@@ -20,141 +21,131 @@ export default async function DashboardPage() {
       <div className="flex h-screen w-full items-center justify-center bg-slate-100">
         <div className="rounded-lg bg-white p-8 text-center shadow-lg">
           <h2 className="text-xl font-bold text-slate-800">Votre session a expiré</h2>
-          <p className="mt-2 text-slate-600">Pour des raisons de sécurité, veuillez vous reconnecter.</p>
-          <Link
-            href="/connexion"
-            className="mt-6 inline-block rounded-lg bg-slate-900 px-5 py-2 text-sm font-bold text-white transition-colors hover:bg-slate-700"
-          >
-            Se reconnecter
-          </Link>
+          <p className="mt-2 text-slate-600">Veuillez vous reconnecter.</p>
+          <Link href="/connexion" className="mt-6 inline-block rounded-lg bg-slate-900 px-5 py-2 text-sm font-bold text-white hover:bg-slate-700">Se reconnecter</Link>
         </div>
       </div>
     );
   }
 
-  if (!user) {
-    redirect('/connexion');
-  }
+  if (!user) redirect('/connexion');
 
-  // Initialisation des variables
+  // Initialisation
   let sensors: Sensor[] = [];
   let apiError: string | null = null;
+  let lastUpdateStr = "N/A";
 
   try {
     const token = await getToken();
     sensors = await fetchFromApi<Sensor[]>('/api/sensors', token);
+    
+    // Calcul date dernière mise à jour (la plus récente parmi tous les capteurs)
+    if (sensors.length > 0) {
+      const dates = sensors
+        .map(s => s.state_changed_at ? new Date(s.state_changed_at).getTime() : 0)
+        .filter(t => t > 0);
+      
+      if (dates.length > 0) {
+        const lastUpdate = new Date(Math.max(...dates));
+        lastUpdateStr = lastUpdate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      }
+    }
   } catch (error) {
-    console.error('Failed to fetch sensor data:', error);
     apiError = (error as Error).message;
   }
 
-  // --- CALCULS ET FILTRES (KPIs) ---
-  
-  // 1. Fenêtres
+  // --- CALCUL DES COMPTES (HUBS) ---
+  // On compte les hubs uniques basés sur leur ID
+  const uniqueHubs = new Set(sensors.map(s => s.hub.hub_id)).size;
+
+  // --- CALCULS MOYENNES ---
   const windowSensors = sensors.filter((s) => s.type.type_key === 'window');
   const openWindowsCount = windowSensors.filter((s) => s.displayValue === 'Ouvert').length;
 
-  // 2. Température
   const tempSensors = sensors.filter((s) => s.type.type_key === 'temperature');
-  const avgTemp =
-    tempSensors.length > 0
-      ? Math.round(
-          tempSensors.reduce((acc, s) => acc + Number(s.displayValue || 0), 0) / tempSensors.length
-        )
+  const avgTemp = tempSensors.length > 0
+      ? Math.round(tempSensors.reduce((acc, s) => acc + Number(s.displayValue || 0), 0) / tempSensors.length)
       : null;
 
-  // 3. Humidité
   const humiditySensors = sensors.filter((s) => s.type.type_key === 'humidity');
-  const avgHumidity =
-    humiditySensors.length > 0
-      ? Math.round(
-          humiditySensors.reduce((acc, s) => acc + Number(s.displayValue || 0), 0) /
-            humiditySensors.length
-        )
+  const avgHumidity = humiditySensors.length > 0
+      ? Math.round(humiditySensors.reduce((acc, s) => acc + Number(s.displayValue || 0), 0) / humiditySensors.length)
       : null;
 
-  // 4. Qualité de l'Air (CO2)
   const co2Sensors = sensors.filter((s) => s.type.type_key === 'air_quality');
-  
-  const avgCo2 =
-    co2Sensors.length > 0
-      ? Math.round(
-          co2Sensors.reduce((acc, s) => acc + Number(s.displayValue || 0), 0) / co2Sensors.length
-        )
+  const avgCo2 = co2Sensors.length > 0
+      ? Math.round(co2Sensors.reduce((acc, s) => acc + Number(s.displayValue || 0), 0) / co2Sensors.length)
       : null;
-
   const co2Unit = co2Sensors.length > 0 ? co2Sensors[0].type.unit : 'ppm';
+
 
   return (
     <div>
-      {/* En-tête de la page */}
-      <header className="mb-8">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900">
-              Bonjour, {user.firstName || 'Utilisateur'} !
-            </h1>
-            <p className="mt-1 text-slate-600">Voici le résumé de l'état de vos capteurs.</p>
-          </div>
-          {process.env.NODE_ENV === 'development' && <ApiStatusIndicator />}
+      {/* HEADER */}
+      <header className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">
+            Vue d'ensemble
+          </h1>
+          <p className="mt-1 text-slate-600">Bienvenue {user.firstName}, voici la santé de votre système.</p>
         </div>
+        {process.env.NODE_ENV === 'development' && <ApiStatusIndicator />}
       </header>
 
-      {/* GRILLE DE STATS (KPIs) */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5 mb-8">
-        {/* Carte 1 : Fenêtres */}
-        <div className="rounded-lg bg-white p-5 shadow border border-slate-100">
-          <p className="text-sm font-medium text-slate-500">Fenêtres Ouvertes</p>
-          <p className="mt-2 text-3xl font-bold text-slate-900">{openWindowsCount}</p>
+      {/* 1. TOP BAR : INFOS SYSTÈME (Hubs, Capteurs, Update) */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-8">
+        {/* Hubs Connectés */}
+        <div className="flex items-center gap-4 rounded-xl bg-slate-900 p-5 text-white shadow-md">
+          <div className="rounded-full bg-slate-800 p-3">
+            <Router className="h-6 w-6 text-blue-400" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">Hubs Connectés</p>
+            <p className="text-2xl font-bold">{uniqueHubs}</p>
+          </div>
         </div>
 
-        {/* Carte 2 : Température */}
-        <div className="rounded-lg bg-white p-5 shadow border border-slate-100">
-          <p className="text-sm font-medium text-slate-500">Température Moy.</p>
-          <p className="mt-2 text-3xl font-bold text-slate-900">
-            {avgTemp !== null ? avgTemp : '-'} <span className="text-sm font-normal text-slate-500">°C</span>
-          </p>
+        {/* Total Capteurs */}
+        <div className="flex items-center gap-4 rounded-xl bg-white p-5 border border-slate-200 shadow-sm">
+          <div className="rounded-full bg-blue-50 p-3">
+            <Activity className="h-6 w-6 text-blue-600" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Capteurs</p>
+            <p className="text-2xl font-bold text-slate-900">{sensors.length}</p>
+          </div>
         </div>
 
-        {/* Carte 3 : Humidité */}
-        <div className="rounded-lg bg-white p-5 shadow border border-slate-100">
-          <p className="text-sm font-medium text-slate-500">Humidité Moy.</p>
-          <p className="mt-2 text-3xl font-bold text-slate-900">
-            {avgHumidity !== null ? avgHumidity : '-'} <span className="text-sm font-normal text-slate-500">%</span>
-          </p>
-        </div>
-
-        {/* Carte 4 : Qualité de l'air */}
-        <div className="rounded-lg bg-white p-5 shadow border border-slate-100">
-          <p className="text-sm font-medium text-slate-500">Qualité de l'air (Moy.)</p>
-          <p className="mt-2 text-3xl font-bold text-slate-900">
-            {avgCo2 !== null ? avgCo2 : '-'}
-          </p>
-          <span className="text-xs text-slate-500">{co2Unit}</span>
-        </div>
-
-        {/* Carte 5 : Total Capteurs */}
-        <div className="rounded-lg bg-white p-5 shadow border border-slate-100">
-          <p className="text-sm font-medium text-slate-500">Capteurs Actifs</p>
-          <p className="mt-2 text-3xl font-bold text-slate-900">{sensors.length}</p>
+        {/* Dernière mise à jour */}
+        <div className="flex items-center gap-4 rounded-xl bg-white p-5 border border-slate-200 shadow-sm">
+          <div className="rounded-full bg-slate-50 p-3">
+            <Clock className="h-6 w-6 text-slate-600" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Dernière MàJ</p>
+            <p className="text-2xl font-bold text-slate-900">{lastUpdateStr}</p>
+          </div>
         </div>
       </div>
 
-      {/* Gestion des erreurs API */}
       {apiError && (
-        <div className="mb-6 rounded-lg bg-red-100 p-4 text-red-700">
-          <p className="font-bold">Erreur de chargement :</p>
+        <div className="mb-6 rounded-lg bg-red-100 p-4 text-red-700 border border-red-200">
+          <p className="font-bold">Erreur système :</p>
           <p className="text-sm">{apiError}</p>
         </div>
       )}
 
-      {/* Widget : Liste de TOUS les capteurs (Nouvelle Grille) */}
+      {/* 2. GRILLE PRINCIPALE (4 Cartes Métier) */}
       <div className="mt-8">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-slate-800">Détails par catégorie</h2>
-        </div>
-        
-        <GenericSensorsTable sensors={sensors} />
+        <h2 className="mb-4 text-lg font-semibold text-slate-800">Indicateurs clés</h2>
+        <CategorySummaryCards 
+            sensors={sensors}
+            openWindowsCount={openWindowsCount}
+            avgTemp={avgTemp}
+            avgHumidity={avgHumidity}
+            avgCo2={avgCo2}
+            co2Unit={co2Unit}
+        />
       </div>
     </div>
   );
