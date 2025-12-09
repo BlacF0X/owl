@@ -58,6 +58,22 @@ export default async function DashboardPage() {
   const windowSensors = sensors.filter((s) => s.type.type_key === 'window');
   const openWindowsCount = windowSensors.filter((s) => s.displayValue === 'Ouvert').length;
   const co2Sensor = sensors.find((s) => s.type.type_key === 'air_quality');
+  const tempSensors = sensors.filter((s) => s.type.type_key === 'temperature');
+  const humiditySensors = sensors.filter((s) => s.type.type_key === 'humidity');
+
+  // Calcul Moyenne Température
+  const avgTemp = tempSensors.length > 0
+    ? Math.round(
+        tempSensors.reduce((acc, s) => acc + Number(s.displayValue || 0), 0) / tempSensors.length
+      )
+    : null;
+
+  // Calcul Moyenne Humidité
+  const avgHumidity = humiditySensors.length > 0
+    ? Math.round(
+        humiditySensors.reduce((acc, s) => acc + Number(s.displayValue || 0), 0) / humiditySensors.length
+      )
+    : null;
 
   return (
     <div>
