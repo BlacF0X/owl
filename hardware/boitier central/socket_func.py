@@ -1,7 +1,8 @@
 import socket
 import json_rel
+import time
 HOST = ""          # écoute sur toutes les interfaces
-PORT = 5000        # choisis un port libre > 1024
+PORT = 5268        # choisis un port libre > 1024
 
 
 def get_captor_nbr(captype):
@@ -25,37 +26,60 @@ def get_captor_nbr(captype):
     else:
         return "001"
 
-def listen(Host,Port):
-    s= socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+def listen(Host, Port):
+    print('listen')
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind((Host, Port))
-    s.listen(1)
+    s.listen(5)
+    s.settimeout(180)
     wifi_state = -1
-    print(f"Serveur en écoute sur le port {PORT}...")
-    conn, addr = s.accept()
-    running = True
-    while running:
+    print(f"Serveur en écoute sur le port {Port}...")
+
+    try:
+        conn, addr = s.accept()
+        print("Client connecté :", addr)
+    except OSError:
+        print('error (timeout accept)')
+        s.close()
+        print('return to 1')
+        return 1
+
+    print('toppipo')
+    try:
         data = conn.recv(1024)
-        message = data.decode("utf-8")
-        print("Reçu :", message)
-        if "SEND" in message:
-            c_type = message.split('-')[1]
-            print('t ',c_type)
-            cpid = get_captor_nbr(c_type)
-            json_rel.new_captor(c_type,cpid)
-            print('i ',cpid)
-            conn.sendall(b"REGISTERED-"+str(cpid))
-            print('sended')
-            running = False
-            wifi_state = 1
-        elif "DATA" in message:
-            data_raw = message.split('-')[2]
-            cap_id = message.split('-')[1]
-            print(data_raw)
-            conn.sendall(b"ClEAR")
-            print("clearsend")
-        else:
-            wifi_state = 0
+    except OSError as e:
+        print("Erreur recv:", e)
+    if not data:
+        print("Client a fermé la connexion (data vide)")
+
+    message = data.decode("utf-8")
+    print("Reçu :", message)
+    good = False
+    if "SEND" in message:
+        c_type = message.split('-')[1]
+        cpid = get_captor_nbr(c_type)
+        json_rel.new_captor(c_type, cpid)
+        conn.sendall(("REGISTERED-" + str(cpid)).encode("utf-8"))
+        print('sended')
+        running = False
+        wifi_state = 1
+        good = True
+    elif "DATA" in message:
+        data_raw = message.split('-')[3]
+        cap_id = message.split('-')[1]
+        print("DATA RAW:", data_raw, "ID:", cap_id)
+        conn.sendall(b"ClEAR")
+        print("clearsend")
+        running = False
+        wifi_state = 1
+        good = True
+    else:
+        print("Message inconnu")
+        wifi_state = 1
+
+
     conn.close()
     s.close()
-    return wifi_state
+    return wifi_state,good
 

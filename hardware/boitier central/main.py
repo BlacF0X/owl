@@ -1,7 +1,8 @@
 import _thread
 import time
+import network
 from machine import Pin
-import wifi_data, emit, json_rel
+import wifi_data, emit, json_rel, web_serv, shared
 import socket_func
 
 running_thread = True
@@ -9,7 +10,8 @@ button_count = 0
 last_count = 0
 count = 0
 
-ws = -1
+ws = 1
+shared.change_wifi_state(ws)
 send = False
 led = True
 
@@ -22,28 +24,35 @@ ap = None
 def core1_thread_function(name, delay):
     global ws, ap
     while running_thread:
-        print('top')
+        print('top', ws)
         if ws == 0:
             if ap is not None:
                 emit.un_emit(ap)
             base = json_rel.get_infos()
             wifi = base["emits"]
             wifi = wifi[ws]
-            print(wifi)
             psd = json_rel.get_infos()["password"]
-            print(psd)
-            ap = emit.emit(wifi, psd)
-            ws = socket_func.listen("", 5000)
+            ap = emit.emit(wifi, psd, False)
+            if not ap == None:
+                ws = socket_func.listen("", 5000)
+                shared.change_wifi_state(ws)
+            else:
+                ws = 1
+                shared.change_wifi_state(ws)
         elif ws == 1:
-            if not ap.active():
-                emit.un_emit(ap)
             base = json_rel.get_infos()
             wifi = base["emits"]
             wifi = wifi[ws]
             psd = json_rel.get_infos()["password"]
             ap = emit.emit(wifi, psd)
-            ws = socket_func.listen("", 5000)
-        time.sleep(delay)
+            if not ap == None:
+                ws, good = socket_func.listen("", 5000)
+                shared.change_wifi_state(ws)
+            else:
+                ws = 1
+                shared.change_wifi_state(ws)
+        time.sleep(1)
+        print(ws)
 
 
 def core0_main_func():
@@ -74,15 +83,29 @@ def core0_main_func():
         order = (button_count // 5) + 1
         send = False
         button_count = 0
-        if order >= 10:
-            running_thread = False
+        if order >= 6:
             for i in range(3):
                 green_led.value(1)
                 time.sleep(0.1)
                 green_led.value(0)
                 time.sleep(0.1)
+                green_led.value(1)
+                time.sleep(0.1)
+                green_led.value(0)
+                time.sleep(0.1)
+            ap = network.WLAN(network.AP_IF)
+            ap.active(False)
+            ssid, pwd = web_serv.start_config_portal()
+            print("Reçu depuis portail:", ssid, pwd)
+            json_rel.save_data("home_wifi", {"ssid": ssid, "psd": pwd})
+            ap = network.WLAN(network.AP_IF)
+            ap.active(False)
+            ws = 1
+            shared.change_wifi_state(1)
+            print("finish")
         elif order >= 3:
             ws = 0
+            shared.change_wifi_state(ws)
             print(ws)
             for i in range(2):
                 green_led.value(1)
@@ -94,11 +117,9 @@ def core0_main_func():
             time.sleep(0.1)
             green_led.value(0)
             time.sleep(0.1)
-            if running_thread == False:
-                running_trhead = True
 
 
-_thread.start_new_thread(core1_thread_function, ("Core 1", 3))
+_thread.start_new_thread(core1_thread_function, ("Core 1", 90))
 try:
     while True:
         core0_main_func()
@@ -106,5 +127,11 @@ try:
 except KeyboardInterrupt:
     running_thread = False
     time.sleep(0.3)
-    print("Second thread terminated gracefully.")
+finally:
+    wlan = network.WLAN(network.STA_IF)
+    wlan.active(False)
+    ap = network.WLAN(network.AP_IF)
+    ap.active(False)
+    shared.change_wifi_state(0)
+print("Second thread terminated gracefully.")
 print("Main thread terminated gracefully.")
