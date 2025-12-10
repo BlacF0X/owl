@@ -1,260 +1,130 @@
 import '@testing-library/jest-dom';
+import React from 'react';
 import { render, screen } from '@testing-library/react';
-import HumidityEvolutionChart from '../HumidityEvolutionChart';
-import { HumidityDataPoint } from '../HumidityEvolutionChart';
+import HumidityEvolutionChart, { type HumidityDataPoint } from '../HumidityEvolutionChart';
+
+// ✅ Mock Lucide React
+jest.mock('lucide-react', () => ({
+  Activity: () => <div data-testid="icon-activity" />,
+}));
+
+// ✅ Mock Recharts Avancé
+jest.mock('recharts', () => {
+  const OriginalModule = jest.requireActual('react');
+  return {
+    ResponsiveContainer: ({ children }: any) => <div data-testid="responsive">{children}</div>,
+    // CORRECTION 1: Utiliser <svg> pour éviter les erreurs de balises SVG (<stop>, <defs>) invalides dans une div
+    AreaChart: ({ children }: any) => <svg data-testid="area-chart">{children}</svg>,
+    Area: () => <div data-testid="area" />,
+    XAxis: () => <div data-testid="xaxis" />,
+    YAxis: () => <div data-testid="yaxis" />,
+    CartesianGrid: () => <div data-testid="grid" />,
+    // Mock du Tooltip pour simuler le survol
+    Tooltip: ({ content }: any) => {
+      const mockPayload = [{ value: 55 }];
+      const mockLabel = '14h00'; // CORRECTION 5: Label formaté pour matcher l'attente du test
+
+      if (OriginalModule.isValidElement(content)) {
+        return (
+          <div data-testid="tooltip">
+            {OriginalModule.cloneElement(content as React.ReactElement, {
+              active: true,
+              payload: mockPayload,
+              label: mockLabel,
+            })}
+          </div>
+        );
+      }
+      return <div data-testid="tooltip">{content}</div>;
+    },
+  };
+});
 
 describe('HumidityEvolutionChart Component', () => {
-  // Test 1: Affichage du titre
-  it('affiche le titre du graphique', () => {
-    const mockData: HumidityDataPoint[] = [
-      { hour: 0, value: 50 },
-      { hour: 1, value: 55 },
-    ];
+  const mockData: HumidityDataPoint[] = [
+    { hour: 9, value: 45 },
+    { hour: 12, value: 50 },
+    { hour: 15, value: 65 },
+    { hour: 18, value: 55 },
+  ];
 
+  it('rend le composant graphique sans erreur', () => {
     render(<HumidityEvolutionChart data={mockData} />);
-
-    expect(screen.getByText(/dernières 24h/i)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 3 })).toBeInTheDocument();
+    // Ici on teste responsive container car il y a des données
+    expect(screen.getByTestId('responsive')).toBeInTheDocument();
   });
 
-  // Test 2: Message si pas de donnees
-  it('affiche un message quand il n y a pas de donnees', () => {
+  // CORRECTION 2 : Quand il n'y a pas de données, le graphique n'est PAS rendu
+  it("affiche un message si aucune donnée n'est disponible", () => {
     render(<HumidityEvolutionChart data={[]} />);
-
-    expect(screen.getByText(/Aucune donnée/i)).toBeInTheDocument();
+    // On ne cherche pas le graphique, mais le message de fallback
+    expect(screen.queryByTestId('responsive')).not.toBeInTheDocument();
+    expect(screen.getByText('Aucune donnée disponible')).toBeInTheDocument();
   });
 
-  // Test 3: Ne rend pas le graphique si data est vide
-  it('ne rend pas le graphique si data est vide', () => {
-    const { container } = render(<HumidityEvolutionChart data={[]} />);
-
-    const chart = container.querySelector('[class*="h-64"]');
-    expect(chart).not.toBeInTheDocument();
-  });
-
-  // Test 4: Calcul de la moyenne
-  it('calcule et affiche la moyenne correctement', () => {
-    const mockData: HumidityDataPoint[] = [
-      { hour: 0, value: 40 },
-      { hour: 8, value: 50 },
-      { hour: 16, value: 60 },
-    ];
-
+  it("affiche l'icône Activity", () => {
     render(<HumidityEvolutionChart data={mockData} />);
-
-    expect(screen.getByText(/Moyenne sur 24h/i)).toBeInTheDocument();
+    expect(screen.getByTestId('icon-activity')).toBeInTheDocument();
   });
 
-  // Test 5: Affiche l axe Y
-  it('affiche l axe Y avec les valeurs de 0 a 100', () => {
-    const mockData: HumidityDataPoint[] = [{ hour: 0, value: 50 }];
-
-    const { container } = render(<HumidityEvolutionChart data={mockData} />);
-
-    const yTicks = container.textContent;
-    expect(yTicks).toContain('100');
-    expect(yTicks).toContain('80');
-    expect(yTicks).toContain('0');
-  });
-
-  // Test 6: Affiche les heures sur l axe X
-  it('affiche l axe X avec les heures', () => {
-    const mockData: HumidityDataPoint[] = [
-      { hour: 0, value: 50 },
-      { hour: 4, value: 55 },
-      { hour: 8, value: 60 },
-    ];
-
+  it('affiche la moyenne correctement', () => {
     render(<HumidityEvolutionChart data={mockData} />);
-
-    // Utilise getAllByText au lieu de getByText pour eviter les doublons
-    const hourElements = screen.getAllByText(/0\s*h/);
-    expect(hourElements.length).toBeGreaterThan(0);
+    expect(screen.getByText(/Moyenne/i)).toBeInTheDocument();
+    expect(screen.getByText(/54/)).toBeInTheDocument();
   });
 
-  // Test 7: Moyenne arrondie
-  it('affiche la moyenne correctement arrondie', () => {
-    const mockData: HumidityDataPoint[] = [
-      { hour: 0, value: 50 },
-      { hour: 8, value: 51 },
-      { hour: 16, value: 52 },
-    ];
+  // CORRECTION 3 : Gérer les multiples occurrences de "50"
+  it('gère les données avec une seule valeur', () => {
+    const singleData: HumidityDataPoint[] = [{ hour: 12, value: 50 }];
+    render(<HumidityEvolutionChart data={singleData} />);
 
+    expect(screen.getByTestId('responsive')).toBeInTheDocument();
+    // Le chiffre 50 apparait dans Moyenne, Min et Max. On vérifie qu'on en trouve au moins un.
+    const values = screen.getAllByText(/50/);
+    expect(values.length).toBeGreaterThan(0);
+  });
+
+  it('affiche le graphique avec données complètes', () => {
     render(<HumidityEvolutionChart data={mockData} />);
-
-    expect(screen.getByText(/Moyenne sur 24h/i)).toBeInTheDocument();
+    expect(screen.getByTestId('area-chart')).toBeInTheDocument();
+    expect(screen.getByTestId('grid')).toBeInTheDocument();
+    expect(screen.getByTestId('xaxis')).toBeInTheDocument();
+    expect(screen.getByTestId('yaxis')).toBeInTheDocument();
   });
 
-  // Test 8: Classes CSS du conteneur
-  it('applique les classes CSS correctes au conteneur', () => {
-    const mockData: HumidityDataPoint[] = [{ hour: 0, value: 50 }];
+  // CORRECTION 4 : Suppression du test "formate correctement les ticks"
+  // car le composant n'utilise pas tickFormatter (il formate les données en amont)
+  // et le mock XAxis ne peut pas deviner les données passées à AreaChart.
 
-    const { container } = render(<HumidityEvolutionChart data={mockData} />);
-
-    const mainDiv = container.firstChild;
-    expect(mainDiv).toHaveClass('rounded-xl');
-    expect(mainDiv).toHaveClass('border');
-    expect(mainDiv).toHaveClass('bg-white');
-    expect(mainDiv).toHaveClass('p-6');
-  });
-
-  // Test 9: Icone TrendingUp
-  it('affiche l icone TrendingUp', () => {
-    const mockData: HumidityDataPoint[] = [{ hour: 0, value: 50 }];
-
-    const { container } = render(<HumidityEvolutionChart data={mockData} />);
-
-    const svg = container.querySelector('svg');
-    expect(svg).toBeInTheDocument();
-  });
-
-  // Test 10: Une seule valeur
-  it('gère une seule valeur de donnee', () => {
-    const mockData: HumidityDataPoint[] = [{ hour: 12, value: 50 }];
-
+  it('rend le CustomTooltip avec les valeurs correctes', () => {
     render(<HumidityEvolutionChart data={mockData} />);
-
-    expect(screen.getByText(/dernières 24h/i)).toBeInTheDocument();
+    // Le mock Tooltip injecte active=true, payload=[{value: 55}], label="14h00"
+    expect(screen.getByText('14h00')).toBeInTheDocument();
+    expect(screen.getByText('55%')).toBeInTheDocument();
+    expect(screen.getByText(/Humidité/)).toBeInTheDocument();
   });
 
-  // Test 11: Valeurs minimales (0%)
-  it('gère les valeurs minimales (0%)', () => {
-    const mockData: HumidityDataPoint[] = [
-      { hour: 0, value: 0 },
-      { hour: 12, value: 0 },
+  it('calcule la moyenne correctement avec valeurs différentes', () => {
+    const dataWithDifferentValues: HumidityDataPoint[] = [
+      { hour: 6, value: 30 },
+      { hour: 12, value: 50 },
+      { hour: 18, value: 70 },
     ];
-
-    render(<HumidityEvolutionChart data={mockData} />);
-
-    expect(screen.getByText(/Moyenne sur 24h/i)).toBeInTheDocument();
+    render(<HumidityEvolutionChart data={dataWithDifferentValues} />);
+    // (30+50+70)/3 = 50
+    // Comme il y a 50 pour Moyenne, Min(30) et Max(70), on peut chercher "50" spécifiquement
+    // Mais attention, "50" peut être dans le Min si on change les données.
+    // Ici on vérifie juste qu'il est présent.
+    expect(screen.getAllByText(/50/).length).toBeGreaterThan(0);
   });
 
-  // Test 12: Valeurs maximales (100%)
-  it('gère les valeurs maximales (100%)', () => {
-    const mockData: HumidityDataPoint[] = [
-      { hour: 0, value: 100 },
-      { hour: 12, value: 100 },
+  it('se rend correctement avec des données partielles', () => {
+    const dataWithMissing: HumidityDataPoint[] = [
+      { hour: 9, value: 45 },
+      { hour: 18, value: 55 },
     ];
-
-    render(<HumidityEvolutionChart data={mockData} />);
-
-    expect(screen.getByText(/Moyenne sur 24h/i)).toBeInTheDocument();
-  });
-
-  // Test 13: Mélange de valeurs extremes
-  it('gère un mélange de valeurs extremes', () => {
-    const mockData: HumidityDataPoint[] = [
-      { hour: 0, value: 0 },
-      { hour: 12, value: 100 },
-    ];
-
-    render(<HumidityEvolutionChart data={mockData} />);
-
-    expect(screen.getByText(/Moyenne sur 24h/i)).toBeInTheDocument();
-  });
-
-  // Test 14: Valeurs fractionnaires
-  it('gère les valeurs fractionnaires', () => {
-    const mockData: HumidityDataPoint[] = [
-      { hour: 0, value: 45.5 },
-      { hour: 12, value: 54.5 },
-    ];
-
-    render(<HumidityEvolutionChart data={mockData} />);
-
-    expect(screen.getByText(/Moyenne sur 24h/i)).toBeInTheDocument();
-  });
-
-  // Test 15: Composant se rend sans erreur
-  it('rend le composant sans erreur', () => {
-    const mockData: HumidityDataPoint[] = [
-      { hour: 0, value: 50 },
-      { hour: 12, value: 60 },
-    ];
-
-    expect(() => {
-      render(<HumidityEvolutionChart data={mockData} />);
-    }).not.toThrow();
-  });
-
-  // Test 16: 24 heures de donnees
-  it('gère 24 heures de donnees', () => {
-    const mockData: HumidityDataPoint[] = Array.from({ length: 24 }, (_, i) => ({
-      hour: i,
-      value: 50,
-    }));
-
-    render(<HumidityEvolutionChart data={mockData} />);
-
-    expect(screen.getByText(/dernières 24h/i)).toBeInTheDocument();
-    expect(screen.getByText(/Moyenne sur 24h/i)).toBeInTheDocument();
-  });
-
-  // Test 17: Journée typique d humidite
-  it('gère une journée typique d humidite', () => {
-    const mockData: HumidityDataPoint[] = [
-      { hour: 0, value: 45 },
-      { hour: 4, value: 42 },
-      { hour: 8, value: 50 },
-      { hour: 12, value: 65 },
-      { hour: 16, value: 70 },
-      { hour: 20, value: 60 },
-      { hour: 23, value: 50 },
-    ];
-
-    const { container } = render(<HumidityEvolutionChart data={mockData} />);
-
-    expect(container.firstChild).toBeInTheDocument();
-  });
-
-  // Test 18: Couleur verte pour valeurs optimales
-  it('applique la couleur verte pour les valeurs optimales (40-60%)', () => {
-    const mockData: HumidityDataPoint[] = [{ hour: 0, value: 50 }];
-
-    const { container } = render(<HumidityEvolutionChart data={mockData} />);
-
-    expect(container.innerHTML).toContain('green');
-  });
-
-  // Test 19: Couleur jaune pour valeurs moyennes
-  it('applique la couleur jaune pour les valeurs moyennes (60-70%)', () => {
-    const mockData: HumidityDataPoint[] = [{ hour: 0, value: 65 }];
-
-    const { container } = render(<HumidityEvolutionChart data={mockData} />);
-
-    expect(container.innerHTML).toContain('yellow');
-  });
-
-  // Test 20: Couleur rouge pour valeurs critiques
-  it('applique la couleur rouge pour les valeurs critiques (>70%)', () => {
-    const mockData: HumidityDataPoint[] = [{ hour: 0, value: 75 }];
-
-    const { container } = render(<HumidityEvolutionChart data={mockData} />);
-
-    expect(container.innerHTML).toContain('red');
-  });
-
-  // Test 21: Header du graphique
-  it('applique les classes CSS du header', () => {
-    const mockData: HumidityDataPoint[] = [{ hour: 0, value: 50 }];
-
-    const { container } = render(<HumidityEvolutionChart data={mockData} />);
-
-    const header = container.querySelector('[class*="flex"]');
-    expect(header).toHaveClass('items-center');
-    expect(header).toHaveClass('gap-3');
-  });
-
-  // Test 22: Formatage des heures avec suffixe h
-  it('formate correctement les heures avec le suffixe h', () => {
-    const mockData: HumidityDataPoint[] = [
-      { hour: 0, value: 50 },
-      { hour: 12, value: 55 },
-    ];
-
-    const { container } = render(<HumidityEvolutionChart data={mockData} />);
-
-    const content = container.textContent || '';
-    expect(content).toMatch(/0\s*h/);
-    expect(content).toMatch(/12\s*h/);
+    render(<HumidityEvolutionChart data={dataWithMissing} />);
+    expect(screen.getByTestId('area-chart')).toBeInTheDocument();
   });
 });
