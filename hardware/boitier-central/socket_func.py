@@ -1,7 +1,6 @@
 import socket
 import json_rel
-import time
-HOST = ""          # écoute sur toutes les interfaces
+HOST = "127.0.0.1" # écoute sur localhost
 PORT = 5268        # choisis un port libre > 1024
 
 

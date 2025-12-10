@@ -27,3 +27,4 @@ Closes #
 - [ ] **Backend** (API Express, TypeORM, Controllers)
 - [ ] **Database** (Entities, SQL Scripts)
 - [ ] **Shared** (Types, Utils)
+- [ ] **Hardware** (Python, Boitiers, Capteurs)
