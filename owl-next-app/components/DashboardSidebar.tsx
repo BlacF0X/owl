@@ -5,6 +5,7 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { LayoutDashboard, DoorOpen, Wind, Thermometer, Router, Droplets } from 'lucide-react';
+import SystemStatusWidget from '@/components/SystemStatusWidget';
 
 interface TempSensor {
   sensor_id: string;
@@ -176,8 +177,9 @@ const DashboardSidebar = () => {
           </ul>
         </div>
       </nav>
-      <div className="flex-shrink-0 border-t p-4">
-        <p className="text-center text-xs text-slate-500">
+      <div className="flex-shrink-0 border-t border-slate-100 bg-white p-4">
+        <SystemStatusWidget />
+        <p className="mt-1 text-center text-[10px] text-slate-400">
           &copy; {new Date().getFullYear()} Project OwL Inc.
         </p>
       </div>
