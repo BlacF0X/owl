@@ -109,7 +109,7 @@ describe('DashboardPage (Server Component)', () => {
     auth.mockResolvedValue({ getToken: jest.fn().mockResolvedValue('fake-token') });
   });
 
-  it('redirige vers /connexion si aucun utilisateur n\'est connecté', async () => {
+  it("redirige vers /connexion si aucun utilisateur n'est connecté", async () => {
     currentUser.mockResolvedValue(null);
 
     // On s'attend à ce que l'appel lance l'erreur NEXT_REDIRECT définie dans le mock
@@ -122,13 +122,13 @@ describe('DashboardPage (Server Component)', () => {
     expect(redirect).toHaveBeenCalledWith('/connexion');
   });
 
-  it('affiche le header avec le prénom de l\'utilisateur', async () => {
+  it("affiche le header avec le prénom de l'utilisateur", async () => {
     (fetchFromApi as jest.Mock).mockResolvedValue([]);
 
     const jsx = await DashboardPage();
     render(jsx);
 
-    expect(screen.getByText('Vue d\'ensemble')).toBeInTheDocument();
+    expect(screen.getByText("Vue d'ensemble")).toBeInTheDocument();
     expect(screen.getByText('Thomas')).toBeInTheDocument();
   });
 
@@ -172,7 +172,7 @@ describe('DashboardPage (Server Component)', () => {
     expect(screen.getByTestId('prop-avg-co2')).toHaveTextContent('800');
   });
 
-  it('affiche un message d\'erreur si l\'API échoue', async () => {
+  it("affiche un message d'erreur si l'API échoue", async () => {
     (fetchFromApi as jest.Mock).mockRejectedValue(new Error('Serveur indisponible'));
 
     const jsx = await DashboardPage();
@@ -182,7 +182,7 @@ describe('DashboardPage (Server Component)', () => {
     expect(screen.getByText('Serveur indisponible')).toBeInTheDocument();
   });
 
-  it('gère le cas où aucune donnée n\'est renvoyée (liste vide)', async () => {
+  it("gère le cas où aucune donnée n'est renvoyée (liste vide)", async () => {
     (fetchFromApi as jest.Mock).mockResolvedValue([]);
 
     const jsx = await DashboardPage();

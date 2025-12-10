@@ -46,12 +46,7 @@ describe('CategorySummaryCards Component', () => {
   };
 
   it('affiche les 4 cartes avec les titres corrects', () => {
-    render(
-      <CategorySummaryCards 
-        {...defaultProps} 
-        avgTemp={20} avgHumidity={50} avgCo2={450} 
-      />
-    );
+    render(<CategorySummaryCards {...defaultProps} avgTemp={20} avgHumidity={50} avgCo2={450} />);
 
     expect(screen.getByText('Fenêtres Ouvertes')).toBeInTheDocument();
     expect(screen.getByText('Température Moyenne')).toBeInTheDocument();
@@ -87,11 +82,11 @@ describe('CategorySummaryCards Component', () => {
     });
 
     it('affiche "Idéale" et style vert si entre 18°C et 23°C', () => {
-      // CORRECTION : On force l'humidité à une valeur "mauvaise" (10% -> Trop sec) 
+      // CORRECTION : On force l'humidité à une valeur "mauvaise" (10% -> Trop sec)
       // pour que son label soit "Trop sec" et non "Idéale".
       render(<CategorySummaryCards {...defaultProps} avgTemp={20} avgHumidity={10} />);
-      
-      const badge = screen.getByText('Idéale'); 
+
+      const badge = screen.getByText('Idéale');
       expect(badge).toBeInTheDocument();
       expect(badge).toHaveClass('text-emerald-700');
     });
@@ -116,7 +111,7 @@ describe('CategorySummaryCards Component', () => {
       // CORRECTION : On force la température à une valeur "mauvaise" (30°C -> Chaude)
       // pour que son label soit "Chaude" et non "Idéale".
       render(<CategorySummaryCards {...defaultProps} avgHumidity={50} avgTemp={30} />);
-      
+
       const badge = screen.getByText('Idéale');
       expect(badge).toBeInTheDocument();
       expect(badge).toHaveClass('text-emerald-700');
@@ -175,12 +170,12 @@ describe('CategorySummaryCards Component', () => {
 
   it('calcule correctement le nombre de capteurs par catégorie', () => {
     render(
-      <CategorySummaryCards 
-        {...defaultProps} 
+      <CategorySummaryCards
+        {...defaultProps}
         sensors={mockSensors}
-        avgTemp={20} 
-        avgHumidity={50} 
-        avgCo2={400} 
+        avgTemp={20}
+        avgHumidity={50}
+        avgCo2={400}
       />
     );
 
@@ -193,12 +188,7 @@ describe('CategorySummaryCards Component', () => {
 
   it('gère les valeurs nulles en affichant "-"', () => {
     render(
-      <CategorySummaryCards
-        {...defaultProps}
-        avgTemp={null}
-        avgHumidity={null}
-        avgCo2={null}
-      />
+      <CategorySummaryCards {...defaultProps} avgTemp={null} avgHumidity={null} avgCo2={null} />
     );
 
     const dashes = screen.getAllByText('-');
