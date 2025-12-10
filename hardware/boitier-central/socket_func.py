@@ -26,10 +26,10 @@ def get_captor_nbr(captype):
         return "001"
 
 
-def listen(Host, Port):
+def listen(Port):
     print('listen')
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.bind((Host, Port))
+    s.bind((HOST, Port))
     s.listen(5)
     s.settimeout(180)
     wifi_state = -1
@@ -81,4 +81,3 @@ def listen(Host, Port):
     conn.close()
     s.close()
     return wifi_state,good
-
