@@ -8,7 +8,7 @@ import rp2
 import sys
 import binascii
 
-TIMEOUT_S = 10
+TIMEOUT_S = 180
 
 
 def scanning():
@@ -25,13 +25,15 @@ def scanning():
 
 def connect(ssid, password):
     wlan = network.WLAN(network.STA_IF)
+    wlan.active(False)
     wlan.active(True)
+    while not wlan.active():
+        print('activation')
     print('v', ssid, password)
     wlan.connect(ssid, password)
-    t0 = time.time()
     connected = False
-
-    while time.time() - t0 < TIMEOUT_S:
+    while not connected:
+        print('connection')
         if wlan.isconnected():
             connected = True
             break
@@ -40,14 +42,8 @@ def connect(ssid, password):
         time.sleep(0.2)
         pico_led.off()
         time.sleep(0.2)
-    if connected:
-        print("Connecté !", wlan.ifconfig())
-        return wlan, ssid, True
-    else:
-        print("Timeout, on annule la connexion")
-        wlan.disconnect()  # si dispo dans ta version, sinon:
-        wlan.active(False)
-        return wlan, ssid, False
+    print("Connecté !", wlan.ifconfig())
+    return wlan, ssid, True
 
 
 def get_wifi():
@@ -56,8 +52,8 @@ def get_wifi():
     print(liste_net)
     if len(liste_net) > 0:
         for d in liste_net:
-            print(d)
             if 'OWL' in d['ssid']:
+                print('owl')
                 psd, state = decrypt.decryption(d['ssid'])
                 print("st", state)
                 print("psd", psd)
@@ -68,10 +64,9 @@ def get_wifi():
                     return d['ssid'], psd, state
                 else:
                     return d['ssid'], None, -1
-            else:
-                return None, None, -1
     else:
         return None, None, -1
+    return None, None, -1
 
 
 
