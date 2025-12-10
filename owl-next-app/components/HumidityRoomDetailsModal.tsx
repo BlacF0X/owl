@@ -10,6 +10,27 @@ interface HumidityRoomDetailsModalProps {
 }
 
 export default function HumidityRoomDetailsModal({ room, onClose }: HumidityRoomDetailsModalProps) {
+  // Fonction pour formater la date proprement en FR
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'N/A';
+    // Si c'est déjà une heure simple (ex: "16:47"), on la retourne telle quelle
+    if (dateString.length < 10) return dateString;
+
+    // Sinon on essaie de parser la date ISO
+    try {
+      return new Date(dateString).toLocaleString('fr-FR', {
+        timeZone: 'Europe/Paris',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch {
+      return dateString;
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
       <div className="w-full max-w-md overflow-hidden rounded-xl bg-white shadow-2xl">
@@ -45,22 +66,20 @@ export default function HumidityRoomDetailsModal({ room, onClose }: HumidityRoom
             <p className="text-sm text-blue-900">
               {room.status === 'optimal' && '✓ Humidité idéale pour le confort et la santé'}
               {room.status === 'warning' && "⚠️ L'humidité est élevée, aérez la pièce"}
-              {room.status === 'danger' && '⚠️ Humidité trop élevée, risque de moisissures'}
+              {room.status === 'danger' && '⚠️ Humidité hors zone de confort (<40% ou >60%)'}
             </p>
           </div>
 
-          {room.lastUpdate && (
-            <div className="text-sm text-slate-600">
+          <div className="text-sm text-slate-600">
+            <p>
+              <span className="font-semibold">Dernier relevé:</span> {formatDate(room.lastUpdate)}
+            </p>
+            {room.hubName && (
               <p>
-                <span className="font-semibold">Dernier relevé:</span> {room.lastUpdate}
+                <span className="font-semibold">Boîtier:</span> {room.hubName}
               </p>
-              {room.hubName && (
-                <p>
-                  <span className="font-semibold">Boîtier:</span> {room.hubName}
-                </p>
-              )}
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         <div className="sticky bottom-0 border-t bg-slate-50 p-4 flex justify-end">
