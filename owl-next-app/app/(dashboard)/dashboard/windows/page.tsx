@@ -25,7 +25,6 @@ export default async function WindowSensorsPage() {
     console.error('Clerk authentication error:', error);
     return (
       <div className="flex h-screen w-full items-center justify-center bg-slate-100">
-        {/* ... votre UI d'erreur de session ... */}
         <p>Session expirée. Veuillez vous reconnecter.</p>
       </div>
     );
