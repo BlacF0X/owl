@@ -2,14 +2,16 @@
 
 import 'reflect-metadata';
 import dotenv from 'dotenv';
-import { Clerk } from '@clerk/clerk-sdk-node';
+import { createClerkClient } from '@clerk/clerk-sdk-node';
 import { AppDataSource } from '../src/config/data-source.js';
 import { User } from '../src/entities/User.js';
 
 // Charger les variables d'environnement depuis le .env
 dotenv.config();
 
-const clerkClient = Clerk({ secretKey: process.env.CLERK_SECRET_KEY });
+const clerkClient = createClerkClient({
+  secretKey: process.env.CLERK_SECRET_KEY,
+});
 
 const syncExistingUsers = async () => {
   console.log(
@@ -37,11 +39,16 @@ const syncExistingUsers = async () => {
     console.log("🔍 Récupération des utilisateurs depuis l'API de Clerk...");
 
     while (true) {
-      const clerkUsers = await clerkClient.users.getUserList({
+      // --- CORRECTION CLERK V5 ---
+      // getUserList retourne maintenant un objet { data, totalCount }
+      const response = await clerkClient.users.getUserList({
         limit,
         offset,
-        orderBy: '+created_at', // Optionnel : assure un ordre constant
+        orderBy: '+created_at',
       });
+
+      const clerkUsers = response.data; // On récupère le tableau via .data
+      // ----------------------------
 
       // Si le lot est vide, nous avons récupéré tous les utilisateurs
       if (clerkUsers.length === 0) {
@@ -78,13 +85,11 @@ const syncExistingUsers = async () => {
         }
 
         // --- MISE À JOUR DES CHAMPS ---
-        // On mappe toutes les informations nécessaires depuis Clerk vers notre entité User
         dbUser.clerk_user_id = clerkUser.id;
         dbUser.first_name = clerkUser.firstName;
         dbUser.email = email;
 
         // On préserve la date de création originale de Clerk.
-        // TypeORM utilisera cette valeur au lieu de celle générée par @CreateDateColumn
         dbUser.created_at = new Date(clerkUser.createdAt);
 
         await userRepository.save(dbUser);

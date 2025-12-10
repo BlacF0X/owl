@@ -8,12 +8,14 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "doppler run -- tsx watch src/index.ts",
+    "dev:local": "tsx watch src/index.ts",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "simulate": "doppler run -- npx tsx scripts/simulate-hub.ts"
   },
   "dependencies": {
-    "@clerk/clerk-sdk-node": "^4.13.23",
+    "@clerk/clerk-sdk-node": "^5.1.6",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/node": "^20.14.9",
@@ -22,7 +24,9 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "express-rate-limit": "^8.2.1",
     "pg": "^8.16.3",
+    "pusher": "^5.2.0",
     "reflect-metadata": "^0.2.2",
     "svix": "^1.81.0",
     "swagger-jsdoc": "^6.2.8",

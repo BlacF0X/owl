@@ -5,6 +5,8 @@ import sensorRouter from './sensor.routes.js';
 import co2Router from './co2.routes.js';
 import humidityRouter from './humidity.routes.js';
 import temperatureRouter from './temperature.routes.js';
+import ingestRouter from './ingest.routes.js';
+import pusherRouter from './pusher.routes.js';
 
 const apiRouter = Router();
 
@@ -43,5 +45,7 @@ apiRouter.use('/sensors', sensorRouter);
 apiRouter.use('/co2', co2Router);
 apiRouter.use('/humidity', humidityRouter);
 apiRouter.use('/temperature', temperatureRouter);
+apiRouter.use('/ingest', ingestRouter);
+apiRouter.use('/pusher', pusherRouter);
 
 export default apiRouter;

@@ -1,64 +1,67 @@
-'use client';
-
 import React from 'react';
 
-type TemperatureCircleProps = {
+interface TemperatureCircleProps {
   sensorName: string;
   temperature: number;
-  min: number;
-  max: number;
-};
+  min?: number;
+  max?: number;
+  subtitle?: string;
+}
 
 const TemperatureCircle: React.FC<TemperatureCircleProps> = ({
   sensorName,
   temperature,
-  min,
-  max,
+  min = 15, // min est défini mais pas utilisé pour le calcul visuel ici, on le garde pour extensibilité
+  max = 30, // idem
+  subtitle = 'Température en temps réel',
 }) => {
-  const radius = 32;
-  const strokeWidth = 8;
-  const circumference = 2 * Math.PI * radius;
+  // Suppression de la variable inutile colorClass
 
-  const safeTemp = Math.min(Math.max(temperature, min), max);
-  const progress = ((safeTemp - min) / (max - min)) * 100;
-  const strokeDashoffset = circumference - (progress / 100) * circumference;
+  // Calcul simple pour l'anneau de progression
+  // Note : on utilise min/max ici pour le pourcentage
+  const percentage = Math.min(Math.max(((temperature - min) / (max - min)) * 100, 0), 100);
+  const circumference = 2 * Math.PI * 45;
+  const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
-  let color = '#22c55e';
-  if (temperature <= 18) color = '#3b82f6';
-  else if (temperature >= 26) color = '#dc2626';
+  // Définition des couleurs dynamiques
+  const getStrokeColor = () => {
+    if (temperature >= 23) return 'stroke-red-500'; // Trop chaud
+    if (temperature <= 18) return 'stroke-blue-500'; // Trop froid
+    return 'stroke-green-500'; // Confort 18–22
+  };
+
+  const getTextColor = () => {
+    if (temperature >= 23) return 'text-red-500';
+    if (temperature <= 18) return 'text-blue-500';
+    return 'text-green-500';
+  };
 
   return (
-    <div className="flex flex-col items-center w-full">
-      {/* Affiche le nom du capteur au-dessus de la jauge */}
-      <div className="mb-2 text-lg font-semibold text-slate-700">{sensorName}</div>
-      <svg width={100} height={100} viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="50" cy="50" r={radius} stroke="#e5e7eb" strokeWidth={strokeWidth} fill="none" />
-        <circle
-          cx="50"
-          cy="50"
-          r={radius}
-          stroke={color}
-          strokeWidth={strokeWidth}
-          strokeLinecap="round"
-          fill="none"
-          strokeDasharray={circumference}
-          strokeDashoffset={strokeDashoffset}
-          transform="rotate(-90 50 50)"
-          style={{ transition: 'stroke-dashoffset 0.7s ease' }}
-        />
-        <text
-          x="50"
-          y="54"
-          fill={color}
-          fontSize={22}
-          fontWeight="700"
-          dominantBaseline="middle"
-          textAnchor="middle"
-        >
-          {temperature.toFixed(1)}°
-        </text>
-      </svg>
-      <p className="text-sm text-slate-500 mt-2">Température en temps réel</p>
+    <div className="flex flex-col items-center">
+      <h3 className="text-lg font-semibold text-slate-800 mb-4">{sensorName}</h3>
+
+      <div className="relative w-32 h-32 flex items-center justify-center">
+        {/* Cercle de fond */}
+        <svg className="absolute w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="45" fill="none" stroke="#e2e8f0" strokeWidth="8" />
+          {/* Cercle de progression */}
+          <circle
+            cx="50"
+            cy="50"
+            r="45"
+            fill="none"
+            className={`transition-all duration-1000 ease-out ${getStrokeColor()}`}
+            strokeWidth="8"
+            strokeDasharray={circumference}
+            strokeDashoffset={strokeDashoffset}
+            strokeLinecap="round"
+          />
+        </svg>
+
+        <span className={`text-3xl font-bold ${getTextColor()}`}>{temperature.toFixed(1)}°</span>
+      </div>
+
+      <p className="text-sm text-slate-500 mt-4 font-medium">{subtitle}</p>
     </div>
   );
 };

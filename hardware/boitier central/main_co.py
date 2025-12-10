@@ -29,7 +29,7 @@ def lister_clients_connectes(ap_interface):
         print(f"\n{len(clients)} appareil(s) connecté(s) :")
         for mac_address_tuple in clients:
             mac_hex = ':'.join(f'{b:02x}' for b in mac_address_tuple[0])
-            print(f"- MAC: {mac_hex}")
+            # print(f"- MAC: {mac_hex}") # J'ai commenté cette ligne pour la sécu du projet. Décommente la si besoin pour le dev mais n'oublie pas de la recommenter pour la prod
     else:
         print("\nAucun appareil connecté pour l'instant.")
 

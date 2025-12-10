@@ -41,8 +41,8 @@ const COLORS = {
 };
 
 const getColor = (value: number) => {
-  if (value > 25) return COLORS.red;
-  if (value < 20) return COLORS.blue;
+  if (value > 23) return COLORS.red;
+  if (value < 18) return COLORS.blue;
   return COLORS.green;
 };
 
@@ -53,6 +53,9 @@ interface SegmentContext {
 
 export default function TemperatureDayChart({ data, currentHour }: ChartProps) {
   const safeData = data && data.length > 0 ? data : [];
+
+  // On détecte si on est en mode "Temps réel" (vue 24h) grâce à la présence de currentHour
+  const isRealTime = currentHour !== null && currentHour !== undefined;
 
   const chartData = {
     labels: safeData.map((d) => d.label),
@@ -66,8 +69,8 @@ export default function TemperatureDayChart({ data, currentHour }: ChartProps) {
             const context = ctx as SegmentContext;
             if (!context.p1 || !context.p1.parsed) return COLORS.green;
             const val = context.p1.parsed.y;
-            if (val > 25) return COLORS.red;
-            if (val < 20) return COLORS.blue;
+            if (val > 23) return COLORS.red;
+            if (val < 18) return COLORS.blue;
             return COLORS.green;
           },
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -75,8 +78,8 @@ export default function TemperatureDayChart({ data, currentHour }: ChartProps) {
             const context = ctx as SegmentContext;
             if (!context.p1 || !context.p1.parsed) return `${COLORS.green}33`;
             const val = context.p1.parsed.y;
-            if (val > 25) return `${COLORS.red}33`;
-            if (val < 20) return `${COLORS.blue}33`;
+            if (val > 23) return `${COLORS.red}33`;
+            if (val < 18) return `${COLORS.blue}33`;
             return `${COLORS.green}33`;
           },
         },
@@ -98,7 +101,7 @@ export default function TemperatureDayChart({ data, currentHour }: ChartProps) {
     ],
   };
 
-  const options: ChartOptions<'line'> & { plugins: { annotation?: unknown } } = {
+  const options: ChartOptions<'line'> = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -127,28 +130,27 @@ export default function TemperatureDayChart({ data, currentHour }: ChartProps) {
         },
       },
       annotation: {
-        annotations:
-          currentHour !== null && currentHour !== undefined
-            ? {
-                line1: {
-                  type: 'line',
-                  xMin: currentHour,
-                  xMax: currentHour,
-                  borderColor: '#94a3b8',
-                  borderWidth: 2,
-                  borderDash: [5, 5],
-                  label: {
-                    display: true,
-                    content: 'Maintenant',
-                    position: 'start',
-                    backgroundColor: 'rgba(148, 163, 184, 0.9)',
-                    color: 'white',
-                    font: { size: 10, weight: 'bold' },
-                    yAdjust: 0,
-                  },
+        annotations: isRealTime
+          ? {
+              line1: {
+                type: 'line',
+                xMin: currentHour,
+                xMax: currentHour,
+                borderColor: '#94a3b8',
+                borderWidth: 2,
+                borderDash: [5, 5],
+                label: {
+                  display: true,
+                  content: 'Maintenant',
+                  position: 'start',
+                  backgroundColor: 'rgba(148, 163, 184, 0.9)',
+                  color: 'white',
+                  font: { size: 10, weight: 'bold' },
+                  yAdjust: 0,
                 },
-              }
-            : {},
+              },
+            }
+          : {},
       },
     },
     scales: {
@@ -158,8 +160,9 @@ export default function TemperatureDayChart({ data, currentHour }: ChartProps) {
           color: '#94a3b8',
           font: { size: 10 },
           maxRotation: 0,
-          autoSkip: false,
-          maxTicksLimit: 24,
+          // Modification ici : on désactive le saut automatique en mode 24h
+          autoSkip: !isRealTime,
+          maxTicksLimit: isRealTime ? 24 : 8,
         },
         border: { display: false },
       },

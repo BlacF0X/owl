@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import type { Request, Response, NextFunction } from 'express';
-import { Clerk } from '@clerk/clerk-sdk-node';
+import { createClerkClient } from '@clerk/clerk-sdk-node';
 
 // Étendre le type Request d'Express pour y attacher les informations d'authentification
 declare global {
@@ -14,7 +14,9 @@ declare global {
   }
 }
 
-const clerkClient = Clerk({ secretKey: process.env.CLERK_SECRET_KEY });
+const clerkClient = createClerkClient({
+  secretKey: process.env.CLERK_SECRET_KEY,
+});
 
 export const clerkAuthMiddleware = async (
   req: Request,
