@@ -29,7 +29,7 @@ def connect(ssid, password):
     wlan.active(True)
     while not wlan.active():
         print('activation')
-    print('v', ssid, password)
+    print('v', ssid) # J'ai retirer le 'password' pour la sécu, rémets le si besoin pour le dev
     wlan.connect(ssid, password)
     connected = False
     while not connected:
