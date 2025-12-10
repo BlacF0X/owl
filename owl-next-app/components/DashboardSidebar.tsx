@@ -5,7 +5,7 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { LayoutDashboard, DoorOpen, Wind, Thermometer, Router, Droplets } from 'lucide-react';
-import SystemStatusWidget from '@/components/SystemStatusWidget'; 
+import SystemStatusWidget from '@/components/SystemStatusWidget';
 
 interface TempSensor {
   sensor_id: string;

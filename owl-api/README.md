@@ -90,7 +90,7 @@ Si vous n'utilisez pas Doppler, vous pouvez configurer les variables manuellemen
    ```
 
    > [!NOTE]
-   > N'utilisez pas `npm run dev` dans ce cas, car cette commande est préconfigurée pour utiliser Doppler.*
+   > N'utilisez pas `npm run dev` dans ce cas, car cette commande est préconfigurée pour utiliser Doppler.\*
 
 Le serveur démarrera par défaut sur le port 8080.
 

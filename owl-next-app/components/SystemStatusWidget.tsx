@@ -19,7 +19,7 @@ export default function SystemStatusWidget() {
   const [services, setServices] = useState<ServiceStatus[]>(
     servicesToCheck.map((s) => ({ ...s, status: 'loading' }))
   );
-  
+
   const isLoading = services.every((s) => s.status === 'loading');
   const hasIssues = services.some((s) => s.status === 'degraded' || s.status === 'error');
 
