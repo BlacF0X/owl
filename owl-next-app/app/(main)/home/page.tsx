@@ -17,8 +17,8 @@ const Home: React.FC = () => {
             alt="Intérieur d'une maison moderne avec des fenêtres bien éclairées."
             fill={true}
             priority={true}
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 100vw"
-            quality={75}
+            sizes="100vw"
+            quality={60}
             className="object-cover"
           />
         </div>
@@ -41,7 +41,11 @@ const Home: React.FC = () => {
       </section>
 
       {/* Features Section */}
-      <section className="bg-slate-50 py-16 text-center sm:py-24" id="features">
+      <section
+        className="bg-slate-50 py-16 text-center sm:py-24"
+        id="features"
+        style={{ contentVisibility: 'auto', containIntrinsicSize: '800px' }}
+      >
         <div className="mx-auto mb-16 max-w-3xl px-4 sm:px-6 lg:px-8">
           <h1 className="text-3xl font-bold text-slate-900 mb-6 sm:text-4xl">
             Que proposons-nous?
@@ -66,6 +70,7 @@ const Home: React.FC = () => {
                   src={hubImg}
                   alt="Boitier central du projet OwL"
                   className="h-full w-auto object-contain transition-transform duration-500 group-hover:scale-105"
+                  sizes="(max-width: 768px) 100vw, 33vw"
                 />
               </div>
               <h3 className="text-xl font-bold text-slate-900">Boitier central</h3>
@@ -79,6 +84,7 @@ const Home: React.FC = () => {
                   src={windowSensorImg}
                   alt="Capteurs pour fenêtres"
                   className="h-full w-auto object-contain transition-transform duration-500 group-hover:scale-105"
+                  sizes="(max-width: 768px) 100vw, 33vw"
                 />
               </div>
               <h3 className="text-xl font-bold text-slate-900">Capteurs pour fenêtres</h3>
@@ -92,6 +98,7 @@ const Home: React.FC = () => {
                   src={co2SensorImg}
                   alt="Capteur de CO2 et qualité d'air"
                   className="h-full w-auto object-contain transition-transform duration-500 group-hover:scale-105"
+                  sizes="(max-width: 768px) 100vw, 33vw"
                 />
               </div>
               <h3 className="text-xl font-bold text-slate-900">Capteur de qualité d'air</h3>
