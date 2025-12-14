@@ -97,7 +97,7 @@ export default async function WindowSensorsPage() {
       <header className="mb-10">
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">État des Capteurs de Fenêtre</h1>
+            <h1 className="text-3xl font-bold text-slate-900">Fenêtres</h1>
             <p className="mt-1 text-slate-600">
               Vue détaillée de tous vos capteurs de fenêtre, groupés par boîtier central.
             </p>

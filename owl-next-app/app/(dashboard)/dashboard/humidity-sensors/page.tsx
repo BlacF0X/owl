@@ -156,7 +156,7 @@ export default function HumiditySensorsPage() {
   return (
     <div className="space-y-8">
       <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">Humidité - Système OwL</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">Humidité</h1>
         <p className="text-sm text-muted-foreground">
           Surveillance en temps réel de l'humidité intérieure
         </p>

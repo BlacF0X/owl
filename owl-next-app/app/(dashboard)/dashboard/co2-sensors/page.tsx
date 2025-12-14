@@ -271,14 +271,13 @@ const CO2SensorsPage = () => {
 
   return (
     <div className="space-y-8 mb-10">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
-            <LayoutDashboard className="h-7 w-7 text-blue-600" />
-            Qualité de l'Air
-          </h1>
-          <p className="mt-1 text-slate-500">Surveillance en temps réel des niveaux de CO₂</p>
-        </div>
+      <header className="mb-8">
+        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
+          Qualité de l'Air
+        </h1>
+        <p className="mt-1 text-slate-600">
+          Surveillance en temps réel des niveaux de CO₂
+        </p>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
