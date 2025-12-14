@@ -15,8 +15,8 @@ const Home: React.FC = () => {
           <Image
             src={heroBackgroundImg}
             alt="Intérieur d'une maison moderne avec des fenêtres bien éclairées."
-            fill
-            priority
+            fill={true}
+            priority={true}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 100vw"
             quality={75}
             className="object-cover"

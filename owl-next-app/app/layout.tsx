@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { ClerkProvider } from '@clerk/nextjs';
 import { frFR } from '@clerk/localizations';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import { Analytics } from '@vercel/analytics/next';
 import './globals.css';
 
 import { Ubuntu } from 'next/font/google';
@@ -29,6 +30,7 @@ export default function RootLayout({
         <body className={`${ubuntu.variable} font-sans antialiased`}>
           {children}
           <SpeedInsights />
+          <Analytics />
         </body>
       </html>
     </ClerkProvider>
