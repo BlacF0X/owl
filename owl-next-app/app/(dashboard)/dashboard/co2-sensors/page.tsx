@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/clerk-react';
-import { LayoutDashboard, LineChart, AlertTriangle, Clock, Home, Briefcase } from 'lucide-react';
+import { LineChart, AlertTriangle, Clock, Home, Briefcase } from 'lucide-react';
 
 import { StatCard } from '@/components/Co2StatCard';
 import { SensorCard } from '@/components/Co2SensorCard';
@@ -272,12 +272,8 @@ const CO2SensorsPage = () => {
   return (
     <div className="space-y-8 mb-10">
       <header className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
-          Qualité de l'Air
-        </h1>
-        <p className="mt-1 text-slate-600">
-          Surveillance en temps réel des niveaux de CO₂
-        </p>
+        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Qualité de l'Air</h1>
+        <p className="mt-1 text-slate-600">Surveillance en temps réel des niveaux de CO₂</p>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
