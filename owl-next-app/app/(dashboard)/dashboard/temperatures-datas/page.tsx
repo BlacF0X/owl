@@ -41,7 +41,7 @@ export default async function TemperaturesDataPage({
   let token: string | null = null;
 
   // Textes par défaut (Vue Globale)
-  let title = 'Tableau de bord des températures';
+  let title = 'Température';
   let subtitle = "Vue d'ensemble de tous vos capteurs de température (tous hubs confondus).";
 
   try {
@@ -54,7 +54,7 @@ export default async function TemperaturesDataPage({
 
       if (sensors.length > 0) {
         const hubName = sensors[0].hub.name;
-        title = `Hub : ${hubName}`;
+        title = `Température, ${hubName}`;
         subtitle = `Affichage exclusif des capteurs connectés au ${hubName}.`;
       } else {
         title = 'Hub introuvable';

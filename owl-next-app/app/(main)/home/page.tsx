@@ -9,19 +9,23 @@ const Home: React.FC = () => {
   return (
     <>
       {/* Hero Section */}
-      <section className="relative bg-cover bg-center text-white h-[60vh] min-h-[500px]">
-        {/* Background Image */}
-        <Image
-          src={heroBackgroundImg}
-          alt="Intérieur d'une maison moderne avec des fenêtres bien éclairées."
-          fill
-          priority
-          quality={85}
-          className="object-cover -z-10"
-          placeholder="blur"
-        />
+      <section className="relative text-white h-[60vh] min-h-[500px]">
+        {/* Conteneur pour l'image + placeholder */}
+        <div className="absolute inset-0 -z-10 bg-[#8db89a]">
+          <Image
+            src={heroBackgroundImg}
+            alt="Intérieur d'une maison moderne avec des fenêtres bien éclairées."
+            fill
+            priority
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 100vw"
+            quality={75}
+            className="object-cover"
+          />
+        </div>
+
         {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-black/30"></div>
+
         {/* Content */}
         <div className="relative flex h-full items-center justify-center px-4 text-center sm:px-6 lg:px-8">
           <div className="max-w-4xl">

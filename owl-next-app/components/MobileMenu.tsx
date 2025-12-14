@@ -33,7 +33,7 @@ const sidebarLinks = [
   { name: 'Général', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Fenêtres', href: '/dashboard/windows', icon: DoorOpen },
   { name: 'Humidité', href: '/dashboard/humidity-sensors', icon: Droplets },
-  { name: 'CO2', href: '/dashboard/co2-sensors', icon: Wind },
+  { name: 'CO₂', href: '/dashboard/co2-sensors', icon: Wind },
 ];
 
 // Liens de ta Navbar du haut (Accueil, Mon espace, Astuces)
