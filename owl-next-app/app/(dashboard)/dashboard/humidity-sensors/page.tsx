@@ -4,10 +4,17 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import HumidityStatsCards from '@/components/HumidityStatsCards';
 import HumidityRoomsView from '@/components/HumidityRoomsView';
-import HumidityEvolutionChart, {
-  type HumidityDataPoint,
-} from '@/components/HumidityEvolutionChart';
 import { type HumidityRoom } from '@/components/HumidityRoomCard';
+import { type HumidityDataPoint } from '@/components/HumidityEvolutionChart';
+
+import dynamic from 'next/dynamic';
+
+const HumidityEvolutionChart = dynamic(() => import('@/components/HumidityEvolutionChart'), {
+  loading: () => (
+    <div className="h-64 w-full bg-slate-50 animate-pulse rounded-lg border border-slate-200" />
+  ),
+  ssr: false,
+});
 
 interface HumiditySensor {
   sensor_id: string;
@@ -149,7 +156,7 @@ export default function HumiditySensorsPage() {
   return (
     <div className="space-y-8">
       <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">Humidité - Système OwL</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">Humidité</h1>
         <p className="text-sm text-muted-foreground">
           Surveillance en temps réel de l'humidité intérieure
         </p>

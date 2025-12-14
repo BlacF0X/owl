@@ -7,6 +7,9 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['var(--font-ubuntu)', 'sans-serif'],
+      },
       rotate: {
         'y-180': '180deg',
       },

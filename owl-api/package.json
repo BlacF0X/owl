@@ -10,7 +10,7 @@
     "dev": "doppler run -- tsx watch src/index.ts",
     "dev:local": "tsx watch src/index.ts",
     "lint": "eslint .",
-    "format": "prettier --write .",
+    "format": "prettier --write . --list-different",
     "format:check": "prettier --check .",
     "simulate": "doppler run -- npx tsx scripts/simulate-hub.ts"
   },
