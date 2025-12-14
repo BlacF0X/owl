@@ -6,7 +6,6 @@ import { LayoutDashboard, LineChart, AlertTriangle, Clock, Home, Briefcase } fro
 
 import { StatCard } from '@/components/Co2StatCard';
 import { SensorCard } from '@/components/Co2SensorCard';
-import { EvolutionChart } from '@/components/Co2EvolutionChart';
 import { AlertHistory } from '@/components/Co2AlertHistory';
 import { HistoryModal } from '@/components/Co2HistoryModal';
 import {
@@ -16,6 +15,21 @@ import {
   EvolutionData,
   SensorHistoryResponse,
 } from '@/components/Co2Types';
+
+import dynamic from 'next/dynamic';
+
+const EvolutionChart = dynamic(
+  () => import('@/components/Co2EvolutionChart').then((mod) => mod.EvolutionChart),
+  {
+    // Affiche un rectangle gris pulsant pendant le chargement du JS
+    loading: () => (
+      <div className="w-full h-full min-h-[320px] bg-slate-50 animate-pulse rounded-xl flex items-center justify-center text-slate-300 text-sm">
+        Chargement du graphique...
+      </div>
+    ),
+    ssr: false, // Désactive le rendu serveur pour ce composant (optimisation)
+  }
+);
 
 const SensorSection: React.FC<{
   title: string;

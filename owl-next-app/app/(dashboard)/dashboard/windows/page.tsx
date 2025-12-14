@@ -4,8 +4,8 @@ import { fetchFromApi } from '@/src/lib/apiClient';
 import { Sensor } from '@/src/types';
 import WindowSensorsView from '@/components/WindowSensorsView';
 import WindowActivityLog from '@/components/WindowActivityLog';
-import WindowHourlyActivityChart from '@/components/WindowHourlyActivityChart';
 import { AlertTriangle, BarChart3 } from 'lucide-react';
+import WindowLazyChart from '@/components/WindowLazyChart';
 
 interface HourlyStat {
   hour: number;
@@ -158,7 +158,7 @@ export default async function WindowSensorsPage() {
 
           {/* Insertion du graphique */}
           <div className="h-48 w-full">
-            <WindowHourlyActivityChart data={hourlyStats} />
+            <WindowLazyChart data={hourlyStats} />
           </div>
         </div>
       </div>
