@@ -27,8 +27,8 @@ export default function RootLayout({
     <ClerkProvider localization={frFR}>
       <html lang="fr">
         <body className={`${ubuntu.variable} font-sans antialiased`}>
-            {children}
-            <SpeedInsights />
+          {children}
+          <SpeedInsights />
         </body>
       </html>
     </ClerkProvider>

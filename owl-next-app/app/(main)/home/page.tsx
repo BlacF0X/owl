@@ -33,7 +33,8 @@ const Home: React.FC = () => {
               Surveillez l'environnement en temps réel
             </h2>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-200 md:text-xl">
-              Project OwL vous aide à mieux comprendre votre environnement grâce à des données précises.
+              Project OwL vous aide à mieux comprendre votre environnement grâce à des données
+              précises.
             </p>
           </div>
         </div>

@@ -9,15 +9,12 @@ import { type HumidityDataPoint } from '@/components/HumidityEvolutionChart';
 
 import dynamic from 'next/dynamic';
 
-const HumidityEvolutionChart = dynamic(
-  () => import('@/components/HumidityEvolutionChart'),
-  {
-    loading: () => (
-      <div className="h-64 w-full bg-slate-50 animate-pulse rounded-lg border border-slate-200" />
-    ),
-    ssr: false,
-  }
-);
+const HumidityEvolutionChart = dynamic(() => import('@/components/HumidityEvolutionChart'), {
+  loading: () => (
+    <div className="h-64 w-full bg-slate-50 animate-pulse rounded-lg border border-slate-200" />
+  ),
+  ssr: false,
+});
 
 interface HumiditySensor {
   sensor_id: string;

@@ -8,17 +8,14 @@ import AlertLog from '@/components/TemperatureAlertLog';
 
 import dynamic from 'next/dynamic';
 
-const TemperatureDayChart = dynamic(
-  () => import('@/components/TemperatureDayChart'),
-  {
-    loading: () => (
-      <div className="h-full w-full bg-slate-50 animate-pulse rounded-lg flex items-center justify-center text-xs text-slate-400">
-        Chargement...
-      </div>
-    ),
-    ssr: false,
-  }
-);
+const TemperatureDayChart = dynamic(() => import('@/components/TemperatureDayChart'), {
+  loading: () => (
+    <div className="h-full w-full bg-slate-50 animate-pulse rounded-lg flex items-center justify-center text-xs text-slate-400">
+      Chargement...
+    </div>
+  ),
+  ssr: false,
+});
 
 const TemperatureComparisonChart = dynamic(
   () => import('@/components/TemperatureComparisonChart'),
