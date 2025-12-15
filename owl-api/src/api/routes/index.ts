@@ -7,6 +7,7 @@ import humidityRouter from './humidity.routes.js';
 import temperatureRouter from './temperature.routes.js';
 import ingestRouter from './ingest.routes.js';
 import pusherRouter from './pusher.routes.js';
+import hubRouter from './hub.routes.js';
 
 const apiRouter = Router();
 
@@ -41,6 +42,7 @@ apiRouter.use('/webhooks/clerk', clerkWebhookRouter);
 // Les autres routeurs qui ont besoin du parser JSON
 apiRouter.use(express.json());
 apiRouter.use('/test', testRouter);
+apiRouter.use('/hubs', hubRouter);
 apiRouter.use('/sensors', sensorRouter);
 apiRouter.use('/co2', co2Router);
 apiRouter.use('/humidity', humidityRouter);
