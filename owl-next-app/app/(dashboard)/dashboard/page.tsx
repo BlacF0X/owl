@@ -30,12 +30,12 @@ export default async function DashboardPage() {
 
     const [sensorsData, hubsData] = await Promise.all([
       fetchFromApi<Sensor[]>('/api/sensors', token),
-      fetchFromApi<Hub[]>('/api/hubs', token)
+      fetchFromApi<Hub[]>('/api/hubs', token),
     ]);
 
     sensors = sensorsData;
     hubs = hubsData;
-    
+
     if (sensors.length > 0) {
       const dates = sensors
         .map((s) => (s.state_changed_at ? new Date(s.state_changed_at).getTime() : 0))
@@ -52,7 +52,7 @@ export default async function DashboardPage() {
   }
 
   // Calculs
-  const uniqueHubs = hubs.length; 
+  const uniqueHubs = hubs.length;
   const windowSensors = sensors.filter((s) => s.type.type_key === 'window');
   const openWindowsCount = windowSensors.filter((s) => s.displayValue === 'Ouvert').length;
   const tempSensors = sensors.filter((s) => s.type.type_key === 'temperature');

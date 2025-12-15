@@ -13,7 +13,7 @@ export const getHubsForUser = async (req: Request, res: Response) => {
     }
 
     const hubRepository = AppDataSource.getRepository(Hub);
-    
+
     // On cherche les hubs où la relation 'user' correspond à l'ID Clerk
     const hubs = await hubRepository.find({
       where: {
@@ -31,8 +31,8 @@ export const getHubsForUser = async (req: Request, res: Response) => {
         serial_number: true,
         status: true,
         last_seen_at: true,
-        created_at: true
-      }
+        created_at: true,
+      },
     });
 
     res.status(200).json(hubs);
