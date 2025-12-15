@@ -37,7 +37,6 @@ interface Props {
 }
 
 export default function TemperatureSensorCard({ sensor, history, viewMode, onRetry }: Props) {
-  // Cas 1 : Pas de données (loading ou erreur)
   if (!history) {
     return (
       <div className="bg-white rounded-xl shadow-md p-6 flex flex-col items-center justify-center min-h-[280px] animate-pulse">
@@ -49,7 +48,6 @@ export default function TemperatureSensorCard({ sensor, history, viewMode, onRet
     );
   }
 
-  // Cas 2 : Sélection des données selon le mode
   let dataForChart = history.data24h;
   let tempForCircle = history.currentTemp;
   let statusLabel = 'Température en temps réel';
@@ -72,7 +70,6 @@ export default function TemperatureSensorCard({ sensor, history, viewMode, onRet
     currentHour = null;
   }
 
-  // Cas 3 : Pas de données dans l'historique
   if (dataForChart.length === 0) {
     return (
       <div className="bg-white rounded-xl shadow-md p-6 flex flex-col items-center justify-center min-h-[280px]">
@@ -100,10 +97,8 @@ export default function TemperatureSensorCard({ sensor, history, viewMode, onRet
     );
   }
 
-  // Cas 4 : Affichage normal
   return (
     <div className="bg-white rounded-xl shadow-md p-6 flex flex-col lg:flex-row items-center justify-between w-full animate-in fade-in slide-in-from-bottom-4 gap-8">
-      {/* Cercle de température */}
       <div className="w-full lg:w-auto lg:min-w-[300px] flex justify-center shrink-0">
         <TemperatureCircle
           sensorName={sensor.name}
@@ -114,7 +109,6 @@ export default function TemperatureSensorCard({ sensor, history, viewMode, onRet
         />
       </div>
 
-      {/* Graphique */}
       <div className="w-full h-[250px] lg:h-[280px] pl-0 lg:pl-6 flex-1 max-w-5xl">
         <TemperatureDayChart data={dataForChart} currentHour={currentHour} />
       </div>

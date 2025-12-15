@@ -6,8 +6,13 @@ import { Loader2 } from 'lucide-react';
 import TemperatureSensorCard from './TemperatureSensorCard';
 import type { TemperatureSensor, SensorHistory } from './TemperatureSensorCard';
 
+interface ChartDataPoint {
+  label: string;
+  value: number | null;
+}
+
 interface HistoryItem {
-  valuenum: number | string;
+  value: number | string;
   timestamp: string;
 }
 
@@ -28,7 +33,6 @@ export default function TemperatureBatchLoader({ sensors, viewMode }: Props) {
       const token = await getToken();
       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
-      // ✅ CORRECTION : Suppression du fetch 30d
       const results = await Promise.allSettled(
         sensors.map(async (sensor) => {
           try {
@@ -37,14 +41,12 @@ export default function TemperatureBatchLoader({ sensors, viewMode }: Props) {
             });
 
             if (!res.ok) {
-              console.warn(`❌ Échec chargement pour ${sensor.name}: ${res.status}`);
               return null;
             }
 
             const rawData: HistoryItem[] = await res.json();
             return { sensorId: sensor.sensor_id, rawData, sensor };
           } catch (err) {
-            console.warn(`Erreur pour ${sensor.name}`, err);
             return null;
           }
         })
@@ -89,7 +91,6 @@ export default function TemperatureBatchLoader({ sensors, viewMode }: Props) {
   );
 }
 
-// Fonction de traitement
 function processRawData(rawData: HistoryItem[], sensor: TemperatureSensor): SensorHistory {
   if (!rawData || rawData.length === 0) {
     return {
@@ -111,14 +112,16 @@ function processRawData(rawData: HistoryItem[], sensor: TemperatureSensor): Sens
 
   const lastDataPoint = sortedData[sortedData.length - 1];
   const referenceDate = new Date(lastDataPoint.timestamp);
-  const referenceDayKey = referenceDate.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' });
+  const referenceDayKey = referenceDate.toLocaleDateString('fr-FR', {
+    weekday: 'short',
+    day: 'numeric',
+  });
   const refHour = referenceDate.getHours();
 
-  // Données 24h
-  const chartData24h: { label: string; value: number | null }[] = [];
+  // ============ DONNÉES 24H ============
+  const chartData24h: ChartDataPoint[] = [];
   for (let hour = 0; hour <= 23; hour++) {
     const hourLabel = `${hour.toString().padStart(2, '0')}h`;
-
     if (hour > refHour) {
       chartData24h.push({ label: hourLabel, value: null });
       continue;
@@ -134,64 +137,70 @@ function processRawData(rawData: HistoryItem[], sensor: TemperatureSensor): Sens
     });
 
     if (match) {
-      chartData24h.push({ label: hourLabel, value: Number(match.valuenum) });
+      chartData24h.push({ label: hourLabel, value: Number(match.value) });
     } else {
       const prev = chartData24h.length > 0 ? chartData24h[chartData24h.length - 1].value : null;
       chartData24h.push({ label: hourLabel, value: prev });
     }
   }
 
-  // Grouper par jour
+  // ============ DONNÉES 7 JOURS ============
   const tempsByDay = new Map<string, number[]>();
-  const dayKeysInOrder = new Set<string>();
+  const dayKeysInOrder: string[] = [];
 
   sortedData.forEach((item) => {
     const d = new Date(item.timestamp);
-    const dayKey = d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' });
-
+    const dayKey = d.toLocaleDateString('fr-FR', {
+      weekday: 'short',
+      day: 'numeric',
+    });
+    
     if (!tempsByDay.has(dayKey)) {
+      dayKeysInOrder.push(dayKey);
       tempsByDay.set(dayKey, []);
-      dayKeysInOrder.add(dayKey);
     }
-
-    const val = Number(item.valuenum);
-    if (!isNaN(val)) tempsByDay.get(dayKey)?.push(val);
-  });
-
-  const chartData7dMax: { label: string; value: number }[] = [];
-  const chartData7dMin: { label: string; value: number }[] = [];
-  const chartData7dAvg: { label: string; value: number }[] = [];
-
-  dayKeysInOrder.forEach((key) => {
-    const temps = tempsByDay.get(key);
-    if (temps && temps.length > 0) {
-      const max = Math.max(...temps);
-      const min = Math.min(...temps);
-      const avg = temps.reduce((a, b) => a + b, 0) / temps.length;
-
-      chartData7dMax.push({ label: key, value: max });
-      chartData7dMin.push({ label: key, value: min });
-      chartData7dAvg.push({ label: key, value: avg });
+    
+    const val = Number(item.value);
+    if (!isNaN(val)) {
+      tempsByDay.get(dayKey)!.push(val);
     }
   });
 
-  // Stats du jour actuel
-  const lastDayTemps = tempsByDay.get(referenceDayKey);
-  let maxTempToday: number | null = null;
-  let minTempToday: number | null = null;
-  let avgTempToday: number | null = null;
+  const data7dMax: ChartDataPoint[] = [];
+  const data7dMin: ChartDataPoint[] = [];
+  const data7dAvg: ChartDataPoint[] = [];
 
-  if (lastDayTemps && lastDayTemps.length > 0) {
-    maxTempToday = Math.max(...lastDayTemps);
-    minTempToday = Math.min(...lastDayTemps);
-    avgTempToday = lastDayTemps.reduce((a, b) => a + b, 0) / lastDayTemps.length;
-  }
+  dayKeysInOrder.forEach((dayKey) => {
+    const temps = tempsByDay.get(dayKey) || [];
+    
+    if (temps.length === 0) {
+      data7dMax.push({ label: dayKey, value: null });
+      data7dMin.push({ label: dayKey, value: null });
+      data7dAvg.push({ label: dayKey, value: null });
+    } else {
+      const maxTemp = Math.max(...temps);
+      const minTemp = Math.min(...temps);
+      const avgTemp = Math.round((temps.reduce((a, b) => a + b, 0) / temps.length) * 10) / 10;
+      
+      data7dMax.push({ label: dayKey, value: maxTemp });
+      data7dMin.push({ label: dayKey, value: minTemp });
+      data7dAvg.push({ label: dayKey, value: avgTemp });
+    }
+  });
+
+  const todayTemps = tempsByDay.get(referenceDayKey) || [];
+  
+  const maxTempToday = todayTemps.length > 0 ? Math.max(...todayTemps) : null;
+  const minTempToday = todayTemps.length > 0 ? Math.min(...todayTemps) : null;
+  const avgTempToday = todayTemps.length > 0 
+    ? Math.round((todayTemps.reduce((a, b) => a + b, 0) / todayTemps.length) * 10) / 10 
+    : null;
 
   return {
     data24h: chartData24h,
-    data7dMax: chartData7dMax.slice(-7),
-    data7dMin: chartData7dMin.slice(-7),
-    data7dAvg: chartData7dAvg.slice(-7),
+    data7dMax,
+    data7dMin,
+    data7dAvg,
     currentTemp: parseFloat(sensor.displayValue) || 0,
     maxTempToday,
     minTempToday,

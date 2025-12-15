@@ -1,7 +1,8 @@
 import { currentUser, auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { fetchFromApi } from '@/src/lib/apiClient';
-import TemperatureDashboard, { TemperatureSensor } from '@/components/TemperatureDashboard';
+import TemperatureDashboard from '@/components/TemperatureDashboard';
+import type { TemperatureSensor } from '@/components/TemperatureSensorCard';
 
 export const dynamic = 'force-dynamic';
 
