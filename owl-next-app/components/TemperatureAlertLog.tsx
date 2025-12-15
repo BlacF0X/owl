@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from 'react';
 import type { TemperatureSensor } from './TemperatureSensorCard';
 
-// --- Types ---
 interface AlertItem {
   id: string;
   sensorName: string;
@@ -45,10 +44,17 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors, token }) => {
     day: 'numeric',
     month: 'long',
   });
-  const displayDate = formattedDateTitle.charAt(0).toUpperCase() + formattedDateTitle.slice(1);
+
+  const displayDate =
+    formattedDateTitle.charAt(0).toUpperCase() + formattedDateTitle.slice(1);
 
   useEffect(() => {
-    if (!token || sensors.length === 0) {
+    if (!token) {
+      setLoading(true);
+      return;
+    }
+
+    if (sensors.length === 0) {
       setLoading(false);
       return;
     }
@@ -57,20 +63,27 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors, token }) => {
       setLoading(true);
       const allAlerts: AlertItem[] = [];
       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-      const dateStr = selectedDate.toISOString().split('T')[0];
+      const targetDateStr = selectedDate.toISOString().split('T')[0];
 
       try {
         const promises = sensors.map(async (sensor) => {
           try {
-            const res = await fetch(`${API_URL}/api/sensors/${sensor.sensor_id}/readings?date=${dateStr}`, {
+            const url = `${API_URL}/api/sensors/${sensor.sensor_id}/readings?period=7d&refDate=${selectedDate.toISOString()}`;
+            
+            const res = await fetch(url, {
               headers: { Authorization: `Bearer ${token}` },
             });
 
             if (!res.ok) return;
 
-            const data = await res.json();
-            data.forEach((reading: { value_num: number | string; timestamp: string }) => {
-              const val = Number(reading.value_num);
+            const data: Array<{ value: number | string; timestamp: string }> = await res.json();
+
+            data.forEach((reading) => {
+              const readingDateStr = new Date(reading.timestamp).toISOString().split('T')[0];
+              
+              if (readingDateStr !== targetDateStr) return;
+
+              const val = Number(reading.value);
               if (isNaN(val)) return;
 
               if (val < MIN_THRESHOLD) {
@@ -91,16 +104,16 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors, token }) => {
                 });
               }
             });
-          } catch (err) {
-            console.error(`Erreur alertes ${sensor.name}:`, err);
+          } catch {
+            // Erreur ignorée silencieusement
           }
         });
 
         await Promise.all(promises);
         allAlerts.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
         setAlerts(allAlerts);
-      } catch (err) {
-        console.error('Erreur globale alertes:', err);
+      } catch {
+        // Erreur ignorée silencieusement
       } finally {
         setLoading(false);
       }
@@ -116,7 +129,101 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors, token }) => {
 
   return (
     <div className="w-full bg-white rounded-xl shadow-md p-6 animate-in fade-in slide-in-from-bottom-4 mt-8 border border-red-100">
-      {/* ... reste du JSX inchangé ... */}
+      {/* En-tête */}
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xl font-bold text-slate-800">Journal des Alertes</h2>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={goToPreviousDay}
+            className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600"
+          >
+            ←
+          </button>
+          <span className="text-sm font-medium text-slate-700 px-4">{displayDate}</span>
+          <button
+            onClick={goToNextDay}
+            disabled={selectedDate.toDateString() === new Date().toDateString()}
+            className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            →
+          </button>
+        </div>
+      </div>
+
+      {/* Filtres */}
+      <div className="flex gap-2 mb-4 flex-wrap">
+        <button
+          onClick={() => setFilterType('all')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            filterType === 'all'
+              ? 'bg-slate-900 text-white shadow-sm'
+              : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          Toutes
+        </button>
+        <button
+          onClick={() => setFilterType('high')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            filterType === 'high'
+              ? 'bg-red-600 text-white shadow-sm'
+              : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          Trop hautes (≥ {MAX_THRESHOLD}°C)
+        </button>
+        <button
+          onClick={() => setFilterType('low')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            filterType === 'low'
+              ? 'bg-blue-600 text-white shadow-sm'
+              : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          Trop basses (≤ {MIN_THRESHOLD}°C)
+        </button>
+      </div>
+
+      {/* Liste des alertes */}
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          <p className="ml-3 text-slate-500">Chargement des alertes...</p>
+        </div>
+      ) : filteredAlerts.length === 0 ? (
+        <div className="text-center py-12 text-slate-400">
+          <p>Aucune alerte pour cette journée</p>
+        </div>
+      ) : (
+        <div className="space-y-2 max-h-96 overflow-y-auto">
+          {filteredAlerts.map((alert) => (
+            <div
+              key={alert.id}
+              className={`flex items-center justify-between p-4 rounded-lg ${
+                alert.type === 'high' ? 'bg-red-50 border-l-4 border-red-500' : 'bg-blue-50 border-l-4 border-blue-500'
+              }`}
+            >
+              <div>
+                <p className="font-semibold text-slate-800">{alert.sensorName}</p>
+                <p className="text-sm text-slate-600">
+                  {alert.timestamp.toLocaleTimeString('fr-FR', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className={`text-2xl font-bold ${alert.type === 'high' ? 'text-red-600' : 'text-blue-600'}`}>
+                  {alert.value.toFixed(1)}°C
+                </p>
+                <p className="text-xs text-slate-500">
+                  {alert.type === 'high' ? 'Trop chaud' : 'Trop froid'}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
