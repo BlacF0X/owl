@@ -1,7 +1,7 @@
 import { currentUser, auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { fetchFromApi } from '@/src/lib/apiClient';
-import { Sensor } from '@/src/types';
+import { Sensor, Hub } from '@/src/types';
 import ApiStatusIndicator from '@/components/ApiStatusIndicator';
 import CategorySummaryCards from '@/components/CategorySummaryCards';
 import { Router, Database, Clock } from 'lucide-react';
@@ -21,13 +21,21 @@ export default async function DashboardPage() {
   if (!user) redirect('/connexion');
 
   let sensors: Sensor[] = [];
+  let hubs: Hub[] = [];
   let apiError: string | null = null;
   let lastUpdateStr = 'N/A';
 
   try {
     const token = await getToken();
-    sensors = await fetchFromApi<Sensor[]>('/api/sensors', token);
 
+    const [sensorsData, hubsData] = await Promise.all([
+      fetchFromApi<Sensor[]>('/api/sensors', token),
+      fetchFromApi<Hub[]>('/api/hubs', token)
+    ]);
+
+    sensors = sensorsData;
+    hubs = hubsData;
+    
     if (sensors.length > 0) {
       const dates = sensors
         .map((s) => (s.state_changed_at ? new Date(s.state_changed_at).getTime() : 0))
@@ -44,7 +52,7 @@ export default async function DashboardPage() {
   }
 
   // Calculs
-  const uniqueHubs = new Set(sensors.map((s) => s.hub.hub_id)).size;
+  const uniqueHubs = hubs.length; 
   const windowSensors = sensors.filter((s) => s.type.type_key === 'window');
   const openWindowsCount = windowSensors.filter((s) => s.displayValue === 'Ouvert').length;
   const tempSensors = sensors.filter((s) => s.type.type_key === 'temperature');

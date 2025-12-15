@@ -32,3 +32,14 @@ export interface WindowActivityEvent {
   sensorName: string;
   hubName: string;
 }
+
+export type HubStatus = 'online' | 'offline' | 'pending';
+
+export interface Hub {
+  hub_id: string;
+  name: string;
+  serial_number: string;
+  status: HubStatus;
+  last_seen_at: string | null; // Les dates arrivent en string (ISO 8601) depuis l'API JSON
+  created_at: string;
+}
