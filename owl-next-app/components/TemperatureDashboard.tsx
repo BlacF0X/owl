@@ -16,19 +16,22 @@ interface Props {
   initialSensors: TemperatureSensor[];
 }
 
+interface ChartDataPoint {
+  label: string;
+  value: number | null;
+}
+
 export default function TemperatureDashboard({ initialSensors }: Props) {
   const searchParams = useSearchParams();
   const { getToken } = useAuth();
   const hubId = searchParams?.get('hubId');
   const [viewMode, setViewMode] = useState<ViewMode>('current');
 
-  // États pour le mode "Tous les hubs"
   const [hubSummaries, setHubSummaries] = useState<HubSummary[]>([]);
   const [hubsLoading, setHubsLoading] = useState(false);
   const [hubsError, setHubsError] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
 
-  // ✅ Récupérer le token au montage
   useEffect(() => {
     const fetchToken = async () => {
       const t = await getToken();
@@ -37,9 +40,9 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
     fetchToken();
   }, [getToken]);
 
-  // Charger les summaries par hub uniquement si pas de hubId et mode "current"
+  // Charger les données complètes des hubs (avec graphiques)
   useEffect(() => {
-    if (hubId || viewMode !== 'current') return;
+    if (hubId) return; // Ne pas charger en mode hub spécifique
 
     const loadHubSummaries = async () => {
       setHubsLoading(true);
@@ -49,7 +52,6 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
         const token = await getToken();
         const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
-        // ✅ Filtrer les capteurs qui ont un hub défini
         const sensorsWithHub = initialSensors.filter((s) => s.hub);
 
         const uniqueHubs = Array.from(
@@ -66,75 +68,147 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
               ? parseFloat(sensorsForHub[0].displayValue) || 0
               : 0;
 
-            const summaryPromises = sensorsForHub.map(async (s) => {
+            // ✅ Récupérer les données pour TOUS les capteurs du hub
+            const allReadingsPromises = sensorsForHub.map(async (sensor) => {
               try {
                 const res = await fetch(
-                  `${API_URL}/api/sensors/${s.sensor_id}/readings?period=7d`,
+                  `${API_URL}/api/sensors/${sensor.sensor_id}/readings?period=7d`,
                   { headers: { Authorization: `Bearer ${token}` } }
                 );
-                if (!res.ok) return null;
-
-                const rawData: Array<{ value: number | string; timestamp: string }> =
-                  await res.json();
-
-                const values = rawData
-                  .map((r) => Number(r.value))
-                  .filter((v) => !isNaN(v));
-
-                return {
-                  max7d: values.length ? Math.max(...values) : null,
-                  min7d: values.length ? Math.min(...values) : null,
-                  avg7d: values.length
-                    ? Math.round((values.reduce((a, b) => a + b, 0) / values.length) * 10) / 10
-                    : null,
-                  data24h: [],
-                };
+                if (!res.ok) return [];
+                return await res.json();
               } catch {
-                return null;
+                return [];
               }
             });
 
-            const allData = (await Promise.all(summaryPromises)).filter(Boolean);
-            const max7d = allData.length
-              ? Math.max(...allData.map((d) => d!.max7d).filter((v) => v !== null))
-              : null;
-            const min7d = allData.length
-              ? Math.min(...allData.map((d) => d!.min7d).filter((v) => v !== null))
-              : null;
-            const avg7d =
-              allData.length && allData.some((d) => d!.avg7d !== null)
-                ? Math.round(
-                    (allData
-                      .map((d) => d!.avg7d)
-                      .filter((v) => v !== null)
-                      .reduce((a, b) => a! + b!, 0) as number) /
-                      allData.filter((d) => d!.avg7d !== null).length
-                  )
-                : null;
+            const allReadings = (await Promise.all(allReadingsPromises)).flat();
 
-            const chartData24h: Array<{ label: string; value: number | null }> = [];
+            // ✅ Traiter les données comme dans TemperatureBatchLoader
+            const sortedData = allReadings
+              .map((r: any) => ({
+                value: Number(r.value),
+                timestamp: new Date(r.timestamp),
+              }))
+              .filter((r) => !isNaN(r.value))
+              .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+
+            if (sortedData.length === 0) {
+              return {
+                hubid: hId,
+                hubname: hubName,
+                sensorcount: sensorCount,
+                currenttemp: currentTemp,
+                avgtemp7d: null,
+                maxtemp7d: null,
+                mintemp7d: null,
+                chartData24h: [],
+                chartData7dAvg: [],
+                chartData7dMax: [],
+                chartData7dMin: [],
+              } as HubSummary;
+            }
+
+            const lastDataPoint = sortedData[sortedData.length - 1];
+            const referenceDate = lastDataPoint.timestamp;
+            const refHour = referenceDate.getHours();
+
+            // 📊 GRAPHIQUE 24H
+            const chartData24h: ChartDataPoint[] = [];
+            for (let hour = 0; hour <= 23; hour++) {
+              const hourLabel = `${hour.toString().padStart(2, '0')}h`;
+              if (hour > refHour) {
+                chartData24h.push({ label: hourLabel, value: null });
+                continue;
+              }
+
+              const readings = sortedData.filter((d) => {
+                return (
+                  d.timestamp.getDate() === referenceDate.getDate() &&
+                  d.timestamp.getMonth() === referenceDate.getMonth() &&
+                  d.timestamp.getHours() === hour
+                );
+              });
+
+              if (readings.length > 0) {
+                const avg = readings.reduce((sum, r) => sum + r.value, 0) / readings.length;
+                chartData24h.push({ label: hourLabel, value: Math.round(avg * 10) / 10 });
+              } else {
+                const prev = chartData24h.length > 0 ? chartData24h[chartData24h.length - 1].value : null;
+                chartData24h.push({ label: hourLabel, value: prev });
+              }
+            }
+
+            // 📊 GRAPHIQUES 7 JOURS
+            const tempsByDay = new Map<string, number[]>();
+            const dayKeysInOrder: string[] = [];
+
+            sortedData.forEach((item) => {
+              const dayKey = item.timestamp.toLocaleDateString('fr-FR', {
+                weekday: 'short',
+                day: 'numeric',
+              });
+              if (!tempsByDay.has(dayKey)) {
+                dayKeysInOrder.push(dayKey);
+                tempsByDay.set(dayKey, []);
+              }
+              tempsByDay.get(dayKey)!.push(item.value);
+            });
+
+            const chartData7dMax: ChartDataPoint[] = [];
+            const chartData7dMin: ChartDataPoint[] = [];
+            const chartData7dAvg: ChartDataPoint[] = [];
+
+            dayKeysInOrder.forEach((dayKey) => {
+              const temps = tempsByDay.get(dayKey)!;
+              if (temps.length === 0) {
+                chartData7dMax.push({ label: dayKey, value: null });
+                chartData7dMin.push({ label: dayKey, value: null });
+                chartData7dAvg.push({ label: dayKey, value: null });
+              } else {
+                const maxTemp = Math.max(...temps);
+                const minTemp = Math.min(...temps);
+                const avgTemp = Math.round((temps.reduce((a, b) => a + b, 0) / temps.length) * 10) / 10;
+
+                chartData7dMax.push({ label: dayKey, value: maxTemp });
+                chartData7dMin.push({ label: dayKey, value: minTemp });
+                chartData7dAvg.push({ label: dayKey, value: avgTemp });
+              }
+            });
+
+            const referenceDayKey = referenceDate.toLocaleDateString('fr-FR', {
+              weekday: 'short',
+              day: 'numeric',
+            });
+            const todayTemps = tempsByDay.get(referenceDayKey) || [];
+            const maxtemp7d = todayTemps.length > 0 ? Math.max(...todayTemps) : null;
+            const mintemp7d = todayTemps.length > 0 ? Math.min(...todayTemps) : null;
+            const avgtemp7d = todayTemps.length > 0
+              ? Math.round((todayTemps.reduce((a, b) => a + b, 0) / todayTemps.length) * 10) / 10
+              : null;
 
             return {
               hubid: hId,
               hubname: hubName,
               sensorcount: sensorCount,
               currenttemp: currentTemp,
-              avgtemp7d: avg7d,
-              maxtemp7d: max7d,
-              mintemp7d: min7d,
-              chartData24h: chartData24h,
-            };
-          } catch (err) {
-            console.warn('Erreur hub', hId, err);
+              avgtemp7d,
+              maxtemp7d,
+              mintemp7d,
+              chartData24h,
+              chartData7dAvg,
+              chartData7dMax,
+              chartData7dMin,
+            } as HubSummary;
+          } catch {
             return null;
           }
         });
 
         const results = await Promise.all(hubPromises);
-        const validHubs = results.filter(Boolean) as HubSummary[];
+        const validHubs = results.filter((h): h is HubSummary => h !== null);
         setHubSummaries(validHubs);
-      } catch (err) {
-        console.warn('Erreur chargement hubs', err);
+      } catch {
         setHubsError('Erreur de chargement des hubs');
       } finally {
         setHubsLoading(false);
@@ -144,7 +218,6 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
     loadHubSummaries();
   }, [hubId, initialSensors, getToken, viewMode]);
 
-  // Validation initiale
   if (!initialSensors || initialSensors.length === 0) {
     return (
       <div className="text-center py-12 bg-white rounded-xl shadow-sm">
@@ -175,10 +248,11 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
     );
   }
 
-  // MODE TOUS LES HUBS (liste des cartes)
+  // MODE TOUS LES HUBS
   return (
     <div className="flex flex-col gap-6 w-full pb-10">
-      <DashboardViewButtons currentMode={viewMode} onChange={setViewMode} showComparison />
+      {/* ✅ Boutons SANS comparaison */}
+      <DashboardViewButtons currentMode={viewMode} onChange={setViewMode} showComparison={false} />
 
       {hubsLoading ? (
         <div className="flex items-center justify-center py-12">
@@ -194,7 +268,7 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
           <p className="text-slate-500">Aucun hub trouvé.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="flex flex-col gap-6">
           {hubSummaries.map((hub) => (
             <TemperatureHubCard key={hub.hubid} hub={hub} viewMode={viewMode} />
           ))}

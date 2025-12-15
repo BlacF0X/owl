@@ -14,9 +14,9 @@ export interface HubSummary {
   hubname: string;
   sensorcount: number;
   currenttemp: number;
-  avgtemp7d: number;
-  maxtemp7d: number;
-  mintemp7d: number;
+  avgtemp7d: number | null;
+  maxtemp7d: number | null;
+  mintemp7d: number | null;
   chartData24h: ChartDataPoint[];
   chartData7dAvg: ChartDataPoint[];
   chartData7dMax: ChartDataPoint[];
@@ -29,20 +29,22 @@ interface Props {
 }
 
 export default function TemperatureHubCard({ hub, viewMode }: Props) {
-  let temperature = hub.avgtemp7d;
+  let temperature = hub.avgtemp7d ?? 0;
   let chartData = hub.chartData7dAvg;
   let subtitle = 'Moyenne 7 jours';
+  let currentHour: number | null = null;
 
   if (viewMode === 'current') {
     temperature = hub.currenttemp;
     chartData = hub.chartData24h;
     subtitle = 'Température actuelle (24h)';
+    currentHour = new Date().getHours();
   } else if (viewMode === 'max') {
-    temperature = hub.maxtemp7d;
+    temperature = hub.maxtemp7d ?? 0;
     chartData = hub.chartData7dMax;
     subtitle = 'Maximum 7 jours';
   } else if (viewMode === 'min') {
-    temperature = hub.mintemp7d;
+    temperature = hub.mintemp7d ?? 0;
     chartData = hub.chartData7dMin;
     subtitle = 'Minimum 7 jours';
   }
@@ -61,10 +63,10 @@ export default function TemperatureHubCard({ hub, viewMode }: Props) {
       </div>
 
       {/* Container flex pour graphique + badge */}
-      <div className="flex-1 flex flex-col lg:flex-row items-center gap-6">
+      <div className="flex-1 flex flex-col lg:flex-row items-center gap-6 w-full">
         {/* Graphique */}
         <div className="w-full lg:w-3/4 h-[250px]">
-          <TemperatureDayChart data={chartData} currentHour={null} />
+          <TemperatureDayChart data={chartData} currentHour={currentHour} />
         </div>
 
         {/* Badge nombre de capteurs */}
