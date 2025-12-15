@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
-import { LayoutDashboard, DoorOpen, Wind, CloudSun, Thermometer, Router } from 'lucide-react';
+import { LayoutDashboard, DoorOpen, Wind, Thermometer, Router, Droplets } from 'lucide-react';
+import SystemStatusWidget from '@/components/SystemStatusWidget';
 
 interface TempSensor {
   sensor_id: string;
@@ -21,10 +22,10 @@ interface Hub {
 
 const navLinks = [
   { name: 'Général', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Capteurs de fenêtre', href: '/dashboard/windows', icon: DoorOpen },
+  { name: 'Fenêtres', href: '/dashboard/windows', icon: DoorOpen },
   // Température géré manuellement
-  { name: "Qualité de l'air", href: '/dashboard/humidity-sensors', icon: Wind },
-  { name: 'Capteurs de CO2', href: '/dashboard/co2-sensors', icon: CloudSun },
+  { name: 'Humidité', href: '/dashboard/humidity-sensors', icon: Droplets },
+  { name: 'CO₂', href: '/dashboard/co2-sensors', icon: Wind },
 ];
 
 const DashboardSidebar = () => {
@@ -176,8 +177,9 @@ const DashboardSidebar = () => {
           </ul>
         </div>
       </nav>
-      <div className="flex-shrink-0 border-t p-4">
-        <p className="text-center text-xs text-slate-500">
+      <div className="flex-shrink-0 border-t border-slate-100 bg-white p-4">
+        <SystemStatusWidget />
+        <p className="mt-1 text-center text-[10px] text-slate-400">
           &copy; {new Date().getFullYear()} Project OwL Inc.
         </p>
       </div>

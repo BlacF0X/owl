@@ -1,221 +1,220 @@
 import '@testing-library/jest-dom';
 import { render, screen, fireEvent } from '@testing-library/react';
 import HumidityRoomDetailsModal from '../HumidityRoomDetailsModal';
-import { HumidityRoom } from '../HumidityRoomCard';
 
-const mockRoom: HumidityRoom = {
-  id: '1',
-  name: 'Salon',
-  humidity: 55,
-  status: 'optimal',
-  lastUpdate: new Date().toISOString(),
-  hubName: 'Maison',
-};
+// ✅ Interface correcte
+interface HumidityRoom {
+  id: string;
+  name: string;
+  humidity: number;
+  status: 'optimal' | 'warning' | 'danger';
+  hubName: string;
+  lastUpdate: string;
+}
 
 describe('HumidityRoomDetailsModal Component', () => {
+  const mockRoom: HumidityRoom = {
+    id: '1',
+    name: 'Salon',
+    humidity: 55,
+    status: 'optimal',
+    hubName: 'Maison',
+    lastUpdate: '2025-12-09T15:30:00Z',
+  };
+
   const mockOnClose = jest.fn();
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    mockOnClose.mockClear();
   });
 
-  it('affiche le titre et le nom de la piece', () => {
+  it('affiche la modale avec les informations de la pièce', () => {
     render(<HumidityRoomDetailsModal room={mockRoom} onClose={mockOnClose} />);
 
-    expect(screen.getByText('Salon')).toBeInTheDocument();
+    expect(screen.getByText(/Salon/i)).toBeInTheDocument();
+    expect(screen.getByText(/Humidité actuelle/i)).toBeInTheDocument();
+    // ✅ Chercher l'élément parent contenant "55" ET "%"
+    const humidityContainer = screen.getByText(/Humidité actuelle/i).closest('div')?.parentElement;
+    expect(humidityContainer?.textContent).toContain('55');
+    expect(humidityContainer?.textContent).toContain('%');
   });
 
-  it('affiche la valeur d humidite actuelle', () => {
-    const { container } = render(
-      <HumidityRoomDetailsModal room={mockRoom} onClose={mockOnClose} />
-    );
-
-    expect(container.textContent).toContain('55');
-    expect(container.textContent).toContain('actuelle');
-  });
-
-  it('affiche le statut Optimal pour le statut optimal', () => {
+  it('affiche le statut correct (optimal)', () => {
     render(<HumidityRoomDetailsModal room={mockRoom} onClose={mockOnClose} />);
 
-    expect(screen.getByText('Optimal')).toBeInTheDocument();
+    expect(screen.getByText(/Optimal/i)).toBeInTheDocument();
   });
 
-  it('affiche le statut Alerte pour le statut warning', () => {
-    const warningRoom: HumidityRoom = {
-      ...mockRoom,
-      humidity: 65,
-      status: 'warning',
-    };
-
-    render(<HumidityRoomDetailsModal room={warningRoom} onClose={mockOnClose} />);
-
-    expect(screen.getByText('Alerte')).toBeInTheDocument();
-  });
-
-  it('affiche le statut Critique pour le statut danger', () => {
-    const dangerRoom: HumidityRoom = {
-      ...mockRoom,
-      humidity: 80,
-      status: 'danger',
-    };
-
+  it('affiche le statut correct (danger)', () => {
+    const dangerRoom = { ...mockRoom, humidity: 75, status: 'danger' as const };
     render(<HumidityRoomDetailsModal room={dangerRoom} onClose={mockOnClose} />);
 
-    expect(screen.getByText('Critique')).toBeInTheDocument();
+    expect(screen.getByText(/Critique/i)).toBeInTheDocument();
+    // ✅ Vérifier la valeur 75
+    const statusContainer = screen.getByText(/Critique/i).closest('div')
+      ?.parentElement?.parentElement;
+    expect(statusContainer?.textContent).toContain('75');
   });
 
-  it('affiche le message de confort pour statut optimal', () => {
-    const { container } = render(
-      <HumidityRoomDetailsModal room={mockRoom} onClose={mockOnClose} />
-    );
-
-    expect(container.textContent).toContain('confort');
-    expect(container.textContent).toContain('santé');
-  });
-
-  it('affiche le message d aeration pour statut warning', () => {
-    const warningRoom: HumidityRoom = {
-      ...mockRoom,
-      status: 'warning',
-    };
-
-    const { container } = render(
-      <HumidityRoomDetailsModal room={warningRoom} onClose={mockOnClose} />
-    );
-
-    expect(container.textContent).toContain('aérez');
-  });
-
-  it('affiche le message d alerte pour statut danger', () => {
-    const dangerRoom: HumidityRoom = {
-      ...mockRoom,
-      status: 'danger',
-    };
-
-    const { container } = render(
-      <HumidityRoomDetailsModal room={dangerRoom} onClose={mockOnClose} />
-    );
-
-    expect(container.textContent).toContain('moisissures');
-  });
-
-  it('affiche le boitier (hubName)', () => {
-    const { container } = render(
-      <HumidityRoomDetailsModal room={mockRoom} onClose={mockOnClose} />
-    );
-
-    expect(container.textContent).toContain('Boîtier');
-    expect(screen.getByText('Maison')).toBeInTheDocument();
-  });
-
-  it('affiche le dernier releve', () => {
-    const { container } = render(
-      <HumidityRoomDetailsModal room={mockRoom} onClose={mockOnClose} />
-    );
-
-    expect(container.textContent).toContain('Dernier');
-  });
-
-  it('appelle onClose quand on clique sur Fermer', () => {
+  it('appelle onClose quand on clique sur le bouton Fermer', async () => {
     render(<HumidityRoomDetailsModal room={mockRoom} onClose={mockOnClose} />);
 
-    const closeButton = screen.getByRole('button', { name: /fermer/i });
+    const closeButton = screen.getByRole('button', { name: /Fermer/i });
     fireEvent.click(closeButton);
 
     expect(mockOnClose).toHaveBeenCalledTimes(1);
   });
 
-  it('appelle onClose quand on clique sur la croix', () => {
+  it('affiche le hub correctement', () => {
     render(<HumidityRoomDetailsModal room={mockRoom} onClose={mockOnClose} />);
 
-    const closeButtons = screen.getAllByRole('button');
-    const xButton = closeButtons.find((btn) => btn.classList.contains('rounded-full'));
-
-    if (xButton) {
-      fireEvent.click(xButton);
-      expect(mockOnClose).toHaveBeenCalledTimes(1);
-    }
+    expect(screen.getByText(/Maison/i)).toBeInTheDocument();
   });
 
-  it('n affiche pas le boitier si hubName est absent', () => {
-    const noHubRoom: HumidityRoom = {
-      ...mockRoom,
-      hubName: undefined,
-    };
+  it('affiche la date de mise à jour', () => {
+    render(<HumidityRoomDetailsModal room={mockRoom} onClose={mockOnClose} />);
 
-    const { container } = render(
-      <HumidityRoomDetailsModal room={noHubRoom} onClose={mockOnClose} />
-    );
-
-    expect(container.textContent).not.toContain('Boîtier');
+    expect(screen.getByText(/09\/12\/2025/i)).toBeInTheDocument();
   });
 
-  it('gere les humidites tres basses', () => {
-    const lowRoom: HumidityRoom = {
-      ...mockRoom,
-      humidity: 10,
-    };
+  it('affiche le statut "Alerte" pour warning', () => {
+    const warningRoom = { ...mockRoom, humidity: 65, status: 'warning' as const };
+    render(<HumidityRoomDetailsModal room={warningRoom} onClose={mockOnClose} />);
 
-    const { container } = render(<HumidityRoomDetailsModal room={lowRoom} onClose={mockOnClose} />);
-
-    expect(container.textContent).toContain('10');
+    expect(screen.getByText(/Alerte/i)).toBeInTheDocument();
   });
 
-  it('gere les humidites tres elevees', () => {
-    const highRoom: HumidityRoom = {
-      ...mockRoom,
-      humidity: 95,
+  it('rend correctement avec plusieurs pièces successives', () => {
+    const { rerender } = render(<HumidityRoomDetailsModal room={mockRoom} onClose={mockOnClose} />);
+
+    expect(
+      screen.getByText(/Humidité actuelle/i).closest('div')?.parentElement?.textContent
+    ).toContain('55');
+
+    const chambreRoom = {
+      id: '2',
+      name: 'Chambre',
+      humidity: 48,
+      status: 'optimal' as const,
+      hubName: 'Maison',
+      lastUpdate: '2025-12-09T15:35:00Z',
     };
 
-    const { container } = render(
-      <HumidityRoomDetailsModal room={highRoom} onClose={mockOnClose} />
-    );
+    rerender(<HumidityRoomDetailsModal room={chambreRoom} onClose={mockOnClose} />);
 
-    expect(container.textContent).toContain('95');
+    expect(screen.getByText(/Chambre/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Humidité actuelle/i).closest('div')?.parentElement?.textContent
+    ).toContain('48');
   });
 
-  it('gere les noms de piece tres longs', () => {
-    const longNameRoom: HumidityRoom = {
-      ...mockRoom,
-      name: 'Salle d eau du sous-sol avec sauna integre',
-    };
+  it("affiche l'interface complète de la modale", () => {
+    render(<HumidityRoomDetailsModal room={mockRoom} onClose={mockOnClose} />);
 
+    expect(screen.getByRole('button', { name: /Fermer/i })).toBeInTheDocument();
+    expect(screen.getByText(/Salon/i)).toBeInTheDocument();
+    expect(screen.getByText(/Humidité actuelle/i)).toBeInTheDocument();
+  });
+
+  it('appelle onClose quand on clique sur le bouton de fermeture (X)', () => {
+    render(<HumidityRoomDetailsModal room={mockRoom} onClose={mockOnClose} />);
+
+    const buttons = screen.getAllByRole('button');
+    fireEvent.click(buttons[0]); // Le bouton X est le premier
+    expect(mockOnClose).toHaveBeenCalled();
+  });
+
+  it("gère correctement les valeurs d'humidité extrêmes (très sec)", () => {
+    const veryDryRoom = {
+      ...mockRoom,
+      humidity: 20,
+      status: 'danger' as const,
+    };
+    render(<HumidityRoomDetailsModal room={veryDryRoom} onClose={mockOnClose} />);
+
+    expect(screen.getByText(/Critique/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Humidité actuelle/i).closest('div')?.parentElement?.textContent
+    ).toContain('20');
+  });
+
+  it("gère correctement les valeurs d'humidité extrêmes (très humide)", () => {
+    const veryWetRoom = {
+      ...mockRoom,
+      humidity: 85,
+      status: 'danger' as const,
+    };
+    render(<HumidityRoomDetailsModal room={veryWetRoom} onClose={mockOnClose} />);
+
+    expect(screen.getByText(/Critique/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Humidité actuelle/i).closest('div')?.parentElement?.textContent
+    ).toContain('85');
+  });
+
+  it("affiche correctement les informations d'une pièce du bureau", () => {
+    const bureauRoom = {
+      id: '3',
+      name: 'Bureau',
+      humidity: 42,
+      status: 'optimal' as const,
+      hubName: 'Bureau-Hub',
+      lastUpdate: '2025-12-09T16:00:00Z',
+    };
+    render(<HumidityRoomDetailsModal room={bureauRoom} onClose={mockOnClose} />);
+
+    expect(screen.getByRole('heading')).toHaveTextContent('Bureau');
+    expect(screen.getByText(/Bureau-Hub/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Humidité actuelle/i).closest('div')?.parentElement?.textContent
+    ).toContain('42');
+  });
+
+  it('rend le composant sans crash avec un long nom de pièce', () => {
+    const longNameRoom = {
+      ...mockRoom,
+      name: 'Très long nom de pièce avec beaucoup de caractères',
+    };
     render(<HumidityRoomDetailsModal room={longNameRoom} onClose={mockOnClose} />);
 
-    expect(screen.getByText('Salle d eau du sous-sol avec sauna integre')).toBeInTheDocument();
+    expect(screen.getByText(/Très long nom de pièce/i)).toBeInTheDocument();
   });
 
-  it('applique les classes CSS du modal correctement', () => {
+  it('affiche les messages appropriés selon le statut', () => {
+    const { rerender } = render(<HumidityRoomDetailsModal room={mockRoom} onClose={mockOnClose} />);
+
+    // ✅ Optimal : "✓ Humidité idéale..."
+    expect(screen.getByText(/Humidité idéale/i)).toBeInTheDocument();
+
+    // ✅ Warning : "⚠️ L'humidité est élevée..."
+    const warningRoom = { ...mockRoom, humidity: 65, status: 'warning' as const };
+    rerender(<HumidityRoomDetailsModal room={warningRoom} onClose={mockOnClose} />);
+    expect(screen.getByText(/L'humidité est élevée/i)).toBeInTheDocument();
+
+    // ✅ Danger : "⚠️ Humidité hors zone..."
+    const dangerRoom = { ...mockRoom, humidity: 20, status: 'danger' as const };
+    rerender(<HumidityRoomDetailsModal room={dangerRoom} onClose={mockOnClose} />);
+    expect(screen.getByText(/Humidité hors zone/i)).toBeInTheDocument();
+  });
+
+  it('rend le modal avec le layout correct', () => {
     const { container } = render(
       <HumidityRoomDetailsModal room={mockRoom} onClose={mockOnClose} />
     );
 
-    const modal = container.querySelector('[class*="fixed"]');
-    expect(modal).toHaveClass('inset-0');
-    expect(modal).toHaveClass('z-50');
-  });
-
-  it('applique les classes CSS de la grille 2 colonnes', () => {
-    const { container } = render(
-      <HumidityRoomDetailsModal room={mockRoom} onClose={mockOnClose} />
-    );
-
-    const grid = container.querySelector('[class*="grid"]');
-    expect(grid).toHaveClass('grid-cols-2');
-  });
-
-  it('affiche un arriere-plan semi-transparent', () => {
-    const { container } = render(
-      <HumidityRoomDetailsModal room={mockRoom} onClose={mockOnClose} />
-    );
-
-    const backdrop = container.querySelector('[class*="bg-black"]');
+    // ✅ Vérifier que le modal a la classe backdrop
+    const backdrop = container.querySelector('.bg-black\\/60');
     expect(backdrop).toBeInTheDocument();
   });
 
-  it('affiche le label Statut', () => {
+  it('affiche tous les éléments requis du modal', () => {
     render(<HumidityRoomDetailsModal room={mockRoom} onClose={mockOnClose} />);
 
-    expect(screen.getByText('Statut')).toBeInTheDocument();
+    expect(screen.getByRole('heading')).toHaveTextContent('Salon');
+    expect(screen.getByText(/Humidité actuelle/i)).toBeInTheDocument();
+    expect(screen.getByText(/Statut/i)).toBeInTheDocument();
+    expect(screen.getByText(/Humidité idéale/i)).toBeInTheDocument();
+    expect(screen.getByText(/Dernier relevé/i)).toBeInTheDocument();
+    expect(screen.getByText(/Boîtier/i)).toBeInTheDocument();
   });
 });

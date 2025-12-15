@@ -4,8 +4,8 @@ import { fetchFromApi } from '@/src/lib/apiClient';
 import { Sensor } from '@/src/types';
 import WindowSensorsView from '@/components/WindowSensorsView';
 import WindowActivityLog from '@/components/WindowActivityLog';
-import WindowHourlyActivityChart from '@/components/WindowHourlyActivityChart';
 import { AlertTriangle, BarChart3 } from 'lucide-react';
+import WindowLazyChart from '@/components/WindowLazyChart';
 
 interface HourlyStat {
   hour: number;
@@ -25,7 +25,6 @@ export default async function WindowSensorsPage() {
     console.error('Clerk authentication error:', error);
     return (
       <div className="flex h-screen w-full items-center justify-center bg-slate-100">
-        {/* ... votre UI d'erreur de session ... */}
         <p>Session expirée. Veuillez vous reconnecter.</p>
       </div>
     );
@@ -98,7 +97,7 @@ export default async function WindowSensorsPage() {
       <header className="mb-10">
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">État des Capteurs de Fenêtre</h1>
+            <h1 className="text-3xl font-bold text-slate-900">Fenêtres</h1>
             <p className="mt-1 text-slate-600">
               Vue détaillée de tous vos capteurs de fenêtre, groupés par boîtier central.
             </p>
@@ -159,7 +158,7 @@ export default async function WindowSensorsPage() {
 
           {/* Insertion du graphique */}
           <div className="h-48 w-full">
-            <WindowHourlyActivityChart data={hourlyStats} />
+            <WindowLazyChart data={hourlyStats} />
           </div>
         </div>
       </div>

@@ -25,8 +25,8 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors, token }) => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [filterType, setFilterType] = useState<FilterType>('all');
 
-  const MIN_THRESHOLD = 19;
-  const MAX_THRESHOLD = 25;
+  const MIN_THRESHOLD = 18;
+  const MAX_THRESHOLD = 23;
 
   const goToPreviousDay = () => {
     const newDate = new Date(selectedDate);

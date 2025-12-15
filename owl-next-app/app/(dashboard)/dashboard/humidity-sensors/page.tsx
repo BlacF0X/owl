@@ -4,10 +4,17 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import HumidityStatsCards from '@/components/HumidityStatsCards';
 import HumidityRoomsView from '@/components/HumidityRoomsView';
-import HumidityEvolutionChart, {
-  type HumidityDataPoint,
-} from '@/components/HumidityEvolutionChart';
 import { type HumidityRoom } from '@/components/HumidityRoomCard';
+import { type HumidityDataPoint } from '@/components/HumidityEvolutionChart';
+
+import dynamic from 'next/dynamic';
+
+const HumidityEvolutionChart = dynamic(() => import('@/components/HumidityEvolutionChart'), {
+  loading: () => (
+    <div className="h-64 w-full bg-slate-50 animate-pulse rounded-lg border border-slate-200" />
+  ),
+  ssr: false,
+});
 
 interface HumiditySensor {
   sensor_id: string;
@@ -31,6 +38,7 @@ export default function HumiditySensorsPage() {
   const [stats, setStats] = useState<HumidityStats[]>([]);
   const [averageHumidity, setAverageHumidity] = useState(0);
   const [activeAlerts, setActiveAlerts] = useState(0);
+  const [lastUpdate, setLastUpdate] = useState('N/A'); // ✅ Ajout du state pour la date
 
   useEffect(() => {
     const fetchHumidityData = async () => {
@@ -57,19 +65,33 @@ export default function HumiditySensorsPage() {
         const statsData: HumidityStats[] = await statsResponse.json();
         setStats(statsData);
 
-        // Calculer les stats
+        // --- CALCULS ---
+
+        // 1. Moyenne
         const humidityValues = sensorsData.map((s) => parseInt(s.displayValue) || 0);
         const avg = Math.round(
           humidityValues.reduce((a, b) => a + b, 0) / humidityValues.length || 0
         );
         setAverageHumidity(avg);
 
-        // Compter les alertes
+        // 2. Alertes (Nouvelle règle : Danger si < 40 ou > 60)
         const alertCount = sensorsData.filter((s) => {
           const value = parseInt(s.displayValue) || 0;
-          return value < 40 || value > 70;
+          return value < 40 || value > 60; // ✅ Seuil strict 60%
         }).length;
         setActiveAlerts(alertCount);
+
+        // 3. Dernière mise à jour (La plus récente parmi tous les capteurs)
+        const timestamps = sensorsData
+          .map((s) => (s.state_changed_at ? new Date(s.state_changed_at).getTime() : 0))
+          .filter((t) => t > 0);
+
+        if (timestamps.length > 0) {
+          const last = new Date(Math.max(...timestamps));
+          setLastUpdate(last.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }));
+        } else {
+          setLastUpdate('N/A');
+        }
       } catch (err) {
         console.error('Erreur chargement humidité:', err);
         setError(err instanceof Error ? err.message : 'Erreur inconnue');
@@ -97,23 +119,22 @@ export default function HumiditySensorsPage() {
     );
   }
 
-  // Grouper par hub
+  // Grouper par hub avec calcul du statut pour chaque carte
   const sensorsByHub = sensors.reduce(
     (acc, sensor) => {
       const hubName = sensor.hub.name;
       if (!acc[hubName]) acc[hubName] = [];
+
+      const value = parseInt(sensor.displayValue) || 0;
+
       acc[hubName].push({
         id: sensor.sensor_id,
         name: sensor.name,
-        humidity: parseInt(sensor.displayValue) || 0,
-        status:
-          parseInt(sensor.displayValue) >= 40 && parseInt(sensor.displayValue) <= 60
-            ? ('optimal' as const)
-            : parseInt(sensor.displayValue) > 60
-              ? ('warning' as const)
-              : ('danger' as const),
+        humidity: value,
+        // ✅ Statut simplifié : Optimal ou Danger (pas de warning intermédiaire)
+        status: value >= 40 && value <= 60 ? 'optimal' : 'danger',
         hubName: hubName,
-        lastUpdate: new Date().toISOString(),
+        lastUpdate: sensor.state_changed_at || undefined,
       } as HumidityRoom);
       return acc;
     },
@@ -123,7 +144,7 @@ export default function HumiditySensorsPage() {
   const mockStats = {
     averageHumidity,
     activeAlerts,
-    lastUpdate: 'Maintenant',
+    lastUpdate, // ✅ On passe la vraie date calculée
   };
 
   // Convertir stats pour le graphique
@@ -135,7 +156,7 @@ export default function HumiditySensorsPage() {
   return (
     <div className="space-y-8">
       <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">Dashboard Humidité - Système OwL</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">Humidité</h1>
         <p className="text-sm text-muted-foreground">
           Surveillance en temps réel de l'humidité intérieure
         </p>

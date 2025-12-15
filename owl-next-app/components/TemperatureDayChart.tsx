@@ -41,8 +41,8 @@ const COLORS = {
 };
 
 const getColor = (value: number) => {
-  if (value > 25) return COLORS.red;
-  if (value < 20) return COLORS.blue;
+  if (value > 23) return COLORS.red;
+  if (value < 18) return COLORS.blue;
   return COLORS.green;
 };
 
@@ -69,8 +69,8 @@ export default function TemperatureDayChart({ data, currentHour }: ChartProps) {
             const context = ctx as SegmentContext;
             if (!context.p1 || !context.p1.parsed) return COLORS.green;
             const val = context.p1.parsed.y;
-            if (val > 25) return COLORS.red;
-            if (val < 20) return COLORS.blue;
+            if (val > 23) return COLORS.red;
+            if (val < 18) return COLORS.blue;
             return COLORS.green;
           },
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -78,8 +78,8 @@ export default function TemperatureDayChart({ data, currentHour }: ChartProps) {
             const context = ctx as SegmentContext;
             if (!context.p1 || !context.p1.parsed) return `${COLORS.green}33`;
             const val = context.p1.parsed.y;
-            if (val > 25) return `${COLORS.red}33`;
-            if (val < 20) return `${COLORS.blue}33`;
+            if (val > 23) return `${COLORS.red}33`;
+            if (val < 18) return `${COLORS.blue}33`;
             return `${COLORS.green}33`;
           },
         },
