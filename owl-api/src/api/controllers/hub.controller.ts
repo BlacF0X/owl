@@ -21,21 +21,24 @@ export const provisionHub = async (req: Request, res: Response) => {
     const user = await userRepo.findOneBy({ email: email });
 
     if (!user) {
-      return res.status(404).json({ 
-        message: 'Utilisateur introuvable. Veuillez d\'abord créer un compte sur le Dashboard.' 
+      return res.status(404).json({
+        message:
+          "Utilisateur introuvable. Veuillez d'abord créer un compte sur le Dashboard.",
       });
     }
 
     // 2. Trouver ou Créer le Hub
-    let hub = await hubRepo.findOne({ 
+    let hub = await hubRepo.findOne({
       where: { serial_number: hub_serial },
-      relations: ['user']
+      relations: ['user'],
     });
 
     if (hub) {
       // Sécurité basique : Si le hub appartient déjà à quelqu'un d'autre
       if (hub.user && hub.user.clerk_user_id !== user.clerk_user_id) {
-        return res.status(403).json({ message: 'Ce Hub est déjà associé à un autre utilisateur.' });
+        return res
+          .status(403)
+          .json({ message: 'Ce Hub est déjà associé à un autre utilisateur.' });
       }
       // Mise à jour
       hub.user = user;
@@ -48,18 +51,21 @@ export const provisionHub = async (req: Request, res: Response) => {
         name: `Hub ${hub_serial}`, // Nom par défaut
         status: HubStatus.ONLINE,
         last_seen_at: new Date(),
-        user: user
+        user: user,
       });
     }
 
     await hubRepo.save(hub);
 
     console.log(`✅ Hub ${hub_serial} associé à l'utilisateur ${email}`);
-    return res.status(200).json({ message: 'Hub configuré et associé avec succès.' });
-
+    return res
+      .status(200)
+      .json({ message: 'Hub configuré et associé avec succès.' });
   } catch (error) {
     console.error('Erreur provisioning Hub:', error);
-    return res.status(500).json({ message: 'Erreur serveur lors du provisioning.' });
+    return res
+      .status(500)
+      .json({ message: 'Erreur serveur lors du provisioning.' });
   }
 };
 
