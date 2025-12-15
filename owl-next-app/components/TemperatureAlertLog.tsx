@@ -62,7 +62,7 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors, token }) => {
       try {
         const promises = sensors.map(async (sensor) => {
           try {
-            const res = await fetch(`${API_URL}/api/sensors/${sensor.sensorid}/readings?date=${dateStr}`, {
+            const res = await fetch(`${API_URL}/api/sensors/${sensor.sensor_id}/readings?date=${dateStr}`, {
               headers: { Authorization: `Bearer ${token}` },
             });
 
@@ -75,7 +75,7 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors, token }) => {
 
               if (val < MIN_THRESHOLD) {
                 allAlerts.push({
-                  id: `${sensor.sensorid}-${reading.timestamp}`,
+                  id: `${sensor.sensor_id}-${reading.timestamp}`,
                   sensorName: sensor.name,
                   value: val,
                   timestamp: new Date(reading.timestamp),
@@ -83,7 +83,7 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors, token }) => {
                 });
               } else if (val > MAX_THRESHOLD) {
                 allAlerts.push({
-                  id: `${sensor.sensorid}-${reading.timestamp}`,
+                  id: `${sensor.sensor_id}-${reading.timestamp}`,
                   sensorName: sensor.name,
                   value: val,
                   timestamp: new Date(reading.timestamp),

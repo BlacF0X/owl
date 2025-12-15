@@ -55,7 +55,7 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
         const hubMap = new Map<string, TemperatureSensor[]>();
         initialSensors.forEach((sensor) => {
           // Adaptation pour supporter sensor.hub.hub_id (standard) ou hubid (feature)
-          const hId = sensor.hub?.hubid || sensor.hub?.hub_id || 'unknown';
+          const hId = sensor.hub?.hub_id || 'unknown';
           if (!hubMap.has(hId)) hubMap.set(hId, []);
           hubMap.get(hId)?.push(sensor);
         });
@@ -70,7 +70,7 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
             const sensorDataPromises = sensors.map(async (sensor) => {
               try {
                 // Utilisation de sensor.sensorid ou sensor.sensor_id selon le type disponible
-                const sId = sensor.sensorid || sensor.sensor_id;
+                const sId = sensor.sensor_id;
                 
                 let res = await fetch(`${API_URL}/api/sensors/${sId}/readings?period=30d`, {
                   headers: { Authorization: `Bearer ${token}` },

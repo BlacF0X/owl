@@ -32,7 +32,7 @@ export default function TemperatureComparisonView({ sensors }: Props) {
         const allSensorsData = await Promise.all(
           sensors.map(async (sensor) => {
             try {
-              const res = await fetch(`${API_URL}/api/sensors/${sensor.sensorid}/readings?period=7d`, {
+              const res = await fetch(`${API_URL}/api/sensors/${sensor.sensor_id}/readings?period=7d`, {
                 headers: { Authorization: `Bearer ${token}` },
               });
 

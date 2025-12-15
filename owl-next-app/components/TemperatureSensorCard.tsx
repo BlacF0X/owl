@@ -11,10 +11,10 @@ interface ChartDataPoint {
 }
 
 export interface TemperatureSensor {
-  sensorid: string;
+  sensor_id: string;
   name: string;
   displayValue: string;
-  hub?: { hubid: string; name: string };
+  hub?: { hub_id: string; name: string };
 }
 
 export interface SensorHistory {

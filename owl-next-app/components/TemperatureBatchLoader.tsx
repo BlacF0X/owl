@@ -32,12 +32,12 @@ export default function TemperatureBatchLoader({ sensors, viewMode }: Props) {
       const results = await Promise.allSettled(
         sensors.map(async (sensor) => {
           try {
-            let res = await fetch(`${API_URL}/api/sensors/${sensor.sensorid}/readings?period=30d`, {
+            let res = await fetch(`${API_URL}/api/sensors/${sensor.sensor_id}/readings?period=30d`, {
               headers: { Authorization: `Bearer ${token}` },
             });
 
             if (!res.ok) {
-              res = await fetch(`${API_URL}/api/sensors/${sensor.sensorid}/readings?period=7d`, {
+              res = await fetch(`${API_URL}/api/sensors/${sensor.sensor_id}/readings?period=7d`, {
                 headers: { Authorization: `Bearer ${token}` },
               });
             }
@@ -45,7 +45,7 @@ export default function TemperatureBatchLoader({ sensors, viewMode }: Props) {
             if (!res.ok) return null;
 
             const rawData: HistoryItem[] = await res.json();
-            return { sensorId: sensor.sensorid, rawData, sensor };
+            return { sensorId: sensor.sensor_id, rawData, sensor };
           } catch (err) {
             console.warn(`Erreur pour ${sensor.name}:`, err);
             return null;
@@ -82,9 +82,9 @@ export default function TemperatureBatchLoader({ sensors, viewMode }: Props) {
     <div className="flex flex-col gap-6 w-full">
       {sensors.map((sensor) => (
         <TemperatureSensorCard
-          key={sensor.sensorid}
+          key={sensor.sensor_id}
           sensor={sensor}
-          history={histories[sensor.sensorid]}
+          history={histories[sensor.sensor_id]}
           viewMode={viewMode}
           onRetry={() => setRetryTrigger((prev) => prev + 1)}
         />
