@@ -28,7 +28,7 @@ export default function TemperatureBatchLoader({ sensors, viewMode }: Props) {
       const token = await getToken();
       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
-      // 🚀 Batch fetch en parallèle
+      // Batch fetch en parallèle
       const results = await Promise.allSettled(
         sensors.map(async (sensor) => {
           try {
@@ -93,7 +93,7 @@ export default function TemperatureBatchLoader({ sensors, viewMode }: Props) {
   );
 }
 
-// ⚙️ Fonction de traitement (copiée de la logique existante)
+// Fonction de traitement
 function processRawData(rawData: HistoryItem[], sensor: TemperatureSensor): SensorHistory {
   if (!rawData || rawData.length === 0) {
     return {
@@ -109,7 +109,10 @@ function processRawData(rawData: HistoryItem[], sensor: TemperatureSensor): Sens
     };
   }
 
-  const sortedData = rawData.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+  const sortedData = rawData.sort(
+    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+  );
+
   const lastDataPoint = sortedData[sortedData.length - 1];
   const referenceDate = new Date(lastDataPoint.timestamp);
   const referenceDayKey = referenceDate.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' });
@@ -149,10 +152,12 @@ function processRawData(rawData: HistoryItem[], sensor: TemperatureSensor): Sens
   sortedData.forEach((item) => {
     const d = new Date(item.timestamp);
     const dayKey = d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' });
+
     if (!tempsByDay.has(dayKey)) {
       tempsByDay.set(dayKey, []);
       dayKeysInOrder.add(dayKey);
     }
+
     const val = Number(item.value_num);
     if (!isNaN(val)) tempsByDay.get(dayKey)?.push(val);
   });
