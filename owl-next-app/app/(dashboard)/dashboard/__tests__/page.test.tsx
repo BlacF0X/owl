@@ -100,6 +100,12 @@ const mockSensors = [
   },
 ];
 
+// NOUVEAU : Mock des Hubs (2 hubs correspondant aux sensors)
+const mockHubs = [
+  { hub_id: 'hub1', name: 'Maison', status: 'online' },
+  { hub_id: 'hub2', name: 'Bureau', status: 'online' },
+];
+
 describe('DashboardPage (Server Component)', () => {
   const { currentUser, auth } = require('@clerk/nextjs/server');
 
@@ -133,19 +139,23 @@ describe('DashboardPage (Server Component)', () => {
   });
 
   it('calcule et affiche correctement les statistiques globales (Top Cards)', async () => {
-    (fetchFromApi as jest.Mock).mockResolvedValue(mockSensors);
+    // CORRECTION ICI : On mocke différemment selon l'URL appelée
+    (fetchFromApi as jest.Mock).mockImplementation((url) => {
+      if (url === '/api/sensors') return Promise.resolve(mockSensors);
+      if (url === '/api/hubs') return Promise.resolve(mockHubs); // Retourne 2 hubs
+      return Promise.resolve([]);
+    });
 
     const jsx = await DashboardPage();
     render(jsx);
 
-    // 1. Hubs Connectés : 2
+    // 1. Hubs Connectés : 2 (Longueur de mockHubs)
     const hubCount = screen.getByText('2');
     expect(hubCount).toBeInTheDocument();
     expect(screen.getByText('Hubs Connectés')).toBeInTheDocument();
 
-    // 2. Capteurs Totaux : 5
+    // 2. Capteurs Totaux : 5 (Longueur de mockSensors)
     expect(screen.getByText('5')).toBeInTheDocument();
-    // ✅ MISE À JOUR DU TEXTE ATTENDU
     expect(screen.getByText('Capteurs Totaux')).toBeInTheDocument();
 
     // 3. Dernière Mise à Jour
@@ -154,7 +164,12 @@ describe('DashboardPage (Server Component)', () => {
   });
 
   it('passe les bonnes données calculées au composant CategorySummaryCards', async () => {
-    (fetchFromApi as jest.Mock).mockResolvedValue(mockSensors);
+    // CORRECTION ICI AUSSI
+    (fetchFromApi as jest.Mock).mockImplementation((url) => {
+      if (url === '/api/sensors') return Promise.resolve(mockSensors);
+      if (url === '/api/hubs') return Promise.resolve(mockHubs);
+      return Promise.resolve([]);
+    });
 
     const jsx = await DashboardPage();
     render(jsx);
