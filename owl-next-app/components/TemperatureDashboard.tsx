@@ -54,7 +54,6 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
         // Grouper par hub
         const hubMap = new Map<string, TemperatureSensor[]>();
         initialSensors.forEach((sensor) => {
-          // Adaptation pour supporter sensor.hub.hub_id (standard) ou hubid (feature)
           const hId = sensor.hub?.hub_id || 'unknown';
           if (!hubMap.has(hId)) hubMap.set(hId, []);
           hubMap.get(hId)?.push(sensor);
@@ -69,18 +68,11 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
             // Charger les données de tous les capteurs du hub
             const sensorDataPromises = sensors.map(async (sensor) => {
               try {
-                // Utilisation de sensor.sensorid ou sensor.sensor_id selon le type disponible
                 const sId = sensor.sensor_id;
                 
-                let res = await fetch(`${API_URL}/api/sensors/${sId}/readings?period=30d`, {
+                const res = await fetch(`${API_URL}/api/sensors/${sId}/readings?period=7d`, {
                   headers: { Authorization: `Bearer ${token}` },
                 });
-
-                if (!res.ok) {
-                  res = await fetch(`${API_URL}/api/sensors/${sId}/readings?period=7d`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                  });
-                }
 
                 if (!res.ok) return null;
 
@@ -105,9 +97,6 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
                 maxtemp7d: 0,
                 mintemp7d: 0,
                 chartData24h: [],
-                chartData7dAvg: [],
-                chartData7dMax: [],
-                chartData7dMin: [],
               };
             }
 
@@ -164,58 +153,11 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
                 ? lastHourData.reduce((sum, d) => sum + Number(d.value_num), 0) / lastHourData.length
                 : 0;
 
-            // CALCUL PAR JOUR (7j)
-            const tempsByDay = new Map<string, number[]>();
-            const dayKeysInOrder = new Set<string>();
-
-            sortedData.forEach((item) => {
-              const d = new Date(item.timestamp);
-              const dayKey = d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' });
-
-              if (!tempsByDay.has(dayKey)) {
-                tempsByDay.set(dayKey, []);
-                dayKeysInOrder.add(dayKey);
-              }
-
-              const val = Number(item.value_num);
-              if (!isNaN(val)) tempsByDay.get(dayKey)?.push(val);
-            });
-
-            // Calculer MAX, MIN, AVG par jour
-            const chartData7dMax: ChartDataPoint[] = [];
-            const chartData7dMin: ChartDataPoint[] = [];
-            const chartData7dAvg: ChartDataPoint[] = [];
-
-            let totalAvg = 0;
-            let totalMax = -Infinity;
-            let totalMin = Infinity;
-            let dayCount = 0;
-
-            dayKeysInOrder.forEach((dayKey) => {
-              const temps = tempsByDay.get(dayKey);
-              if (temps && temps.length > 0) {
-                const max = Math.max(...temps);
-                const min = Math.min(...temps);
-                const avg = temps.reduce((a, b) => a + b, 0) / temps.length;
-
-                chartData7dMax.push({ label: dayKey, value: max });
-                chartData7dMin.push({ label: dayKey, value: min });
-                chartData7dAvg.push({ label: dayKey, value: avg });
-
-                totalAvg += avg;
-                totalMax = Math.max(totalMax, max);
-                totalMin = Math.min(totalMin, min);
-                dayCount++;
-              }
-            });
-
-            const last7DaysMax = chartData7dMax.slice(-7);
-            const last7DaysMin = chartData7dMin.slice(-7);
-            const last7DaysAvg = chartData7dAvg.slice(-7);
-
-            const avg7d = dayCount > 0 ? totalAvg / dayCount : 0;
-            const max7d = totalMax !== -Infinity ? totalMax : 0;
-            const min7d = totalMin !== Infinity ? totalMin : 0;
+            // Calcul simple des stats 7j (sans graphiques détaillés)
+            const allTemps = sortedData.map(d => Number(d.value_num)).filter(v => !isNaN(v));
+            const avg7d = allTemps.length > 0 ? allTemps.reduce((a, b) => a + b, 0) / allTemps.length : 0;
+            const max7d = allTemps.length > 0 ? Math.max(...allTemps) : 0;
+            const min7d = allTemps.length > 0 ? Math.min(...allTemps) : 0;
 
             return {
               hubid: hId,
@@ -226,9 +168,6 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
               maxtemp7d: max7d,
               mintemp7d: min7d,
               chartData24h: chartData24h,
-              chartData7dAvg: last7DaysAvg,
-              chartData7dMax: last7DaysMax,
-              chartData7dMin: last7DaysMin,
             };
           } catch (err) {
             console.warn(`Erreur hub ${hId}:`, err);

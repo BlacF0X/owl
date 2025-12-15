@@ -7,7 +7,7 @@ import TemperatureSensorCard from './TemperatureSensorCard';
 import type { TemperatureSensor, SensorHistory } from './TemperatureSensorCard';
 
 interface HistoryItem {
-  value_num: number | string;
+  valuenum: number | string;
   timestamp: string;
 }
 
@@ -28,32 +28,28 @@ export default function TemperatureBatchLoader({ sensors, viewMode }: Props) {
       const token = await getToken();
       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
-      // Batch fetch en parallèle
+      // ✅ CORRECTION : Suppression du fetch 30d
       const results = await Promise.allSettled(
         sensors.map(async (sensor) => {
           try {
-            let res = await fetch(`${API_URL}/api/sensors/${sensor.sensor_id}/readings?period=30d`, {
+            const res = await fetch(`${API_URL}/api/sensors/${sensor.sensor_id}/readings?period=7d`, {
               headers: { Authorization: `Bearer ${token}` },
             });
 
             if (!res.ok) {
-              res = await fetch(`${API_URL}/api/sensors/${sensor.sensor_id}/readings?period=7d`, {
-                headers: { Authorization: `Bearer ${token}` },
-              });
+              console.warn(`❌ Échec chargement pour ${sensor.name}: ${res.status}`);
+              return null;
             }
-
-            if (!res.ok) return null;
 
             const rawData: HistoryItem[] = await res.json();
             return { sensorId: sensor.sensor_id, rawData, sensor };
           } catch (err) {
-            console.warn(`Erreur pour ${sensor.name}:`, err);
+            console.warn(`Erreur pour ${sensor.name}`, err);
             return null;
           }
         })
       );
 
-      // Traiter les résultats
       const processed: Record<string, SensorHistory> = {};
       results.forEach((result) => {
         if (result.status === 'fulfilled' && result.value) {
@@ -138,7 +134,7 @@ function processRawData(rawData: HistoryItem[], sensor: TemperatureSensor): Sens
     });
 
     if (match) {
-      chartData24h.push({ label: hourLabel, value: Number(match.value_num) });
+      chartData24h.push({ label: hourLabel, value: Number(match.valuenum) });
     } else {
       const prev = chartData24h.length > 0 ? chartData24h[chartData24h.length - 1].value : null;
       chartData24h.push({ label: hourLabel, value: prev });
@@ -158,7 +154,7 @@ function processRawData(rawData: HistoryItem[], sensor: TemperatureSensor): Sens
       dayKeysInOrder.add(dayKey);
     }
 
-    const val = Number(item.value_num);
+    const val = Number(item.valuenum);
     if (!isNaN(val)) tempsByDay.get(dayKey)?.push(val);
   });
 
