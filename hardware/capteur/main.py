@@ -19,9 +19,12 @@ registered = False
 
 to_send_later = []
 
-sensor = Pin(15, Pin.IN)
+sensor = Pin(15,Pin.IN)
 data = ""
 data_send_timer = 1
+
+
+
 
 
 def get_data():
@@ -33,7 +36,7 @@ def get_data():
         avg = 0
         for i in liste_data:
             avg += int(i)
-        avg = avg / len(liste_data)
+        avg = avg /len(liste_data)
         if avg >= 0.5:
             return "0"
         else:
@@ -42,73 +45,70 @@ def get_data():
         for i in range(5):
             time.sleep(12)
             liste_data.append(temp_sensor.read_captor())
-        avg = [0, 0]
+        avg = [0,0]
         for i in liste_data:
             avg[0] += i[0]
             avg[1] += i[1]
-        avg[0] = avg[0] / len(liste_data)
-        avg[1] = avg[1] / len(liste_data)
-        return (avg[0], avg[1])
+        avg[0] = avg[0]/len(liste_data)
+        avg[1] = avg[1]/len(liste_data)
+        return (avg[0],avg[1])
 
-
-def new_co_func(ssid, psd):
+def new_co_func(ssid,psd):
     print('newco')
-    global wlan, registered
+    global wlan,registered
     okay = False
     while not okay:
-        wlan, ssid, okay = scan.connect(ssid, psd)
-        print('wln', wlan.ifconfig())
-        print('s', ssid)
+        wlan,ssid,okay = scan.connect(ssid, psd)
+        print('wln',wlan.ifconfig())
+        print('s',ssid)
         response = False
         while not response:
             if int(ssid[-1]) == 0:
                 ip = wlan.ifconfig()[-2]
                 print(ip)
-                resp = socket_func.send_id(ip, 5000, type_cap)
+                resp = socket_func.send_id(ip,5000,type_cap)
                 print(resp)
                 if "REGISTERED" in resp:
-                    json_rel.save_data("capteur", {"c_type": type_cap, "id": resp.split('-')[1]})
-                    json_rel.save_data("wifi_psd", psd)
+                    json_rel.save_data("capteur",{"c_type":type_cap,"id":resp.split('-')[1]})
+                    json_rel.save_data("wifi_psd",psd)
                     response = True
                     registered = True
             time.sleep(1)
 
-
-def info_connection(ssid, psd):
+def info_connection(ssid,psd):
     print('infoco')
     okay = False
     global data
-
-    wlan, ssid, okay = scan.connect(ssid, psd)
+    
+    wlan,ssid,okay = scan.connect(ssid, psd)
     if okay:
-        print('wln', wlan.ifconfig())
-        print('s', ssid)
+        print('wln',wlan.ifconfig())
+        print('s',ssid)
         if int(ssid[-1]) == 1:
             ip = wlan.ifconfig()[-2]
-            print('ip', ip)
+            print('ip',ip)
             old_data = json_rel.captor_data_read()['data']
             datatemp = ""
             print(old_data)
             if len(old_data) > 0:
                 for d in old_data:
-                    datatemp += "|" + str(d)
-            data_plus = "DATA-" + json_rel.get_infos()["capteur"]["id"] + "-" + json_rel.get_infos()["capteur"][
-                "id"] + "-" + datatemp
-
+                    datatemp += "|"+str(d)
+            data_plus = "DATA-"+json_rel.get_infos()["capteur"]["id"]+"-"+ json_rel.get_infos()["capteur"]["c_type"] +"-"+ datatemp
+            
             print(data_plus)
             print("Client IFCONFIG:", wlan.ifconfig())
             print("Client connecte vers", ip, 5000)
-
-            resp = socket_func.send_data(ip, 5000, data_plus)
-            print('rsp', resp)
+            
+            resp = socket_func.send_data(ip,5000,data_plus)
+            print('rsp',resp)
             if resp == None:
                 print('not okay')
-                json_rel.save_captor_data(datatemp, False)
+                json_rel.save_captor_data(datatemp,False)
                 return None
-
+            
             elif "ClEAR" in resp:
-                with open("data.json", 'w') as f:
-                    json.dump({"data": []}, f)
+                with open("data.json",'w') as f:
+                    json.dump({"data":[]},f)
                 wlan.active(False)
         return resp
     else:
@@ -117,37 +117,38 @@ def info_connection(ssid, psd):
 
 
 def core0_main_func():
-    global glb_psd, resp, data, data_send_timer, registered
-    ssid, psd, state = scan.get_wifi()
-    print(ssid, psd, state)
+    global glb_psd,resp,data,data_send_timer,registered
+    ssid,psd,state = scan.get_wifi()
+    print(ssid,psd,state)
     if int(state) == -1:
         if data_send_timer <= 0:
             print('0:-1')
             print(data)
-            json_rel.save_captor_data(data, True)
+            json_rel.save_captor_data(data,True)
             data = ""
             data_send_timer = 2
     elif int(state) == 0:
-        print('r', registered)
+        print('r' ,registered)
         if registered:
             state = 1
         else:
-            new_co_func(ssid, psd)
+            new_co_func(ssid,psd)
     elif int(state) == 1 and data_send_timer <= 0 or len(json_rel.captor_data_read()["data"]) > 0:
         print('0:1')
         if not registered:
             print('not registered')
-            new_co_func(ssid, psd)
+            new_co_func(ssid,psd)
         else:
-            resp = info_connection(ssid, psd)
-            print('r', resp)
+            resp = info_connection(ssid,psd)
+            print('r',resp)
             if not resp == None and 'CLEAR' in resp:
                 data_send_timer = 12
-    print('state : ', state)
+    print('state : ',state)
+            
 
-
-def core1_thread_func(name, delay):
-    global running_thread, data, data_send_timer
+            
+def core1_thread_func(name,delay):
+    global running_thread,data,data_send_timer
     hour_data = []
     while running_thread:
         print('thread1')
@@ -157,11 +158,13 @@ def core1_thread_func(name, delay):
         data_send_timer -= 1
         if data_send_timer <= 0:
             for d in hour_data:
-                data += str(d) + "|"
+                data += str(d)+"|"
             data = data[:-1]
             hour_data = []
-        print('data: ', data)
-        print('data_timer :', data_send_timer)
+        print('data: ',data)
+        print('data_timer :',data_send_timer)
+
+
 
 
 if json_rel.get_infos()['wifi_psd'] == "":
@@ -169,7 +172,7 @@ if json_rel.get_infos()['wifi_psd'] == "":
 else:
     registered = True
 
-_thread.start_new_thread(core1_thread_func, ("Core 1", 3))
+_thread.start_new_thread(core1_thread_func,("Core 1", 3))
 try:
     while running_thread:
         core0_main_func()
