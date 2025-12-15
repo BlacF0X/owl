@@ -15,3 +15,8 @@ export interface IngestPayload {
   hub_serial: string;
   readings: IngestReadingItem[];
 }
+
+export interface ProvisionPayload {
+  hub_serial: string;
+  email: string;
+}

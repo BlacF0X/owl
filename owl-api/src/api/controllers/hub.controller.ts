@@ -22,7 +22,7 @@ export const provisionHub = async (req: Request, res: Response) => {
 
     if (!user) {
       return res.status(404).json({ 
-        message: 'Utilisateur introuvable. Veuillez d'abord créer un compte sur le Dashboard.' 
+        message: 'Utilisateur introuvable. Veuillez d\'abord créer un compte sur le Dashboard.' 
       });
     }
 
@@ -45,7 +45,7 @@ export const provisionHub = async (req: Request, res: Response) => {
       // Création
       hub = hubRepo.create({
         serial_number: hub_serial,
-        name: Hub ${hub_serial}, // Nom par défaut
+        name: `Hub ${hub_serial}`, // Nom par défaut
         status: HubStatus.ONLINE,
         last_seen_at: new Date(),
         user: user
@@ -54,7 +54,7 @@ export const provisionHub = async (req: Request, res: Response) => {
 
     await hubRepo.save(hub);
 
-    console.log(✅ Hub ${hub_serial} associé à l'utilisateur ${email});
+    console.log(`✅ Hub ${hub_serial} associé à l'utilisateur ${email}`);
     return res.status(200).json({ message: 'Hub configuré et associé avec succès.' });
 
   } catch (error) {

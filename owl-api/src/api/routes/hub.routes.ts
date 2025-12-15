@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { getHubsForUser } from '../controllers/hub.controller.js';
 import { clerkAuthMiddleware } from '../middlewares/auth.middleware.js';
+import { provisionHub } from '../controllers/hub.controller.js';
+import { apiAuthMiddleware } from '../middlewares/apiAuth.middleware.js';
 
 const router = Router();
 
@@ -44,5 +46,28 @@ const router = Router();
  *                     format: date-time
  */
 router.get('/', clerkAuthMiddleware, getHubsForUser);
-
+/**
+ * @swagger
+ * /hubs/provision:
+ *   post:
+ *     summary: Associe un Hub physique à un utilisateur via son email
+ *     tags: [Hubs]
+ *     security:
+ *       - apiKeyAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               hub_serial:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Succès
+ */
+router.post('/provision', apiAuthMiddleware, provisionHub);
 export default router;
