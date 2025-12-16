@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { useAuth } from '@clerk/nextjs';
 import type { TemperatureSensor } from './TemperatureSensorCard';
 
 interface AlertItem {
@@ -14,19 +15,19 @@ interface AlertItem {
 
 interface Props {
   sensors: TemperatureSensor[];
-  token: string | null;
 }
 
 type FilterType = 'all' | 'high' | 'low';
 
-const ITEMS_PER_PAGE = 20; // ✅ Pagination
+const ITEMS_PER_PAGE = 20; // Pagination
 
-const TemperatureAlertLog: React.FC<Props> = ({ sensors, token }) => {
+const TemperatureAlertLog: React.FC<Props> = ({ sensors }) => {
+  const { getToken } = useAuth(); // ✅ Récupérer getToken
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [filterType, setFilterType] = useState<FilterType>('all');
-  const [currentPage, setCurrentPage] = useState(1); // ✅ Page actuelle
+  const [currentPage, setCurrentPage] = useState(1); // Page actuelle
 
   const MIN_THRESHOLD = 18;
   const MAX_THRESHOLD = 23;
@@ -35,14 +36,14 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors, token }) => {
     const newDate = new Date(selectedDate);
     newDate.setDate(selectedDate.getDate() - 1);
     setSelectedDate(newDate);
-    setCurrentPage(1); // ✅ Reset pagination
+    setCurrentPage(1); // Reset pagination
   };
 
   const goToNextDay = () => {
     const newDate = new Date(selectedDate);
     newDate.setDate(selectedDate.getDate() + 1);
     setSelectedDate(newDate);
-    setCurrentPage(1); // ✅ Reset pagination
+    setCurrentPage(1); // Reset pagination
   };
 
   const formattedDateTitle = selectedDate.toLocaleDateString('fr-FR', {
@@ -50,14 +51,10 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors, token }) => {
     day: 'numeric',
     month: 'long'
   });
-  const displayDate = formattedDateTitle.charAt(0).toUpperCase() + formattedDateTitle.slice(1);
+  const displayDate =
+    formattedDateTitle.charAt(0).toUpperCase() + formattedDateTitle.slice(1);
 
   useEffect(() => {
-    if (!token) {
-      setLoading(false);
-      return;
-    }
-
     if (sensors.length === 0) {
       setLoading(false);
       return;
@@ -65,6 +62,14 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors, token }) => {
 
     const fetchAlertsForDate = async () => {
       setLoading(true);
+
+      // ✅ Récupérer un token frais
+      const token = await getToken();
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
       const allAlerts: AlertItem[] = [];
       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
       const targetDateStr = selectedDate.toISOString().split('T')[0];
@@ -74,17 +79,19 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors, token }) => {
           try {
             const url = `${API_URL}/api/sensors/${sensor.sensor_id}/readings?period=7d&refDate=${selectedDate.toISOString()}`;
             const res = await fetch(url, {
-              headers: {
-                Authorization: `Bearer ${token}`
-              }
+              headers: { Authorization: `Bearer ${token}` }
             });
 
             if (!res.ok) return;
 
-            const data: Array<{ value: number | string; timestamp: string }> = await res.json();
+            const data: Array<{ value: number | string; timestamp: string }> =
+              await res.json();
 
             data.forEach((reading) => {
-              const readingDateStr = new Date(reading.timestamp).toISOString().split('T')[0];
+              const readingDateStr = new Date(reading.timestamp)
+                .toISOString()
+                .split('T')[0];
+
               if (readingDateStr !== targetDateStr) return;
 
               const val = Number(reading.value);
@@ -114,6 +121,7 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors, token }) => {
         });
 
         await Promise.all(promises);
+
         allAlerts.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
         setAlerts(allAlerts);
       } catch {
@@ -124,14 +132,14 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors, token }) => {
     };
 
     fetchAlertsForDate();
-  }, [sensors, token, selectedDate]);
+  }, [sensors, getToken, selectedDate]); // ✅ getToken dans les deps
 
   const filteredAlerts = alerts.filter((alert) => {
     if (filterType === 'all') return true;
     return alert.type === filterType;
   });
 
-  // ✅ Pagination
+  // Pagination
   const totalPages = Math.ceil(filteredAlerts.length / ITEMS_PER_PAGE);
   const paginatedAlerts = filteredAlerts.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
@@ -143,7 +151,7 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors, token }) => {
       {/* En-tête */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold text-slate-800">Journal des Alertes</h2>
-        
+
         <div className="flex items-center gap-2">
           <button
             onClick={goToPreviousDay}
@@ -152,13 +160,11 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors, token }) => {
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
-          
+
           <div className="w-64 text-center">
-            <span className="text-sm font-medium text-slate-700">
-              {displayDate}
-            </span>
+            <span className="text-sm font-medium text-slate-700">{displayDate}</span>
           </div>
-          
+
           <button
             onClick={goToNextDay}
             disabled={selectedDate.toDateString() === new Date().toDateString()}
@@ -224,65 +230,66 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors, token }) => {
           <p>Aucune alerte pour cette journée</p>
         </div>
       ) : (
-        <>
-          <div className="space-y-2 max-h-96 overflow-y-auto">
-            {paginatedAlerts.map((alert) => (
-              <div
-                key={alert.id}
-                className={`flex items-center justify-between p-4 rounded-lg ${
-                  alert.type === 'high'
-                    ? 'bg-red-50 border-l-4 border-red-500'
-                    : 'bg-blue-50 border-l-4 border-blue-500'
-                }`}
-              >
-                <div>
-                  <p className="font-semibold text-slate-800">{alert.sensorName}</p>
-                  <p className="text-sm text-slate-600">
-                    {alert.timestamp.toLocaleTimeString('fr-FR', {
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p
-                    className={`text-2xl font-bold ${
-                      alert.type === 'high' ? 'text-red-600' : 'text-blue-600'
-                    }`}
-                  >
-                    {alert.value.toFixed(1)}°C
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    {alert.type === 'high' ? 'Trop chaud' : 'Trop froid'}
-                  </p>
-                </div>
+        <div className="space-y-2 max-h-96 overflow-y-auto">
+          {paginatedAlerts.map((alert) => (
+            <div
+              key={alert.id}
+              className={`flex items-center justify-between p-4 rounded-lg ${
+                alert.type === 'high'
+                  ? 'bg-red-50 border-l-4 border-red-500'
+                  : 'bg-blue-50 border-l-4 border-blue-500'
+              }`}
+            >
+              <div>
+                <p className="font-semibold text-slate-800">{alert.sensorName}</p>
+                <p className="text-sm text-slate-600">
+                  {alert.timestamp.toLocaleTimeString('fr-FR', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </p>
               </div>
-            ))}
-          </div>
-
-          {/* ✅ Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-4 mt-6 pt-4 border-t border-slate-200">
-              <button
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Précédent
-              </button>
-              <span className="text-sm text-slate-600">
-                Page {currentPage} sur {totalPages} ({filteredAlerts.length} alerte{filteredAlerts.length > 1 ? 's' : ''})
-              </span>
-              <button
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Suivant
-              </button>
+              <div className="text-right">
+                <p
+                  className={`text-2xl font-bold ${
+                    alert.type === 'high' ? 'text-red-600' : 'text-blue-600'
+                  }`}
+                >
+                  {alert.value.toFixed(1)}°C
+                </p>
+                <p className="text-xs text-slate-500">
+                  {alert.type === 'high' ? 'Trop chaud' : 'Trop froid'}
+                </p>
+              </div>
             </div>
-          )}
-        </>
+          ))}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-4 mt-6 pt-4 border-t border-slate-200">
+          <button
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Précédent
+          </button>
+
+          <span className="text-sm text-slate-600">
+            Page {currentPage} sur {totalPages} ({filteredAlerts.length} alerte
+            {filteredAlerts.length > 1 ? 's' : ''})
+          </span>
+
+          <button
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Suivant
+          </button>
+        </div>
       )}
     </div>
   );

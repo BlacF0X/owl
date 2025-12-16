@@ -23,36 +23,14 @@ interface ChartDataPoint {
 
 export default function TemperatureDashboard({ initialSensors }: Props) {
   const searchParams = useSearchParams();
-  const { getToken } = useAuth();
+  const { getToken } = useAuth(); // ✅ On garde getToken, pas un state token
   const hubId = searchParams?.get('hubId');
   const [viewMode, setViewMode] = useState<ViewMode>('current');
 
   const [hubSummaries, setHubSummaries] = useState<HubSummary[]>([]);
   const [hubsLoading, setHubsLoading] = useState(false);
-  const [token, setToken] = useState<string | null>(null);
 
-  useEffect(() => {
-    let mounted = true;
-    
-    const fetchToken = async () => {
-      try {
-        const t = await getToken();
-        if (mounted) {
-          setToken(t);
-        }
-      } catch (error) {
-        console.error('[TemperatureDashboard] Erreur token:', error);
-      }
-    };
-    
-    fetchToken();
-    
-    return () => {
-      mounted = false;
-    };
-  }, [getToken]);
-
-  // ✅ OPTIMISATION : Mémoïsation des hubs uniques
+  // ✅ Mémoïsation des hubs uniques
   const uniqueHubs = useMemo(() => {
     const sensorsWithHub = initialSensors.filter((s) => s.hub);
     return Array.from(
@@ -69,15 +47,23 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
     );
   }, [initialSensors]);
 
-  // ✅ OPTIMISATION : 1 SEULE requête API par hub
+  // ✅ Charger les données (avec token frais à chaque fois)
   useEffect(() => {
     if (hubId) return;
-    if (!token) return;
+    if (viewMode === 'comparison') return;
 
     const loadHubSummaries = async () => {
       setHubsLoading(true);
 
       try {
+        // ✅ Récupérer un TOKEN FRAIS à chaque chargement
+        const token = await getToken();
+        if (!token) {
+          console.error('Token non disponible');
+          setHubsLoading(false);
+          return;
+        }
+
         const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
         const hubPromises = uniqueHubs.map(async ({ id: hId, name: hubName, created_at }) => {
@@ -88,7 +74,6 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
               ? parseFloat(sensorsForHub[0].displayValue) || 0
               : 0;
 
-            // ✅ UNE SEULE requête pour tous les capteurs du hub
             const res = await fetch(
               `${API_URL}/api/temperature/hubs/${hId}/readings`,
               { headers: { Authorization: `Bearer ${token}` } }
@@ -134,7 +119,6 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
             const now = new Date();
             const refHour = now.getHours();
 
-            // 📊 GRAPHIQUE 24H
             const chartData24h: ChartDataPoint[] = [];
             for (let hour = 0; hour <= 23; hour++) {
               const hourLabel = `${hour.toString().padStart(2, '0')}h`;
@@ -163,7 +147,6 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
               }
             }
 
-            // 📊 GRAPHIQUES 7 JOURS
             const tempsByDay = new Map<string, number[]>();
             const dayKeysInOrder: string[] = [];
 
@@ -241,7 +224,7 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
     };
 
     loadHubSummaries();
-  }, [hubId, initialSensors, token, viewMode, uniqueHubs]);
+  }, [hubId, initialSensors, getToken, viewMode, uniqueHubs]);
 
   if (!initialSensors || initialSensors.length === 0) {
     return (
@@ -256,7 +239,7 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
       <div className="flex flex-col gap-6 w-full pb-10">
         <DashboardViewButtons currentMode={viewMode} onChange={setViewMode} showComparison />
         <TemperatureComparisonView sensors={initialSensors} />
-        <AlertLog sensors={initialSensors} token={token} />
+        <AlertLog sensors={initialSensors} />
       </div>
     );
   }
@@ -266,7 +249,7 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
       <div className="flex flex-col gap-6 w-full pb-10">
         <DashboardViewButtons currentMode={viewMode} onChange={setViewMode} showComparison />
         <TemperatureBatchLoader sensors={initialSensors} viewMode={viewMode} />
-        <AlertLog sensors={initialSensors} token={token} />
+        <AlertLog sensors={initialSensors} />
       </div>
     );
   }

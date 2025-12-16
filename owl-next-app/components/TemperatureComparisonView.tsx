@@ -6,39 +6,17 @@ import { Loader2 } from 'lucide-react';
 import TemperatureComparisonChart from './TemperatureComparisonChart';
 import type { TemperatureSensor } from './TemperatureSensorCard';
 
-interface HistoryItem {
-  valuenum: number | string;
-  timestamp: string;
-}
-
 interface Props {
   sensors: TemperatureSensor[];
 }
 
 export default function TemperatureComparisonView({ sensors }: Props) {
-  const { getToken } = useAuth();
+  const { getToken } = useAuth(); // ✅ Pas de state token
   const [loading, setLoading] = useState(true);
   const [labels, setLabels] = useState<string[]>([]);
   const [sensorsData, setSensorsData] = useState<Array<{ sensorName: string; data: (number | null)[] }>>([]);
   const [averageData, setAverageData] = useState<(number | null)[]>([]);
-  const [token, setToken] = useState<string | null>(null);
 
-  // ✅ OPTIMISATION 1 : Charger le token une seule fois
-  useEffect(() => {
-    let mounted = true;
-    const fetchToken = async () => {
-      try {
-        const t = await getToken();
-        if (mounted) setToken(t);
-      } catch (err) {
-        console.error('Erreur token:', err);
-      }
-    };
-    fetchToken();
-    return () => { mounted = false; };
-  }, [getToken]);
-
-  // ✅ OPTIMISATION 2 : Grouper les capteurs par hub
   const sensorsByHub = useMemo(() => {
     const grouped = new Map<string, TemperatureSensor[]>();
     sensors.forEach((sensor) => {
@@ -52,9 +30,7 @@ export default function TemperatureComparisonView({ sensors }: Props) {
     return grouped;
   }, [sensors]);
 
-  // ✅ OPTIMISATION 3 : Utiliser l'endpoint groupé
   useEffect(() => {
-    if (!token) return;
     if (sensorsByHub.size === 0) {
       setLoading(false);
       return;
@@ -65,7 +41,14 @@ export default function TemperatureComparisonView({ sensors }: Props) {
       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
       try {
-        // ✅ UNE SEULE requête par hub au lieu de N requêtes par capteur
+        // ✅ Token frais à chaque chargement
+        const token = await getToken();
+        if (!token) {
+          console.error('Token non disponible');
+          setLoading(false);
+          return;
+        }
+
         const hubPromises = Array.from(sensorsByHub.entries()).map(async ([hubId, hubSensors]) => {
           try {
             const res = await fetch(`${API_URL}/api/temperature/hubs/${hubId}/readings`, {
@@ -76,7 +59,6 @@ export default function TemperatureComparisonView({ sensors }: Props) {
 
             const groupedReadings = await res.json();
 
-            // Traiter chaque capteur du hub
             return hubSensors.map((sensor) => {
               const rawData = groupedReadings[sensor.sensor_id] || [];
               
@@ -86,7 +68,6 @@ export default function TemperatureComparisonView({ sensors }: Props) {
                 new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
               );
 
-              // Grouper par jour
               const tempsByDay = new Map<string, number[]>();
               sortedData.forEach((item: any) => {
                 const d = new Date(item.timestamp);
@@ -103,7 +84,6 @@ export default function TemperatureComparisonView({ sensors }: Props) {
                 }
               });
 
-              // Calculer moyennes
               const dayLabels: string[] = [];
               const dayAverages: number[] = [];
               tempsByDay.forEach((temps, dayKey) => {
@@ -144,7 +124,6 @@ export default function TemperatureComparisonView({ sensors }: Props) {
           data: sensor.data as (number | null)[]
         }));
 
-        // Moyenne globale
         const avgByDay: (number | null)[] = commonLabels.map((_, index) => {
           const values = validData.map((sensor) => sensor.data[index]).filter((v) => v != null);
           if (values.length === 0) return null;
@@ -161,7 +140,7 @@ export default function TemperatureComparisonView({ sensors }: Props) {
     };
 
     fetchAllData();
-  }, [token, sensorsByHub]); // ✅ Dépendances optimisées
+  }, [getToken, sensorsByHub]); // ✅ getToken dans les deps
 
   if (loading) {
     return (
