@@ -37,13 +37,11 @@ export default function TemperatureBatchLoader({ sensors, viewMode }: Props) {
         sensors.map(async (sensor) => {
           try {
             const res = await fetch(`${API_URL}/api/sensors/${sensor.sensor_id}/readings?period=7d`, {
-              headers: { Authorization: `Bearer ${token}` },
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
             });
-
-            if (!res.ok) {
-              return null;
-            }
-
+            if (!res.ok) return null;
             const rawData: HistoryItem[] = await res.json();
             return { sensorId: sensor.sensor_id, rawData, sensor };
           } catch (err) {
@@ -106,32 +104,32 @@ function processRawData(rawData: HistoryItem[], sensor: TemperatureSensor): Sens
     };
   }
 
-  const sortedData = rawData.sort(
-    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-  );
-
+  const sortedData = rawData.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
   const lastDataPoint = sortedData[sortedData.length - 1];
   const referenceDate = new Date(lastDataPoint.timestamp);
-  const referenceDayKey = referenceDate.toLocaleDateString('fr-FR', {
-    weekday: 'short',
-    day: 'numeric',
-  });
-  const refHour = referenceDate.getHours();
+  const referenceDayKey = referenceDate.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' });
+  
+  // 🔥 FIX : Utiliser l'heure LOCALE
+  const now = new Date();
+  const refHour = now.getHours();
 
-  // ============ DONNÉES 24H ============
+  // 📊 DONNÉES 24H
   const chartData24h: ChartDataPoint[] = [];
   for (let hour = 0; hour <= 23; hour++) {
     const hourLabel = `${hour.toString().padStart(2, '0')}h`;
+
     if (hour > refHour) {
       chartData24h.push({ label: hourLabel, value: null });
       continue;
     }
 
+    // 🔥 Filtrer sur l'heure LOCALE du timestamp
     const match = sortedData.find((d) => {
       const dTime = new Date(d.timestamp);
       return (
-        dTime.getDate() === referenceDate.getDate() &&
-        dTime.getMonth() === referenceDate.getMonth() &&
+        dTime.getDate() === now.getDate() &&
+        dTime.getMonth() === now.getMonth() &&
+        dTime.getFullYear() === now.getFullYear() &&
         dTime.getHours() === hour
       );
     });
@@ -144,22 +142,17 @@ function processRawData(rawData: HistoryItem[], sensor: TemperatureSensor): Sens
     }
   }
 
-  // ============ DONNÉES 7 JOURS ============
+  // 📊 DONNÉES 7 JOURS
   const tempsByDay = new Map<string, number[]>();
   const dayKeysInOrder: string[] = [];
 
   sortedData.forEach((item) => {
     const d = new Date(item.timestamp);
-    const dayKey = d.toLocaleDateString('fr-FR', {
-      weekday: 'short',
-      day: 'numeric',
-    });
-    
+    const dayKey = d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' });
     if (!tempsByDay.has(dayKey)) {
       dayKeysInOrder.push(dayKey);
       tempsByDay.set(dayKey, []);
     }
-    
     const val = Number(item.value);
     if (!isNaN(val)) {
       tempsByDay.get(dayKey)!.push(val);
@@ -171,8 +164,7 @@ function processRawData(rawData: HistoryItem[], sensor: TemperatureSensor): Sens
   const data7dAvg: ChartDataPoint[] = [];
 
   dayKeysInOrder.forEach((dayKey) => {
-    const temps = tempsByDay.get(dayKey) || [];
-    
+    const temps = tempsByDay.get(dayKey)!;
     if (temps.length === 0) {
       data7dMax.push({ label: dayKey, value: null });
       data7dMin.push({ label: dayKey, value: null });
@@ -181,19 +173,18 @@ function processRawData(rawData: HistoryItem[], sensor: TemperatureSensor): Sens
       const maxTemp = Math.max(...temps);
       const minTemp = Math.min(...temps);
       const avgTemp = Math.round((temps.reduce((a, b) => a + b, 0) / temps.length) * 10) / 10;
-      
+
       data7dMax.push({ label: dayKey, value: maxTemp });
       data7dMin.push({ label: dayKey, value: minTemp });
       data7dAvg.push({ label: dayKey, value: avgTemp });
     }
   });
 
-  const todayTemps = tempsByDay.get(referenceDayKey) || [];
-  
+  const todayTemps = tempsByDay.get(referenceDayKey)!;
   const maxTempToday = todayTemps.length > 0 ? Math.max(...todayTemps) : null;
   const minTempToday = todayTemps.length > 0 ? Math.min(...todayTemps) : null;
-  const avgTempToday = todayTemps.length > 0 
-    ? Math.round((todayTemps.reduce((a, b) => a + b, 0) / todayTemps.length) * 10) / 10 
+  const avgTempToday = todayTemps.length > 0
+    ? Math.round((todayTemps.reduce((a, b) => a + b, 0) / todayTemps.length) * 10) / 10
     : null;
 
   return {

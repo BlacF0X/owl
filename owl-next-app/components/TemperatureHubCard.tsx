@@ -41,7 +41,10 @@ export default function TemperatureHubCard({ hub, viewMode }: Props) {
     temperature = hub.currenttemp;
     chartData = hub.chartData24h;
     subtitle = 'Température actuelle (24h)';
-    currentHour = new Date().getHours();
+    
+    // 🔥 FIX : Heure locale de Bruxelles
+    const now = new Date();
+    currentHour = now.getHours();
   } else if (viewMode === 'max') {
     temperature = hub.maxtemp7d ?? 0;
     chartData = hub.chartData7dMax;

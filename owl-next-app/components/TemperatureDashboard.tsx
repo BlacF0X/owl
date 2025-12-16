@@ -32,32 +32,40 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
   const [hubsError, setHubsError] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
 
+  // Charger le token immédiatement
   useEffect(() => {
+    let mounted = true;
+    
     const fetchToken = async () => {
-      const t = await getToken();
-      setToken(t);
+      try {
+        const t = await getToken();
+        if (mounted) {
+          setToken(t);
+          console.log('[TemperatureDashboard] Token récupéré:', t ? '✅' : '❌');
+        }
+      } catch (error) {
+        console.error('[TemperatureDashboard] Erreur récupération token:', error);
+      }
     };
+    
     fetchToken();
+    
+    return () => {
+      mounted = false;
+    };
   }, [getToken]);
 
   // Charger les données complètes des hubs (avec graphiques)
   useEffect(() => {
-    if (hubId) return; // Ne pas charger en mode hub spécifique
+    if (hubId) return;
+    if (!token) return;
 
     const loadHubSummaries = async () => {
       setHubsLoading(true);
       setHubsError(null);
 
       try {
-        // ✅ ATTENDRE le token avant de continuer
-        const authToken = await getToken();
-        if (!authToken) {
-          setHubsError('Token non disponible');
-          return;
-        }
-
         const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-
         const sensorsWithHub = initialSensors.filter((s) => s.hub);
 
         const uniqueHubs = Array.from(
@@ -74,12 +82,11 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
               ? parseFloat(sensorsForHub[0].displayValue) || 0
               : 0;
 
-            // ✅ Utiliser authToken (et non token de state)
             const allReadingsPromises = sensorsForHub.map(async (sensor) => {
               try {
                 const res = await fetch(
                   `${API_URL}/api/sensors/${sensor.sensor_id}/readings?period=7d`,
-                  { headers: { Authorization: `Bearer ${authToken}` } }
+                  { headers: { Authorization: `Bearer ${token}` } }
                 );
                 if (!res.ok) return [];
                 return await res.json();
@@ -90,7 +97,6 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
 
             const allReadings = (await Promise.all(allReadingsPromises)).flat();
 
-            // ✅ Traiter les données comme dans TemperatureBatchLoader
             const sortedData = allReadings
               .map((r: any) => ({
                 value: Number(r.value),
@@ -117,22 +123,29 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
 
             const lastDataPoint = sortedData[sortedData.length - 1];
             const referenceDate = lastDataPoint.timestamp;
-            const refHour = referenceDate.getHours();
+
+            // 🔥 FIX : Utiliser l'heure LOCALE de Bruxelles
+            const now = new Date();
+            const refHour = now.getHours();
 
             // 📊 GRAPHIQUE 24H
             const chartData24h: ChartDataPoint[] = [];
             for (let hour = 0; hour <= 23; hour++) {
               const hourLabel = `${hour.toString().padStart(2, '0')}h`;
+              
               if (hour > refHour) {
                 chartData24h.push({ label: hourLabel, value: null });
                 continue;
               }
 
+              // 🔥 Filtrer sur l'heure LOCALE du timestamp
               const readings = sortedData.filter((d) => {
+                const localDate = new Date(d.timestamp.getTime());
                 return (
-                  d.timestamp.getDate() === referenceDate.getDate() &&
-                  d.timestamp.getMonth() === referenceDate.getMonth() &&
-                  d.timestamp.getHours() === hour
+                  localDate.getDate() === now.getDate() &&
+                  localDate.getMonth() === now.getMonth() &&
+                  localDate.getFullYear() === now.getFullYear() &&
+                  localDate.getHours() === hour
                 );
               });
 
@@ -223,7 +236,7 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
     };
 
     loadHubSummaries();
-  }, [hubId, initialSensors, getToken, viewMode]);
+  }, [hubId, initialSensors, token, viewMode]);
 
   if (!initialSensors || initialSensors.length === 0) {
     return (
@@ -255,7 +268,7 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
     );
   }
 
-  // MODE TOUS LES HUBS
+  // MODE TOUS LES HUBS (SANS AlertLog)
   return (
     <div className="flex flex-col gap-6 w-full pb-10">
       <DashboardViewButtons currentMode={viewMode} onChange={setViewMode} showComparison={false} />
@@ -280,8 +293,6 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
           ))}
         </div>
       )}
-
-      <AlertLog sensors={initialSensors} token={token} />
     </div>
   );
 }
