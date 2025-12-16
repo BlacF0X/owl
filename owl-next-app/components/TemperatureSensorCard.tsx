@@ -87,7 +87,7 @@ export default function TemperatureSensorCard({ sensor, history, viewMode, onRet
           <AlertTriangle className="h-12 w-12 mx-auto text-orange-500 mb-4" />
           <h3 className="text-lg font-semibold text-slate-800 mb-2">{sensor.name}</h3>
           <p className="text-sm text-slate-600 mb-4">Aucune donnée historique disponible</p>
-          
+
           {onRetry && (
             <button
               onClick={onRetry}

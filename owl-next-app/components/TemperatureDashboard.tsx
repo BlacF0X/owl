@@ -23,31 +23,29 @@ interface ChartDataPoint {
 
 export default function TemperatureDashboard({ initialSensors }: Props) {
   const searchParams = useSearchParams();
-  const { getToken } = useAuth(); // ✅ On garde getToken, pas un state token
+  const { getToken } = useAuth();
   const hubId = searchParams?.get('hubId');
   const [viewMode, setViewMode] = useState<ViewMode>('current');
 
   const [hubSummaries, setHubSummaries] = useState<HubSummary[]>([]);
   const [hubsLoading, setHubsLoading] = useState(false);
 
-  // ✅ Mémoïsation des hubs uniques
   const uniqueHubs = useMemo(() => {
     const sensorsWithHub = initialSensors.filter((s) => s.hub);
     return Array.from(
       new Map(
         sensorsWithHub.map((s) => [
           s.hub!.hub_id,
-          { 
-            id: s.hub!.hub_id, 
+          {
+            id: s.hub!.hub_id,
             name: s.hub!.name,
-            created_at: s.hub!.created_at
-          }
+            created_at: s.hub!.created_at,
+          },
         ])
       ).values()
     );
   }, [initialSensors]);
 
-  // ✅ Charger les données (avec token frais à chaque fois)
   useEffect(() => {
     if (hubId) return;
     if (viewMode === 'comparison') return;
@@ -56,7 +54,6 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
       setHubsLoading(true);
 
       try {
-        // ✅ Récupérer un TOKEN FRAIS à chaque chargement
         const token = await getToken();
         if (!token) {
           console.error('Token non disponible');
@@ -74,10 +71,9 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
               ? parseFloat(sensorsForHub[0].displayValue) || 0
               : 0;
 
-            const res = await fetch(
-              `${API_URL}/api/temperature/hubs/${hId}/readings`,
-              { headers: { Authorization: `Bearer ${token}` } }
-            );
+            const res = await fetch(`${API_URL}/api/temperature/hubs/${hId}/readings`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
 
             if (!res.ok) {
               return null;
@@ -86,11 +82,13 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
             const groupedReadings = await res.json();
 
             const allReadings: Array<{ value: number; timestamp: Date }> = [];
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             Object.values(groupedReadings).forEach((readings: any) => {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               readings.forEach((r: any) => {
                 allReadings.push({
                   value: Number(r.value),
-                  timestamp: new Date(r.timestamp)
+                  timestamp: new Date(r.timestamp),
                 });
               });
             });
@@ -112,7 +110,7 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
                 chartData24h: [],
                 chartData7dAvg: [],
                 chartData7dMax: [],
-                chartData7dMin: []
+                chartData7dMin: [],
               } as HubSummary;
             }
 
@@ -122,7 +120,7 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
             const chartData24h: ChartDataPoint[] = [];
             for (let hour = 0; hour <= 23; hour++) {
               const hourLabel = `${hour.toString().padStart(2, '0')}h`;
-              
+
               if (hour > refHour) {
                 chartData24h.push({ label: hourLabel, value: null });
                 continue;
@@ -142,7 +140,8 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
                 const avg = readings.reduce((sum, r) => sum + r.value, 0) / readings.length;
                 chartData24h.push({ label: hourLabel, value: Math.round(avg * 10) / 10 });
               } else {
-                const prev = chartData24h.length > 0 ? chartData24h[chartData24h.length - 1].value : null;
+                const prev =
+                  chartData24h.length > 0 ? chartData24h[chartData24h.length - 1].value : null;
                 chartData24h.push({ label: hourLabel, value: prev });
               }
             }
@@ -153,7 +152,7 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
             sortedData.forEach((item) => {
               const dayKey = item.timestamp.toLocaleDateString('fr-FR', {
                 weekday: 'short',
-                day: 'numeric'
+                day: 'numeric',
               });
               if (!tempsByDay.has(dayKey)) {
                 dayKeysInOrder.push(dayKey);
@@ -175,7 +174,8 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
               } else {
                 const maxTemp = Math.max(...temps);
                 const minTemp = Math.min(...temps);
-                const avgTemp = Math.round((temps.reduce((a, b) => a + b, 0) / temps.length) * 10) / 10;
+                const avgTemp =
+                  Math.round((temps.reduce((a, b) => a + b, 0) / temps.length) * 10) / 10;
 
                 chartData7dMax.push({ label: dayKey, value: maxTemp });
                 chartData7dMin.push({ label: dayKey, value: minTemp });
@@ -185,14 +185,15 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
 
             const referenceDayKey = now.toLocaleDateString('fr-FR', {
               weekday: 'short',
-              day: 'numeric'
+              day: 'numeric',
             });
             const todayTemps = tempsByDay.get(referenceDayKey) || [];
             const maxtemp7d = todayTemps.length > 0 ? Math.max(...todayTemps) : null;
             const mintemp7d = todayTemps.length > 0 ? Math.min(...todayTemps) : null;
-            const avgtemp7d = todayTemps.length > 0
-              ? Math.round((todayTemps.reduce((a, b) => a + b, 0) / todayTemps.length) * 10) / 10
-              : null;
+            const avgtemp7d =
+              todayTemps.length > 0
+                ? Math.round((todayTemps.reduce((a, b) => a + b, 0) / todayTemps.length) * 10) / 10
+                : null;
 
             return {
               hubid: hId,
@@ -206,7 +207,7 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
               chartData24h,
               chartData7dAvg,
               chartData7dMax,
-              chartData7dMin
+              chartData7dMin,
             } as HubSummary;
           } catch {
             return null;

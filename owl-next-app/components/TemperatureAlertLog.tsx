@@ -49,10 +49,9 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors }) => {
   const formattedDateTitle = selectedDate.toLocaleDateString('fr-FR', {
     weekday: 'long',
     day: 'numeric',
-    month: 'long'
+    month: 'long',
   });
-  const displayDate =
-    formattedDateTitle.charAt(0).toUpperCase() + formattedDateTitle.slice(1);
+  const displayDate = formattedDateTitle.charAt(0).toUpperCase() + formattedDateTitle.slice(1);
 
   useEffect(() => {
     if (sensors.length === 0) {
@@ -79,18 +78,15 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors }) => {
           try {
             const url = `${API_URL}/api/sensors/${sensor.sensor_id}/readings?period=7d&refDate=${selectedDate.toISOString()}`;
             const res = await fetch(url, {
-              headers: { Authorization: `Bearer ${token}` }
+              headers: { Authorization: `Bearer ${token}` },
             });
 
             if (!res.ok) return;
 
-            const data: Array<{ value: number | string; timestamp: string }> =
-              await res.json();
+            const data: Array<{ value: number | string; timestamp: string }> = await res.json();
 
             data.forEach((reading) => {
-              const readingDateStr = new Date(reading.timestamp)
-                .toISOString()
-                .split('T')[0];
+              const readingDateStr = new Date(reading.timestamp).toISOString().split('T')[0];
 
               if (readingDateStr !== targetDateStr) return;
 
@@ -103,7 +99,7 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors }) => {
                   sensorName: sensor.name,
                   value: val,
                   timestamp: new Date(reading.timestamp),
-                  type: 'low'
+                  type: 'low',
                 });
               } else if (val > MAX_THRESHOLD) {
                 allAlerts.push({
@@ -111,7 +107,7 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors }) => {
                   sensorName: sensor.name,
                   value: val,
                   timestamp: new Date(reading.timestamp),
-                  type: 'high'
+                  type: 'high',
                 });
               }
             });
@@ -245,7 +241,7 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors }) => {
                 <p className="text-sm text-slate-600">
                   {alert.timestamp.toLocaleTimeString('fr-FR', {
                     hour: '2-digit',
-                    minute: '2-digit'
+                    minute: '2-digit',
                   })}
                 </p>
               </div>

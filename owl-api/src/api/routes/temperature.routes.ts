@@ -2,7 +2,7 @@ import { Router } from 'express';
 import {
   getTemperatureSensorsForUser,
   getTemperatureHourlyStats,
-  getHubReadings
+  getHubReadings,
 } from '../controllers/temperature.controller.js';
 import { clerkAuthMiddleware } from '../middlewares/auth.middleware.js';
 

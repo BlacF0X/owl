@@ -14,7 +14,10 @@ interface FormattedReading {
 /**
  * @description Récupère tous les capteurs pour l'utilisateur authentifié et les formate.
  */
-export const getSensorsForUser = async (req: Request, res: Response): Promise<Response> => {
+export const getSensorsForUser = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
   try {
     const userId = req.auth?.userId;
 
@@ -72,7 +75,10 @@ export const getSensorsForUser = async (req: Request, res: Response): Promise<Re
  * @description Récupère l'historique des lectures. Accepte ?period=24h (défaut) ou 7d.
  * Accepte ?refDate=ISOSTRING (optionnel, DEV seulement) pour simuler "maintenant".
  */
-export const getSensorReadings = async (req: Request, res: Response): Promise<Response> => {
+export const getSensorReadings = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
   try {
     const userId = req.auth?.userId;
     const { sensorId } = req.params;

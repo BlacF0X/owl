@@ -17,7 +17,7 @@ interface Props {
 }
 
 export default function TemperatureBatchLoader({ sensors, viewMode }: Props) {
-  const { getToken } = useAuth(); // ✅ Pas de state token
+  const { getToken } = useAuth();
   const [histories, setHistories] = useState<Record<string, SensorHistory>>({});
   const [loading, setLoading] = useState(true);
 
@@ -45,7 +45,6 @@ export default function TemperatureBatchLoader({ sensors, viewMode }: Props) {
       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
       try {
-        // ✅ Token frais à chaque chargement
         const token = await getToken();
         if (!token) {
           console.error('Token non disponible');
@@ -58,7 +57,7 @@ export default function TemperatureBatchLoader({ sensors, viewMode }: Props) {
         const hubPromises = Array.from(sensorsByHub.entries()).map(async ([hubId, hubSensors]) => {
           try {
             const res = await fetch(`${API_URL}/api/temperature/hubs/${hubId}/readings`, {
-              headers: { Authorization: `Bearer ${token}` }
+              headers: { Authorization: `Bearer ${token}` },
             });
 
             if (!res.ok) return;
@@ -84,7 +83,7 @@ export default function TemperatureBatchLoader({ sensors, viewMode }: Props) {
     };
 
     loadAll();
-  }, [getToken, sensorsByHub]); // ✅ getToken dans les deps
+  }, [getToken, sensorsByHub]);
 
   if (loading) {
     return (
@@ -109,6 +108,7 @@ export default function TemperatureBatchLoader({ sensors, viewMode }: Props) {
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function processRawData(rawData: any[], sensor: TemperatureSensor): SensorHistory {
   if (!rawData || rawData.length === 0) {
     return {
@@ -120,12 +120,12 @@ function processRawData(rawData: any[], sensor: TemperatureSensor): SensorHistor
       maxTempToday: null,
       minTempToday: null,
       avgTempToday: null,
-      currentHourIndex: null
+      currentHourIndex: null,
     };
   }
 
-  const sortedData = rawData.sort((a, b) => 
-    new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+  const sortedData = rawData.sort(
+    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
   );
 
   const now = new Date();
@@ -165,7 +165,7 @@ function processRawData(rawData: any[], sensor: TemperatureSensor): SensorHistor
     const d = new Date(item.timestamp);
     const dayKey = d.toLocaleDateString('fr-FR', {
       weekday: 'short',
-      day: 'numeric'
+      day: 'numeric',
     });
     if (!tempsByDay.has(dayKey)) {
       dayKeysInOrder.push(dayKey);
@@ -200,14 +200,15 @@ function processRawData(rawData: any[], sensor: TemperatureSensor): SensorHistor
 
   const referenceDayKey = now.toLocaleDateString('fr-FR', {
     weekday: 'short',
-    day: 'numeric'
+    day: 'numeric',
   });
   const todayTemps = tempsByDay.get(referenceDayKey) || [];
   const maxTempToday = todayTemps.length > 0 ? Math.max(...todayTemps) : null;
   const minTempToday = todayTemps.length > 0 ? Math.min(...todayTemps) : null;
-  const avgTempToday = todayTemps.length > 0
-    ? Math.round((todayTemps.reduce((a, b) => a + b, 0) / todayTemps.length) * 10) / 10
-    : null;
+  const avgTempToday =
+    todayTemps.length > 0
+      ? Math.round((todayTemps.reduce((a, b) => a + b, 0) / todayTemps.length) * 10) / 10
+      : null;
 
   return {
     data24h: chartData24h,
@@ -218,6 +219,6 @@ function processRawData(rawData: any[], sensor: TemperatureSensor): SensorHistor
     maxTempToday,
     minTempToday,
     avgTempToday,
-    currentHourIndex: refHour
+    currentHourIndex: refHour,
   };
 }

@@ -23,22 +23,25 @@ export const getHubReadings = async (req: Request, res: Response) => {
     const readings = await readingRepository.find({
       where: {
         sensor: {
-          hub: { 
-            hub_id: hubId, 
-            user: { clerk_user_id: userId } 
+          hub: {
+            hub_id: hubId,
+            user: { clerk_user_id: userId },
           },
-          sensorType: { type_key: 'temperature' }
+          sensorType: { type_key: 'temperature' },
         },
-        timestamp: Between(sevenDaysAgo, new Date())
+        timestamp: Between(sevenDaysAgo, new Date()),
       },
       relations: ['sensor'],
       order: { timestamp: 'ASC' },
-      take: 10000
+      take: 10000,
     });
 
     // ✅ Groupement par sensor_id pour le frontend
-    const groupedBySensor: Record<string, Array<{ value: number; timestamp: Date }>> = {};
-    
+    const groupedBySensor: Record<
+      string,
+      Array<{ value: number; timestamp: Date }>
+    > = {};
+
     readings.forEach((reading) => {
       const sensorId = reading.sensor.sensor_id;
       if (!groupedBySensor[sensorId]) {
@@ -46,7 +49,7 @@ export const getHubReadings = async (req: Request, res: Response) => {
       }
       groupedBySensor[sensorId].push({
         value: reading.value_num ?? 0,
-        timestamp: reading.timestamp
+        timestamp: reading.timestamp,
       });
     });
 
@@ -58,7 +61,10 @@ export const getHubReadings = async (req: Request, res: Response) => {
 };
 
 // Récupère UNIQUEMENT les capteurs de type température
-export const getTemperatureSensorsForUser = async (req: Request, res: Response) => {
+export const getTemperatureSensorsForUser = async (
+  req: Request,
+  res: Response
+) => {
   try {
     const userId = req.auth?.userId;
     if (!userId) {
@@ -71,8 +77,8 @@ export const getTemperatureSensorsForUser = async (req: Request, res: Response) 
       relations: ['hub', 'hub.user', 'sensorType'],
       where: {
         hub: { user: { clerk_user_id: userId } },
-        sensorType: { type_key: 'temperature' }
-      }
+        sensorType: { type_key: 'temperature' },
+      },
     });
 
     const formattedSensors = tempSensorsFromDb.map((sensor) => {
@@ -83,7 +89,7 @@ export const getTemperatureSensorsForUser = async (req: Request, res: Response) 
         hub: {
           hub_id: sensor.hub.hub_id,
           name: sensor.hub.name,
-          created_at: sensor.hub.created_at // ✅ AJOUT pour badge NOUVEAU
+          created_at: sensor.hub.created_at, // ✅ AJOUT pour badge NOUVEAU
         },
         name: sensor.name,
         displayValue,
@@ -91,8 +97,8 @@ export const getTemperatureSensorsForUser = async (req: Request, res: Response) 
         type: {
           typekey: sensor.sensorType.type_key,
           name: sensor.sensorType.name,
-          unit: sensor.sensorType.unit
-        }
+          unit: sensor.sensorType.unit,
+        },
       };
     });
 
@@ -104,7 +110,10 @@ export const getTemperatureSensorsForUser = async (req: Request, res: Response) 
 };
 
 // Stats horaires température - 7 derniers jours
-export const getTemperatureHourlyStats = async (req: Request, res: Response) => {
+export const getTemperatureHourlyStats = async (
+  req: Request,
+  res: Response
+) => {
   try {
     const userId = req.auth?.userId;
     const refDateQuery = req.query.refDate as string | undefined;
@@ -123,7 +132,10 @@ export const getTemperatureHourlyStats = async (req: Request, res: Response) => 
       if (!isNaN(parsedDate.getTime())) {
         endDate = parsedDate;
       }
-      console.log('[TEMPERATURE STATS DEV] Date référence:', endDate.toISOString());
+      console.log(
+        '[TEMPERATURE STATS DEV] Date référence:',
+        endDate.toISOString()
+      );
     }
 
     const sevenDaysAgo = new Date(endDate);
@@ -147,14 +159,14 @@ export const getTemperatureHourlyStats = async (req: Request, res: Response) => 
 
     const formattedStats = rawStats.map((stat) => ({
       hour: parseInt(stat.hour, 10),
-      count: Math.round(parseFloat(stat.avgTemperature) || 0)
+      count: Math.round(parseFloat(stat.avgTemperature) || 0),
     }));
 
     const completeStats = Array.from({ length: 24 }, (_, i) => {
       const found = formattedStats.find((s) => s.hour === i);
       return {
         hour: i,
-        count: found ? found.count : 0
+        count: found ? found.count : 0,
       };
     });
 

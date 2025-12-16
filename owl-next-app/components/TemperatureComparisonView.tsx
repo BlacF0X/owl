@@ -11,10 +11,12 @@ interface Props {
 }
 
 export default function TemperatureComparisonView({ sensors }: Props) {
-  const { getToken } = useAuth(); // ✅ Pas de state token
+  const { getToken } = useAuth();
   const [loading, setLoading] = useState(true);
   const [labels, setLabels] = useState<string[]>([]);
-  const [sensorsData, setSensorsData] = useState<Array<{ sensorName: string; data: (number | null)[] }>>([]);
+  const [sensorsData, setSensorsData] = useState<
+    Array<{ sensorName: string; data: (number | null)[] }>
+  >([]);
   const [averageData, setAverageData] = useState<(number | null)[]>([]);
 
   const sensorsByHub = useMemo(() => {
@@ -41,7 +43,6 @@ export default function TemperatureComparisonView({ sensors }: Props) {
       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
       try {
-        // ✅ Token frais à chaque chargement
         const token = await getToken();
         if (!token) {
           console.error('Token non disponible');
@@ -52,53 +53,58 @@ export default function TemperatureComparisonView({ sensors }: Props) {
         const hubPromises = Array.from(sensorsByHub.entries()).map(async ([hubId, hubSensors]) => {
           try {
             const res = await fetch(`${API_URL}/api/temperature/hubs/${hubId}/readings`, {
-              headers: { Authorization: `Bearer ${token}` }
+              headers: { Authorization: `Bearer ${token}` },
             });
 
             if (!res.ok) return null;
 
             const groupedReadings = await res.json();
 
-            return hubSensors.map((sensor) => {
-              const rawData = groupedReadings[sensor.sensor_id] || [];
-              
-              if (rawData.length === 0) return null;
+            return hubSensors
+              .map((sensor) => {
+                const rawData = groupedReadings[sensor.sensor_id] || [];
 
-              const sortedData = rawData.sort((a: any, b: any) => 
-                new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-              );
+                if (rawData.length === 0) return null;
 
-              const tempsByDay = new Map<string, number[]>();
-              sortedData.forEach((item: any) => {
-                const d = new Date(item.timestamp);
-                const dayKey = d.toLocaleDateString('fr-FR', {
-                  weekday: 'short',
-                  day: 'numeric'
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const sortedData = rawData.sort(
+                  (a: any, b: any) =>
+                    new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+                );
+
+                const tempsByDay = new Map<string, number[]>();
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                sortedData.forEach((item: any) => {
+                  const d = new Date(item.timestamp);
+                  const dayKey = d.toLocaleDateString('fr-FR', {
+                    weekday: 'short',
+                    day: 'numeric',
+                  });
+                  if (!tempsByDay.has(dayKey)) {
+                    tempsByDay.set(dayKey, []);
+                  }
+                  const val = Number(item.value);
+                  if (!isNaN(val)) {
+                    tempsByDay.get(dayKey)?.push(val);
+                  }
                 });
-                if (!tempsByDay.has(dayKey)) {
-                  tempsByDay.set(dayKey, []);
-                }
-                const val = Number(item.value);
-                if (!isNaN(val)) {
-                  tempsByDay.get(dayKey)?.push(val);
-                }
-              });
 
-              const dayLabels: string[] = [];
-              const dayAverages: number[] = [];
-              tempsByDay.forEach((temps, dayKey) => {
-                if (temps.length > 0) {
-                  dayLabels.push(dayKey);
-                  dayAverages.push(temps.reduce((a, b) => a + b, 0) / temps.length);
-                }
-              });
+                const dayLabels: string[] = [];
+                const dayAverages: number[] = [];
+                tempsByDay.forEach((temps, dayKey) => {
+                  if (temps.length > 0) {
+                    dayLabels.push(dayKey);
+                    dayAverages.push(temps.reduce((a, b) => a + b, 0) / temps.length);
+                  }
+                });
 
-              return {
-                sensorName: sensor.name,
-                labels: dayLabels.slice(-7),
-                data: dayAverages.slice(-7)
-              };
-            }).filter(Boolean);
+                return {
+                  sensorName: sensor.name,
+                  labels: dayLabels.slice(-7),
+                  data: dayAverages.slice(-7),
+                };
+              })
+              .filter(Boolean);
           } catch {
             return null;
           }
@@ -121,7 +127,7 @@ export default function TemperatureComparisonView({ sensors }: Props) {
 
         const sensorsChartData = validData.map((sensor) => ({
           sensorName: sensor.sensorName,
-          data: sensor.data as (number | null)[]
+          data: sensor.data as (number | null)[],
         }));
 
         const avgByDay: (number | null)[] = commonLabels.map((_, index) => {
@@ -140,7 +146,7 @@ export default function TemperatureComparisonView({ sensors }: Props) {
     };
 
     fetchAllData();
-  }, [getToken, sensorsByHub]); // ✅ getToken dans les deps
+  }, [getToken, sensorsByHub]);
 
   if (loading) {
     return (
