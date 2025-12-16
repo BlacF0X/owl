@@ -2,7 +2,7 @@ import _thread
 import time
 import network
 from machine import Pin
-import wifi_data,emit,json_rel,web_serv,shared,setclock,socket_func,register
+import wifi_data,emit,json_rel,web_serv,shared,setclock,socket_func,register,senddb
 
 
 
@@ -52,6 +52,9 @@ def core1_thread_function(name, delay):
             ap = emit.emit(wifi,psd)    
             if not ap == None:
                 ws,good = socket_func.listen("",5000)
+                if good:
+                    datas = json_rel.get_saved_data()
+                    senddb.body(datas["c_type"],datas)
                 shared.change_wifi_state(ws)
             else:
                 ws = 1
@@ -102,10 +105,11 @@ def core0_main_func():
                 time.sleep(0.1)
             ap = network.WLAN(network.AP_IF)
             ap.active(False)
-            ssid, pwd, email = web_serv.start_config_portal()
+            ssid, pwd, email,tmz = web_serv.start_config_portal()
             print("ReÃ§u depuis portail:", ssid, pwd,email)
             json_rel.save_data("home_wifi", {"ssid": ssid, "psd": pwd})
             json_rel.save_data("user_email", email)
+            json_rel.save_data("timezone", tmz[-2:])
             register.try_connect_and_register()
             ap = network.WLAN(network.AP_IF)
             ap.active(False)
