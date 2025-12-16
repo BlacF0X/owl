@@ -65,6 +65,10 @@ def body():
         print( 'ip = ' + status[0] )
     time.sleep(5)
     led.on()
+    if wlan.status()!= 3:
+        led.off()
+        wlan.active(False)
+        return
     status = set_time()
     if status == 0:
         print('errorontheway')

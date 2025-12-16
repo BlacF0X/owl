@@ -43,7 +43,7 @@ def listen(Host, Port):
         print('error (timeout accept)')
         s.close()
         print('return to 1')
-        return 1
+        return 1,False
 
     print('toppipo')
     try:
@@ -72,7 +72,7 @@ def listen(Host, Port):
         print("DATA RAW:", data_raw, "ID:", cap_id)
         conn.sendall(b"ClEAR")
         print("clearsend")
-        json_rel.save_data_received(cap_type,data_raw)
+        json_rel.save_data_received(cap_type,data_raw,cap_id)
         running = False
         wifi_state = 1
         good = True
