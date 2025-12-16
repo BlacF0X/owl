@@ -6,15 +6,20 @@ import {
   ManyToOne,
   JoinColumn,
   OneToMany,
+  Unique,
 } from 'typeorm';
 import { Hub } from './Hub.js';
 import { SensorType } from './SensorType.js';
 import { SensorReading } from './SensorReading.js';
 
 @Entity('sensors')
+@Unique(['hub', 'hardware_id']) 
 export class Sensor {
   @PrimaryGeneratedColumn('uuid')
   sensor_id!: string;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  hardware_id!: string | null;
 
   @Column({ type: 'varchar', length: 100 })
   name!: string;

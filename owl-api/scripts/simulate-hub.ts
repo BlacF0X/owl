@@ -106,9 +106,12 @@ const generatePayloadForHub = (hubConfig: {
 
   for (const type of SENSOR_TYPES) {
     for (let i = 1; i <= SENSORS_PER_TYPE; i++) {
-      const sensorName = `${hubConfig.prefix} - ${type} ${i.toString().padStart(2, '0')}`;
+      const indexStr = i.toString().padStart(2, '0');
+      const hardwareId = `${hubConfig.serial}_${type}_${indexStr}`;
+      const sensorName = `${hubConfig.prefix} - ${type} ${indexStr}`;
 
       readings.push({
+        hardware_id: hardwareId,
         sensor_name: sensorName,
         type: type,
         value: generateValue(type, now), // On passe 'now' explicitement

@@ -5,7 +5,8 @@ export type SensorTypeKey =
   | 'air_quality';
 
 export interface IngestReadingItem {
-  sensor_name: string;
+  sensor_name?: string;
+  hardware_id: string;
   type: SensorTypeKey;
   value: number | boolean | string; // Le hub peut envoyer "1", 1, true, "Ouvert"...
   timestamp?: string; // Optionnel, format ISO 8601

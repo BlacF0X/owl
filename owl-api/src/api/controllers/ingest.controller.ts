@@ -76,8 +76,10 @@ export const processIngest = async (req: Request, res: Response) => {
       relations: ['sensorType'],
     });
     // Map pour accès rapide par nom : "Salon Temp" -> Entity
-    const sensorsMap = new Map(existingSensors.map((s) => [s.name, s]));
-
+    const sensorsMap = new Map<string, Sensor>();
+    existingSensors.forEach(s => {
+        if(s.hardware_id) sensorsMap.set(s.hardware_id, s);
+    });
     // 3. Traitement des lectures
     const readingsToInsert: SensorReading[] = [];
     const sensorsToUpdate: Sensor[] = [];
@@ -93,12 +95,15 @@ export const processIngest = async (req: Request, res: Response) => {
       }
 
       // --- LOGIQUE AUTO-PROVISIONING ---
-      let sensor = sensorsMap.get(item.sensor_name);
+      let sensor = sensorsMap.get(item.hardware_id);
 
       if (!sensor) {
         // Création à la volée
+        const defaultName = item.sensor_name || `Capteur ${item.hardware_id}`;
+
         sensor = queryRunner.manager.create(Sensor, {
-          name: item.sensor_name,
+          name: defaultName,
+          hardware_id: item.hardware_id,
           hub: hub,
           sensorType: sensorTypeEntity,
           current_state_bool: null,
@@ -123,10 +128,10 @@ export const processIngest = async (req: Request, res: Response) => {
       const hasChangedNum =
         valueNum !== null && sensor.current_state_num !== valueNum;
 
+      const readingTime = item.timestamp ? new Date(item.timestamp) : now;
+
       if (hasChangedBool || hasChangedNum) {
-        sensor.state_changed_at = item.timestamp
-          ? new Date(item.timestamp)
-          : now;
+        sensor.state_changed_at = readingTime;
       }
 
       // Mise à jour de l'état courant (en mémoire pour l'instant)
@@ -142,7 +147,7 @@ export const processIngest = async (req: Request, res: Response) => {
       // --- CRÉATION HISTORIQUE ---
       const reading = queryRunner.manager.create(SensorReading, {
         sensor: sensor,
-        timestamp: item.timestamp ? new Date(item.timestamp) : now,
+        timestamp: readingTime,
         value_bool: valueBool,
         value_num: valueNum,
       });
