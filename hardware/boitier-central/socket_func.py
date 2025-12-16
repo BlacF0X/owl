@@ -1,6 +1,7 @@
 import socket
 import json_rel
-HOST = "127.0.0.1" # écoute sur localhost
+import time
+HOST = ""          # écoute sur toutes les interfaces
 PORT = 5268        # choisis un port libre > 1024
 
 
@@ -26,10 +27,10 @@ def get_captor_nbr(captype):
         return "001"
 
 
-def listen(Port):
+def listen(Host, Port):
     print('listen')
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.bind((HOST, Port))
+    s.bind((Host, Port))
     s.listen(5)
     s.settimeout(180)
     wifi_state = -1
@@ -42,7 +43,7 @@ def listen(Port):
         print('error (timeout accept)')
         s.close()
         print('return to 1')
-        return 1
+        return 1,False
 
     print('toppipo')
     try:
@@ -67,9 +68,11 @@ def listen(Port):
     elif "DATA" in message:
         data_raw = message.split('-')[3]
         cap_id = message.split('-')[1]
+        cap_type = message.split('-')[2]
         print("DATA RAW:", data_raw, "ID:", cap_id)
         conn.sendall(b"ClEAR")
         print("clearsend")
+        json_rel.save_data_received(cap_type,data_raw,cap_id)
         running = False
         wifi_state = 1
         good = True

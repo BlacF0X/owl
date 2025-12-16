@@ -78,4 +78,18 @@ describe('WindowSensorCard Component', () => {
     const statusText = screen.getByText('Ouvert');
     expect(statusText).toHaveClass('text-red-600');
   });
+
+  it('gère une fenêtre ouverte sans date de mise à jour (null)', () => {
+    // Cas improbable mais possible techniquement
+    const sensor = {
+      ...createMockSensor({ displayValue: 'Ouvert', state_changed_at: null }),
+    };
+
+    render(<WindowSensorCard sensor={sensor} />);
+
+    // Doit afficher Ouvert
+    expect(screen.getByText('Ouvert')).toBeInTheDocument();
+    // Ne doit PAS afficher "depuis" car pas de date
+    expect(screen.queryByText('depuis')).not.toBeInTheDocument();
+  });
 });

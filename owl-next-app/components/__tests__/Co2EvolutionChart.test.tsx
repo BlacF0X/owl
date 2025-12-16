@@ -2,25 +2,39 @@ import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import { EvolutionChart } from '../Co2EvolutionChart';
 
-// Mock de Chart.js et react-chartjs-2 pour éviter les erreurs de canvas
-jest.mock('react-chartjs-2', () => ({
-  Bar: () => <div data-testid="mock-bar-chart" />,
-}));
+// 1. Mock de Recharts
+jest.mock('recharts', () => {
+  const OriginalModule = jest.requireActual('recharts');
+  return {
+    ...OriginalModule,
+    ResponsiveContainer: ({ children }: any) => (
+      <div data-testid="responsive-container" style={{ width: 500, height: 300 }}>
+        {children}
+      </div>
+    ),
+    // CORRECTION MAJEURE ICI : Utiliser <svg> au lieu de <div>
+    // Cela permet aux enfants (<defs>, <linearGradient>, etc.) d'être valides.
+    AreaChart: ({ children }: any) => <svg data-testid="recharts-area-chart">{children}</svg>,
+    // On remplace les composants internes par des groupes SVG (<g>) pour éviter les erreurs de nesting
+    Area: () => <g data-testid="recharts-area" />,
+    XAxis: () => <g data-testid="recharts-xaxis" />,
+    YAxis: () => <g data-testid="recharts-yaxis" />,
+    CartesianGrid: () => <g data-testid="recharts-grid" />,
+    Tooltip: () => <g data-testid="recharts-tooltip" />,
+    // Note : On ne mocke PAS 'defs', 'linearGradient' ou 'stop' car ce sont des balises natives, pas des composants Recharts.
+  };
+});
 
-jest.mock('chart.js', () => ({
-  Chart: { register: jest.fn() },
-  CategoryScale: jest.fn(),
-  LinearScale: jest.fn(),
-  BarElement: jest.fn(),
-  Title: jest.fn(),
-  Tooltip: jest.fn(),
-  Legend: jest.fn(),
+// 2. Mock des icônes
+jest.mock('lucide-react', () => ({
+  Wind: () => <div data-testid="icon-wind" />,
+  Activity: () => <div data-testid="icon-activity" />,
 }));
 
 describe('Co2EvolutionChart Component', () => {
   it('affiche le chargement', () => {
     render(<EvolutionChart data={[]} loading={true} />);
-    expect(screen.getByText('Chargement des données...')).toBeInTheDocument();
+    expect(screen.getByText('Chargement...')).toBeInTheDocument();
   });
 
   it('affiche un message si aucune donnée', () => {
@@ -28,14 +42,23 @@ describe('Co2EvolutionChart Component', () => {
     expect(screen.getByText('Aucune donnée récente')).toBeInTheDocument();
   });
 
-  it('affiche le graphique quand il y a des données', () => {
-    const mockData = [{ hour: '10:00', height: 100, ppm: 500 }];
+  it('affiche le graphique et les stats quand il y a des données', () => {
+    const mockData = [{ hour: '10:00', ppm: 500 }];
     render(<EvolutionChart data={mockData} loading={false} />);
-    expect(screen.getByTestId('mock-bar-chart')).toBeInTheDocument();
+
+    // On vérifie la présence du graphique (notre mock svg)
+    expect(screen.getByTestId('recharts-area-chart')).toBeInTheDocument();
+
+    // On vérifie les textes des statistiques
+    expect(screen.getByText('Max')).toBeInTheDocument();
+    expect(screen.getByText('Moyenne')).toBeInTheDocument();
+
+    // On vérifie que la valeur 500 est affichée (getAllByText car elle apparaît dans Max ET Moyenne)
+    expect(screen.getAllByText('500')[0]).toBeInTheDocument();
   });
 
   it('affiche le suffixe du titre si fourni', () => {
-    render(<EvolutionChart data={[]} loading={false} titleSuffix="Capteur : Salon" />);
-    expect(screen.getByText('Capteur : Salon')).toBeInTheDocument();
+    render(<EvolutionChart data={[]} loading={false} titleSuffix="Capteur Salon" />);
+    expect(screen.getByText('Capteur Salon')).toBeInTheDocument();
   });
 });

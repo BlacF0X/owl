@@ -111,4 +111,25 @@ describe('WindowActivityLog Component', () => {
       );
     });
   });
+
+  it('gère une erreur API gracieusement', async () => {
+    // On force l'erreur
+    (fetchFromApi as jest.Mock).mockRejectedValue(new Error('Erreur API'));
+
+    // On espionne console.error pour éviter le bruit
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    render(<WindowActivityLog />);
+
+    // On attend que le chargement soit fini (le loader disparaît ou le texte vide apparaît)
+    // Comme il y a erreur, events reste [], donc le message "Aucun changement..." s'affiche
+    await waitFor(() => {
+      expect(
+        screen.getByText("Aucun changement d'état enregistré pour cette date.")
+      ).toBeInTheDocument();
+    });
+
+    expect(consoleSpy).toHaveBeenCalled();
+    consoleSpy.mockRestore();
+  });
 });

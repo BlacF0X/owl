@@ -2,8 +2,9 @@ import _thread
 import time
 import network
 from machine import Pin
-import wifi_data, emit, json_rel, web_serv, shared
-import socket_func
+import wifi_data,emit,json_rel,web_serv,shared,setclock,socket_func,register,senddb
+
+
 
 running_thread = True
 button_count = 0
@@ -20,11 +21,15 @@ if len(json_rel.get_infos()["emits"]) == 0:
     wifi_data.create_wifis_data()
 ap = None
 
-
+if json_rel.get_infos()["home_wifi"]["ssid"] != "":
+    print("setclock1")
+    setclock.body()
+    print("fin")
+    
 def core1_thread_function(name, delay):
-    global ws, ap
+    global ws,ap
     while running_thread:
-        print('top', ws)
+        print('top',ws)
         if ws == 0:
             if ap is not None:
                 emit.un_emit(ap)
@@ -32,9 +37,9 @@ def core1_thread_function(name, delay):
             wifi = base["emits"]
             wifi = wifi[ws]
             psd = json_rel.get_infos()["password"]
-            ap = emit.emit(wifi, psd, False)
+            ap = emit.emit(wifi,psd,False)
             if not ap == None:
-                ws = socket_func.listen("", 5000)
+                ws = socket_func.listen("",5000)
                 shared.change_wifi_state(ws)
             else:
                 ws = 1
@@ -44,15 +49,20 @@ def core1_thread_function(name, delay):
             wifi = base["emits"]
             wifi = wifi[ws]
             psd = json_rel.get_infos()["password"]
-            ap = emit.emit(wifi, psd)
+            ap = emit.emit(wifi,psd)    
             if not ap == None:
-                ws, good = socket_func.listen("", 5000)
+                ws,good = socket_func.listen("",5000)
+                if good:
+                    datas = json_rel.get_saved_data()
+                    senddb.body(datas["c_type"],datas)
                 shared.change_wifi_state(ws)
             else:
                 ws = 1
                 shared.change_wifi_state(ws)
         time.sleep(1)
         print(ws)
+               
+        
 
 
 def core0_main_func():
@@ -63,8 +73,8 @@ def core0_main_func():
     global ws
     global last_count
     order = 0
-    red_led = Pin(15, Pin.OUT)
-    green_led = Pin(13, Pin.OUT)
+    red_led = Pin(15,Pin.OUT)
+    green_led = Pin(13,Pin.OUT)
     button = Pin(0, Pin.IN, Pin.PULL_UP)
     if button.value() == 0:
         button_count += 1
@@ -80,7 +90,7 @@ def core0_main_func():
         red_led.value(0)
     led = not led
     if send:
-        order = (button_count // 5) + 1
+        order = (button_count//5)+1
         send = False
         button_count = 0
         if order >= 6:
@@ -95,11 +105,16 @@ def core0_main_func():
                 time.sleep(0.1)
             ap = network.WLAN(network.AP_IF)
             ap.active(False)
-            ssid, pwd = web_serv.start_config_portal()
-            print("Reçu depuis portail:", ssid, pwd)
+            ssid, pwd, email,tmz = web_serv.start_config_portal()
+            print("ReÃ§u depuis portail:", ssid, pwd,email)
             json_rel.save_data("home_wifi", {"ssid": ssid, "psd": pwd})
+            json_rel.save_data("user_email", email)
+            json_rel.save_data("timezone", tmz[-2:])
+            register.try_connect_and_register()
             ap = network.WLAN(network.AP_IF)
             ap.active(False)
+            print('setclock')
+            setclock.body()
             ws = 1
             shared.change_wifi_state(1)
             print("finish")
@@ -117,8 +132,8 @@ def core0_main_func():
             time.sleep(0.1)
             green_led.value(0)
             time.sleep(0.1)
-
-
+            
+    
 _thread.start_new_thread(core1_thread_function, ("Core 1", 90))
 try:
     while True:

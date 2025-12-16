@@ -119,4 +119,15 @@ describe('WindowSensorDetailsModal Component', () => {
 
     expect(mockOnClose).toHaveBeenCalledTimes(1);
   });
+
+  it("affiche un message d'erreur si l'API échoue", async () => {
+    (fetchFromApi as jest.Mock).mockRejectedValue(new Error('Erreur chargement historique'));
+
+    render(<WindowSensorDetailsModal sensor={mockSensor} onClose={jest.fn()} />);
+
+    // On attend l'apparition du message d'erreur rouge
+    await waitFor(() => {
+      expect(screen.getByText('Erreur : Erreur chargement historique')).toBeInTheDocument();
+    });
+  });
 });
