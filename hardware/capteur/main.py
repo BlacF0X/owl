@@ -6,6 +6,7 @@ import socket
 import socket_func
 import json_rel
 import json
+import shared,toner
 from machine import Pin
 from picozero import pico_led
 import temp_sensor
@@ -21,7 +22,7 @@ to_send_later = []
 
 sensor = Pin(15,Pin.IN)
 data = ""
-data_send_timer = 1
+data_send_timer = 6
 
 
 
@@ -51,6 +52,8 @@ def get_data():
             avg[1] += i[1]
         avg[0] = avg[0]/len(liste_data)
         avg[1] = avg[1]/len(liste_data)
+        for i in range(2):    
+            toner.beep(1200,0.05)
         return (avg[0],avg[1])
 
 def new_co_func(ssid,psd):
@@ -88,7 +91,7 @@ def info_connection(ssid,psd):
             ip = wlan.ifconfig()[-2]
             print('ip',ip)
             old_data = json_rel.captor_data_read()['data']
-            datatemp = ""
+            datatemp = data
             print(old_data)
             if len(old_data) > 0:
                 for d in old_data:
@@ -109,6 +112,7 @@ def info_connection(ssid,psd):
             elif "ClEAR" in resp:
                 with open("data.json",'w') as f:
                     json.dump({"data":[]},f)
+                    data = ""
                 wlan.active(False)
         return resp
     else:
@@ -120,13 +124,15 @@ def core0_main_func():
     global glb_psd,resp,data,data_send_timer,registered
     ssid,psd,state = scan.get_wifi()
     print(ssid,psd,state)
+    data_send_timer = shared.get_timer_state()
     if int(state) == -1:
         if data_send_timer <= 0:
             print('0:-1')
             print(data)
             json_rel.save_captor_data(data,True)
             data = ""
-            data_send_timer = 2
+            data_send_timer = 6
+            shared.change_timer_state(data_send_timer)
     elif int(state) == 0:
         print('r' ,registered)
         if registered:
@@ -141,8 +147,10 @@ def core0_main_func():
         else:
             resp = info_connection(ssid,psd)
             print('r',resp)
-            if not resp == None and 'CLEAR' in resp:
-                data_send_timer = 12
+            if not resp == None and resp == 'CLEAR':
+                data_send_timer = 6
+                shared.change_timer_state(data_send_timer)
+                print('reset')
     print('state : ',state)
             
 
@@ -156,10 +164,10 @@ def core1_thread_func(name,delay):
         temp_data = get_data()
         hour_data.append(temp_data)
         data_send_timer -= 1
+        shared.change_timer_state(data_send_timer)
         if data_send_timer <= 0:
             for d in hour_data:
                 data += str(d)+"|"
-            data = data[:-1]
             hour_data = []
         print('data: ',data)
         print('data_timer :',data_send_timer)
