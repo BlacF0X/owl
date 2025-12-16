@@ -49,7 +49,13 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
       setHubsError(null);
 
       try {
-        const token = await getToken();
+        // ✅ ATTENDRE le token avant de continuer
+        const authToken = await getToken();
+        if (!authToken) {
+          setHubsError('Token non disponible');
+          return;
+        }
+
         const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
         const sensorsWithHub = initialSensors.filter((s) => s.hub);
@@ -68,12 +74,12 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
               ? parseFloat(sensorsForHub[0].displayValue) || 0
               : 0;
 
-            // ✅ Récupérer les données pour TOUS les capteurs du hub
+            // ✅ Utiliser authToken (et non token de state)
             const allReadingsPromises = sensorsForHub.map(async (sensor) => {
               try {
                 const res = await fetch(
                   `${API_URL}/api/sensors/${sensor.sensor_id}/readings?period=7d`,
-                  { headers: { Authorization: `Bearer ${token}` } }
+                  { headers: { Authorization: `Bearer ${authToken}` } }
                 );
                 if (!res.ok) return [];
                 return await res.json();
@@ -208,7 +214,8 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
         const results = await Promise.all(hubPromises);
         const validHubs = results.filter((h): h is HubSummary => h !== null);
         setHubSummaries(validHubs);
-      } catch {
+      } catch (err) {
+        console.error('Erreur chargement hubs:', err);
         setHubsError('Erreur de chargement des hubs');
       } finally {
         setHubsLoading(false);
@@ -251,7 +258,6 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
   // MODE TOUS LES HUBS
   return (
     <div className="flex flex-col gap-6 w-full pb-10">
-      {/* ✅ Boutons SANS comparaison */}
       <DashboardViewButtons currentMode={viewMode} onChange={setViewMode} showComparison={false} />
 
       {hubsLoading ? (

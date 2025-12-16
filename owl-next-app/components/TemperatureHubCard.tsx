@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import TemperatureCircle from './TemperatureCircle';
 import TemperatureDayChart from './TemperatureDayChart';
 
@@ -29,6 +30,8 @@ interface Props {
 }
 
 export default function TemperatureHubCard({ hub, viewMode }: Props) {
+  const router = useRouter();
+
   let temperature = hub.avgtemp7d ?? 0;
   let chartData = hub.chartData7dAvg;
   let subtitle = 'Moyenne 7 jours';
@@ -49,8 +52,15 @@ export default function TemperatureHubCard({ hub, viewMode }: Props) {
     subtitle = 'Minimum 7 jours';
   }
 
+  const handleClick = () => {
+    router.push(`/dashboard/temperatures-datas?hubId=${hub.hubid}`);
+  };
+
   return (
-    <div className="bg-white rounded-xl shadow-md p-6 flex flex-col lg:flex-row items-center justify-between w-full animate-in fade-in slide-in-from-bottom-4 gap-8">
+    <div
+      onClick={handleClick}
+      className="bg-white rounded-xl shadow-md p-6 flex flex-col lg:flex-row items-center justify-between w-full animate-in fade-in slide-in-from-bottom-4 gap-8 cursor-pointer hover:shadow-lg hover:scale-[1.01] transition-all duration-200"
+    >
       {/* Cercle */}
       <div className="w-full lg:w-auto lg:min-w-[300px] flex justify-center shrink-0">
         <TemperatureCircle
