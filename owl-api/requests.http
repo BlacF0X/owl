@@ -13,7 +13,7 @@
 ### Changez ces valeurs selon vos besoins
 ### =================================================================
 @baseUrl = http://localhost:8080
-@authToken = {{$dotenv CLERK_TEST_TOKEN}}
+@authToken = {{$dotenv CLERK_TEST_TOKEN_BOB}}
 
 
 ### =================================================================
@@ -83,5 +83,7 @@ Authorization: Bearer {{authToken}}
 
 
 ### Test nouveau endpoint température groupé
-GET {{baseUrl}}/api/temperature/hubs/TON_HUB_ID_ICI/readings
-Authorization: Bearer eyJhbGciOiJSUzI1NiIsImNhdCI6ImNsX0I3ZDRQRDExMUFBQSIsImtpZCI6Imluc18zNDVyYTNtWUREektYNXFrTE9EQ0xKRUhjbUwiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJodHRwOi8vbG9jYWxob3N0OjMwMDAiLCJleHAiOjE3NjU4OTYxMzYsImZ2YSI6WzE0NjEsLTFdLCJpYXQiOjE3NjU4OTYwNzYsImlzcyI6Imh0dHBzOi8vc3RpcnJpbmctaHllbmEtODkuY2xlcmsuYWNjb3VudHMuZGV2IiwibmJmIjoxNzY1ODk2MDY2LCJzaWQiOiJzZXNzXzM2c3cxbHAyWkl0UHVsWnQ1QmpteW1ITk5aWCIsInN0cyI6ImFjdGl2ZSIsInN1YiI6InVzZXJfMzZZYnRTSG1KemI5VHViZ1JQT3R6MjlRYnRUIiwidiI6Mn0.q_28QAp2GWUy3IUFr4Z5XTKp004zQgP-rUAeS4X-xIF_V3wf3OAXD83HDNebz_TVs1dFoOa7fZR4qqJ5XUy86ge_td9UGF9z12Um-07bqdLjG7kgZuZxRYdumzK-LDWkP68cyXnbizUoMS64DqQct0VILqW6nrYMfu-b_ZOtUOMOddo3Yloj1n3aEk-y74hfPn8DwhQ74EXoeaG036YAkYNuWfCPos5QMwyRdPkjMZTCj6ZTwV1KTbC1Xh__AqOXKRJ0onRNT0jWus7LviPriGiYNCYcE7Hb4uCtYgfrHU3TvdI_LpO6i54qysOQx4Z3FJsiqy0MRtYHrGWA6LYfBg
+@hub_id = 24a7c9a9-5cb5-4d36-bded-c8458219080c
+
+GET {{baseUrl}}/api/temperature/hubs/{{hub_id}}/readings
+Authorization: Bearer {{authToken}}
