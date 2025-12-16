@@ -35,17 +35,12 @@ console.log(
 
 /**
  * Génère une valeur réaliste selon le type de capteur
- * CORRECTION : Suppression de 'iteration', utilisation du temps réel pour le cycle
  */
 const generateValue = (type: string, timestamp?: Date): string | number => {
   const now = timestamp || new Date();
   const hour = now.getHours() + now.getMinutes() / 60;
   const minuteOfDay = hour * 60;
 
-  // CORRECTION MAJEURE ICI :
-  // On calcule le "cycle" basé sur les minutes réelles écoulées (UNIX time).
-  // Cela remplace l'argument 'iteration' qui valait toujours 0.
-  // Le % 720 assure un cycle qui se répète toutes les 12 heures (720 minutes).
   const timeBasedCycle = Math.floor(now.getTime() / 60000) % 720;
 
   switch (type) {
@@ -106,9 +101,12 @@ const generatePayloadForHub = (hubConfig: {
 
   for (const type of SENSOR_TYPES) {
     for (let i = 1; i <= SENSORS_PER_TYPE; i++) {
-      const sensorName = `${hubConfig.prefix} - ${type} ${i.toString().padStart(2, '0')}`;
+      const indexStr = i.toString().padStart(2, '0');
+      const hardwareId = `${hubConfig.serial}_${type}_${indexStr}`;
+      const sensorName = `${hubConfig.prefix} - ${type} ${indexStr}`;
 
       readings.push({
+        hardware_id: hardwareId,
         sensor_name: sensorName,
         type: type,
         value: generateValue(type, now), // On passe 'now' explicitement

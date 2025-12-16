@@ -8,10 +8,13 @@ AP_SSID = "OwlRegistering"
 AP_PASS = "RegisterOwlScoobodoo"
 
 def start_config_portal():
-    """Lance l'AP + portail, affiche variable + scan WiFi, et renvoie (ssid, pwd)."""
-    my_value = json_rel.get_infos()["id"]
-    last_ssid = json_rel.get_infos()["home_wifi"]["ssid"]
-    last_pwd = json_rel.get_infos()["home_wifi"]["psd"]
+    """Lance l'AP + portail, affiche variable + scan WiFi, et renvoie (ssid, pwd, email, timezone)."""
+    infos = json_rel.get_infos()
+    my_value = infos["id"]
+    last_ssid = infos["home_wifi"]["ssid"]
+    last_pwd = infos["home_wifi"]["psd"]
+    # France métropolitaine ≈ GMT+1 en heure standard (CET) [web:40][web:45]
+    last_tz = infos.get("timezone", "GMT+1")
 
     # ----- AP pour le portail -----
     sta_main = network.WLAN(network.STA_IF)
@@ -28,7 +31,7 @@ def start_config_portal():
 
     # ----- STA séparée pour scanner -----
     scanner = network.WLAN(network.STA_IF)
-    scanner.active(True)  # uniquement pour wlan.scan()[web:3][web:12][web:18]
+    scanner.active(True)
 
     def scan_networks():
         nets = scanner.scan()
@@ -41,9 +44,57 @@ def start_config_portal():
             options = '<option value="">Aucun réseau trouvé</option>'
         return options
 
+    def timezone_options(selected_tz):
+        # Mapping offset -> label avec exemples de villes/zones [web:25][web:32]
+        tz_map = {
+            -12: "GMT-12 (Etc/GMT+12, Baker Island)",
+            -11: "GMT-11 (Pacific/Midway, Niue)",
+            -10: "GMT-10 (Pacific/Honolulu, Hawaii)",
+            -9:  "GMT-9 (America/Anchorage)",
+            -8:  "GMT-8 (America/Los_Angeles, Pacific Time)",
+            -7:  "GMT-7 (America/Denver, Mountain Time)",
+            -6:  "GMT-6 (America/Chicago, Central Time)",
+            -5:  "GMT-5 (America/New_York, Eastern Time)",
+            -4:  "GMT-4 (America/Halifax, Atlantic Time)",
+            -3:  "GMT-3 (America/Sao_Paulo, Buenos Aires)",
+            -2:  "GMT-2 (Atlantic/South_Georgia)",
+            -1:  "GMT-1 (Atlantic/Azores, Cape Verde)",
+             0:  "GMT (Europe/London, Lisbon, Dublin)",
+             1:  "GMT+1 (Europe/Paris, Berlin, Madrid)",   # ton cas courant [web:42][web:45]
+             2:  "GMT+2 (Athens, Helsinki, South Africa)",
+             3:  "GMT+3 (Moscow, Nairobi, Istanbul)",
+             4:  "GMT+4 (Dubai, Baku)",
+             5:  "GMT+5 (Pakistan, Maldives)",
+             5.5:"GMT+5:30 (India, Sri Lanka)",
+             6:  "GMT+6 (Bangladesh, Bhutan)",
+             7:  "GMT+7 (Bangkok, Jakarta, Vietnam)",
+             8:  "GMT+8 (Beijing, Singapore, Hong Kong)",
+             9:  "GMT+9 (Tokyo, Seoul)",
+             9.5:"GMT+9:30 (Central Australia)",
+            10:  "GMT+10 (Sydney, Guam)",
+            11:  "GMT+11 (Solomon Islands, New Caledonia)",
+            12:  "GMT+12 (Auckland, Fiji)",
+        }
+
+        html = ""
+        for offset, label in tz_map.items():
+            # value compacte pour ton code : GMT, GMT+1, GMT-5, GMT+5.5, etc.
+            if offset == 0:
+                value = "GMT"
+            elif offset > 0:
+                # garde l'écriture exacte (5 ou 5.5)
+                value = "GMT+{}".format(int(offset) if offset == int(offset) else offset)
+            else:
+                value = "GMT{}".format(int(offset) if offset == int(offset) else offset)
+
+            sel = " selected" if value == selected_tz else ""
+            html += f'<option value="{value}"{sel}>{label}</option>'
+        return html
+
     def build_page():
         ip = ap.ifconfig()[0]
         wifi_options = scan_networks()
+        tz_opts = timezone_options(last_tz)
         return f"""<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -136,6 +187,8 @@ def start_config_portal():
       <p><b>Valeur interne :</b> {my_value}</p>
       <p><b>Dernier SSID choisi :</b> {last_ssid}</p>
       <p><b>Dernier mot de passe :</b> {last_pwd}</p>
+      <p><b>Timezone actuelle :</b> {last_tz}</p>
+      <p>Exemple : GMT+1 ≈ Europe/Paris, Berlin</p>
     </div>
 
     <h2>Configurer le WiFi</h2>
@@ -146,7 +199,15 @@ def start_config_portal():
       </select>
 
       <label for="pwd">Mot de passe</label>
-      <input type="text" id="pwd" name="pwd" placeholder="Entrez le mot de passe" />
+      <input type="text" id="pwd" name="pwd" placeholder="Mot de passe WiFi" />
+
+      <label for="email">Email du compte OwL</label>
+      <input type="text" id="email" name="email" placeholder="votre@email.com" />
+
+      <label for="timezone">Fuseau horaire</label>
+      <select id="timezone" name="timezone">
+        {tz_opts}
+      </select>
 
       <input type="submit" value="Enregistrer">
     </form>
@@ -164,7 +225,7 @@ def start_config_portal():
     s.listen(1)
     print("Serveur HTTP sur http://", ap.ifconfig()[0])
 
-    creds = (None, None)
+    creds = (None, None, None, None)
     server_running = True
 
     while server_running:
@@ -179,19 +240,30 @@ def start_config_portal():
         except IndexError:
             path = "/"
 
-        m_ssid = ure.search(r"ssid=([^& ]+)", path)
-        m_pwd  = ure.search(r"pwd=([^& ]+)", path)
+        m_ssid   = ure.search(r"ssid=([^& ]+)", path)
+        m_pwd    = ure.search(r"pwd=([^& ]+)", path)
+        m_email  = ure.search(r"email=([^& ]+)", path)
+        m_tz     = ure.search(r"timezone=([^& ]+)", path)
 
         while True:
             line = cl_file.readline()
             if not line or line == b"\r\n":
                 break
 
-        if m_ssid and m_pwd and m_ssid.group(1) != "":
+        if m_ssid and m_pwd and m_email and m_tz:
             last_ssid = m_ssid.group(1)
             last_pwd  = m_pwd.group(1)
+            user_email = m_email.group(1).replace("%40", "@")
+            tz_value = m_tz.group(1)
+
+            # Gestion du + dans la query string (souvent décodé en espace) [web:23][web:48]
+            tz_value = tz_value.replace(" ", "+")
+            tz_value = tz_value.replace("%2B", "+")
+
             print("SSID choisi:", last_ssid)
             print("Mot de passe:", last_pwd)
+            print("E-mail:", user_email)
+            print("Timezone:", tz_value)
 
             ok_page = f"""<!DOCTYPE html>
 <html lang="fr">
@@ -226,23 +298,6 @@ def start_config_portal():
       font-size: 0.95rem;
       text-align: center;
     }}
-    .btn {{
-      margin-top: 1.6rem;
-      display: block;
-      width: 100%;
-      padding: 10px;
-      border-radius: 6px;
-      border: none;
-      background: #2551cc;
-      color: white;
-      font-size: 1rem;
-      font-weight: 600;
-      text-decoration: none;
-      text-align: center;
-    }}
-    .btn:active {{
-      background: #1a3da0;
-    }}
   </style>
 </head>
 <body>
@@ -251,6 +306,7 @@ def start_config_portal():
     <p>Le Pico a bien reçu la configuration WiFi.</p>
     <p><b>SSID :</b> {last_ssid}</p>
     <p><b>Mot de passe :</b> {last_pwd}</p>
+    <p><b>Fuseau horaire :</b> {tz_value}</p>
     <p>Vous pouvez maintenant fermer cette page.</p>
   </div>
 </body>
@@ -259,7 +315,7 @@ def start_config_portal():
             cl.send(ok_page)
             cl.close()
 
-            creds = (last_ssid, last_pwd)
+            creds = (last_ssid, last_pwd, user_email, tz_value)
             s.close()
             server_running = False
         else:
@@ -271,5 +327,3 @@ def start_config_portal():
     ap.active(False)
     scanner.active(False)
     return creds
-
-
