@@ -66,14 +66,13 @@ export default function TemperatureComparisonView({ sensors }: Props) {
 
                 if (rawData.length === 0) return null;
 
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                /* eslint-disable @typescript-eslint/no-explicit-any */
                 const sortedData = rawData.sort(
                   (a: any, b: any) =>
                     new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
                 );
 
                 const tempsByDay = new Map<string, number[]>();
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 sortedData.forEach((item: any) => {
                   const d = new Date(item.timestamp);
                   const dayKey = d.toLocaleDateString('fr-FR', {
@@ -88,6 +87,7 @@ export default function TemperatureComparisonView({ sensors }: Props) {
                     tempsByDay.get(dayKey)?.push(val);
                   }
                 });
+                /* eslint-enable @typescript-eslint/no-explicit-any */
 
                 const dayLabels: string[] = [];
                 const dayAverages: number[] = [];
