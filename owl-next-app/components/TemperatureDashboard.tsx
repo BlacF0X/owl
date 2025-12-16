@@ -1,5 +1,6 @@
 'use client';
 
+// ... (Imports inchangés) ...
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@clerk/nextjs';
@@ -24,6 +25,7 @@ interface ChartDataPoint {
 }
 
 export default function TemperatureDashboard({ initialSensors }: Props) {
+  // ... (Hooks et useEffect Pusher inchangés) ...
   const searchParams = useSearchParams();
   const { getToken } = useAuth();
   const hubId = searchParams?.get('hubId');
@@ -37,13 +39,11 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
 
   const hasLoadedHistory = useRef(false);
 
-  // Synchronisation de l'état lors de la navigation
   useEffect(() => {
     setSensors(initialSensors);
     hasLoadedHistory.current = false;
   }, [initialSensors]);
 
-  // Filtrage pour le mode détail
   const filteredSensors = useMemo(() => {
     if (hubId) {
       return sensors.filter((s) => s.hub?.hub_id === hubId);
@@ -51,15 +51,12 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
     return sensors;
   }, [sensors, hubId]);
 
-  // --- LOGIQUE PUSHER ---
   useEffect(() => {
     if (!channel) return;
-
     const handleUpdate = (data: RealtimeUpdate[]) => {
       setSensors((prevSensors) => {
         const sensorMap = new Map(prevSensors.map((s) => [s.sensor_id, s]));
         let hasChanges = false;
-
         data.forEach((update) => {
           if (sensorMap.has(update.sensor_id) && update.type === 'temperature') {
             const existing = sensorMap.get(update.sensor_id)!;
@@ -71,44 +68,33 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
             hasChanges = true;
           }
         });
-
         if (!hasChanges) return prevSensors;
-
         const newSensors = Array.from(sensorMap.values());
-
-        // Mise à jour temps réel des cartes Hub
         setHubSummaries((prevSummaries) => {
           return prevSummaries.map((hub) => {
             const hubSensors = newSensors.filter((s) => s.hub?.hub_id === hub.hubid);
             if (hubSensors.length === 0) return hub;
-
             const validSensors = hubSensors.filter(
               (s) => !isNaN(parseFloat(s.displayValue)) && parseFloat(s.displayValue) !== 0
             );
-
             if (validSensors.length === 0) return { ...hub, currenttemp: 0 };
-
             const sum = validSensors.reduce((acc, s) => acc + parseFloat(s.displayValue), 0);
             const newCurrentTemp = parseFloat((sum / validSensors.length).toFixed(1));
-
             return {
               ...hub,
               currenttemp: newCurrentTemp,
             };
           });
         });
-
         return newSensors;
       });
     };
-
     channel.bind('sensors:update', handleUpdate);
     return () => {
       channel.unbind('sensors:update', handleUpdate);
     };
   }, [channel]);
 
-  // Liste des Hubs uniques (stable)
   const uniqueHubs = useMemo(() => {
     const sensorsWithHub = initialSensors.filter((s) => s.hub);
     return Array.from(
@@ -125,36 +111,27 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
     );
   }, [initialSensors]);
 
-  // --- CHARGEMENT DES DONNÉES ---
   useEffect(() => {
     if (hubId || viewMode === 'comparison' || hasLoadedHistory.current) return;
 
     const loadHubSummaries = async () => {
       setHubsLoading(true);
-
       try {
         const token = await getToken();
         if (!token) {
           setHubsLoading(false);
           return;
         }
-
         const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-
         const hubPromises = uniqueHubs.map(async ({ id: hId, name: hubName, created_at }) => {
           try {
-            // ✅ CORRECTION MAJEURE : Utiliser initialSensors au lieu de sensors
-            // Cela garantit qu'on utilise la liste complète fraîchement reçue du serveur
-            // même si le state 'sensors' n'a pas encore fini sa mise à jour asynchrone.
             const sensorsForHub = initialSensors.filter((s) => s.hub?.hub_id === hId);
             const sensorCount = sensorsForHub.length;
-
             let currentTemp = 0;
             const validSensors = sensorsForHub.filter((s) => {
               const val = parseFloat(s.displayValue);
               return !isNaN(val) && val !== 0;
             });
-
             if (validSensors.length > 0) {
               const sum = validSensors.reduce((acc, s) => acc + parseFloat(s.displayValue), 0);
               currentTemp = parseFloat((sum / validSensors.length).toFixed(1));
@@ -163,12 +140,8 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
             const res = await fetch(`${API_URL}/api/temperature/hubs/${hId}/readings`, {
               headers: { Authorization: `Bearer ${token}` },
             });
-
             if (!res.ok) return null;
-
             const groupedReadings = await res.json();
-
-            // ... Traitement inchangé des données ...
             const allReadings: Array<{ value: number; timestamp: Date }> = [];
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             Object.values(groupedReadings).forEach((readings: any) => {
@@ -180,12 +153,11 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
                 });
               });
             });
-
             const sortedData = allReadings
               .filter((r) => !isNaN(r.value))
               .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
 
-            // Valeurs par défaut
+            // ✅ CORRECTION : Utilisation de calculateStats corrigée
             const emptyStats = {
               avgtemp7d: null,
               maxtemp7d: null,
@@ -195,7 +167,6 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
               chartData7dMax: [],
               chartData7dMin: [],
             };
-
             const resultStats = sortedData.length === 0 ? emptyStats : calculateStats(sortedData);
 
             return {
@@ -210,7 +181,6 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
             return null;
           }
         });
-
         const results = await Promise.all(hubPromises);
         const validHubs = results.filter((h): h is HubSummary => h !== null);
         setHubSummaries(validHubs);
@@ -221,11 +191,11 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
         setHubsLoading(false);
       }
     };
-
     loadHubSummaries();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hubId, getToken, viewMode, uniqueHubs]); // initialSensors est implicitement inclus via uniqueHubs
+  }, [hubId, getToken, viewMode, uniqueHubs]);
 
+  // ... (Reste du composant inchangé) ...
   if (!initialSensors || initialSensors.length === 0) {
     return (
       <div className="text-center py-12 bg-white rounded-xl shadow-sm">
@@ -278,7 +248,9 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
   );
 }
 
-// Fonction utilitaire pour alléger le useEffect et éviter la duplication de code
+// ----------------------------------------------------------
+// ✅ FONCTION CORRIGÉE
+// ----------------------------------------------------------
 function calculateStats(sortedData: { value: number; timestamp: Date }[]) {
   const now = new Date();
   const refHour = now.getHours();
@@ -344,16 +316,14 @@ function calculateStats(sortedData: { value: number; timestamp: Date }[]) {
     }
   });
 
-  const referenceDayKey = now.toLocaleDateString('fr-FR', {
-    weekday: 'short',
-    day: 'numeric',
-  });
-  const todayTemps = tempsByDay.get(referenceDayKey) || [];
-  const maxtemp7d = todayTemps.length > 0 ? Math.max(...todayTemps) : null;
-  const mintemp7d = todayTemps.length > 0 ? Math.min(...todayTemps) : null;
+  // ✅ CORRECTION ICI : Scalaires sur TOUTES les données 7J
+  const allValues = sortedData.map((d) => d.value);
+
+  const maxtemp7d = allValues.length > 0 ? Math.max(...allValues) : null;
+  const mintemp7d = allValues.length > 0 ? Math.min(...allValues) : null;
   const avgtemp7d =
-    todayTemps.length > 0
-      ? Math.round((todayTemps.reduce((a, b) => a + b, 0) / todayTemps.length) * 10) / 10
+    allValues.length > 0
+      ? Math.round((allValues.reduce((a, b) => a + b, 0) / allValues.length) * 10) / 10
       : null;
 
   return {

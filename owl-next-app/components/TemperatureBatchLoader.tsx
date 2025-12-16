@@ -21,7 +21,6 @@ export default function TemperatureBatchLoader({ sensors, viewMode }: Props) {
   const [histories, setHistories] = useState<Record<string, SensorHistory>>({});
   const [loading, setLoading] = useState(true);
 
-  // Ref pour suivre les Hubs dont l'historique est DÉJÀ chargé
   const loadedHubsRef = useRef<Set<string>>(new Set());
 
   const sensorsByHub = useMemo(() => {
@@ -43,12 +42,10 @@ export default function TemperatureBatchLoader({ sensors, viewMode }: Props) {
       return;
     }
 
-    // On identifie les Hubs qui n'ont PAS encore été chargés
     const hubsToLoad = Array.from(sensorsByHub.keys()).filter(
       (hubId) => !loadedHubsRef.current.has(hubId)
     );
 
-    // Si tout est déjà chargé, on ne fait rien (sauf arrêter le loading si besoin)
     if (hubsToLoad.length === 0) {
       setLoading(false);
       return;
@@ -61,7 +58,6 @@ export default function TemperatureBatchLoader({ sensors, viewMode }: Props) {
       try {
         const token = await getToken();
         if (!token) {
-          console.error('Token non disponible');
           setLoading(false);
           return;
         }
@@ -71,7 +67,6 @@ export default function TemperatureBatchLoader({ sensors, viewMode }: Props) {
         const hubPromises = hubsToLoad.map(async (hubId) => {
           try {
             const hubSensors = sensorsByHub.get(hubId)!;
-
             const res = await fetch(`${API_URL}/api/temperature/hubs/${hubId}/readings`, {
               headers: { Authorization: `Bearer ${token}` },
             });
@@ -85,7 +80,6 @@ export default function TemperatureBatchLoader({ sensors, viewMode }: Props) {
               processedUpdates[sensor.sensor_id] = processRawData(rawData, sensor);
             });
 
-            // Marquer ce hub comme chargé
             loadedHubsRef.current.add(hubId);
           } catch (err) {
             console.error(`Erreur hub ${hubId}:`, err);
@@ -93,8 +87,6 @@ export default function TemperatureBatchLoader({ sensors, viewMode }: Props) {
         });
 
         await Promise.all(hubPromises);
-
-        // On fusionne avec les historiques existants au lieu de tout remplacer
         setHistories((prev) => ({ ...prev, ...processedUpdates }));
       } catch (err) {
         console.error('Erreur batch loading:', err);
@@ -118,10 +110,9 @@ export default function TemperatureBatchLoader({ sensors, viewMode }: Props) {
   return (
     <div className="flex flex-col gap-6 w-full">
       {sensors.map((sensor) => {
-        // Fusion des données LIVE avec l'historique
         const history = histories[sensor.sensor_id];
 
-        // Si on a un historique, on force la valeur courante à être celle du capteur live (Pusher)
+        // Fusion des données live
         const liveHistory = history
           ? {
               ...history,
@@ -142,6 +133,9 @@ export default function TemperatureBatchLoader({ sensors, viewMode }: Props) {
   );
 }
 
+// --------------------------------------------------------
+// ✅ Fonction processRawData CORRIGÉE
+// --------------------------------------------------------
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function processRawData(rawData: any[], sensor: TemperatureSensor): SensorHistory {
   if (!rawData || rawData.length === 0) {
@@ -151,9 +145,9 @@ function processRawData(rawData: any[], sensor: TemperatureSensor): SensorHistor
       data7dMin: [],
       data7dAvg: [],
       currentTemp: parseFloat(sensor.displayValue) || 0,
-      maxTempToday: null,
-      minTempToday: null,
-      avgTempToday: null,
+      maxTemp7d: null,
+      minTemp7d: null,
+      avgTemp7d: null,
       currentHourIndex: null,
     };
   }
@@ -165,15 +159,14 @@ function processRawData(rawData: any[], sensor: TemperatureSensor): SensorHistor
   const now = new Date();
   const refHour = now.getHours();
 
+  // 1. Chart 24h (Inchangé)
   const chartData24h: ChartDataPoint[] = [];
   for (let hour = 0; hour <= 23; hour++) {
     const hourLabel = `${hour.toString().padStart(2, '0')}h`;
-
     if (hour > refHour) {
       chartData24h.push({ label: hourLabel, value: null });
       continue;
     }
-
     const match = sortedData.find((d) => {
       const dTime = new Date(d.timestamp);
       return (
@@ -183,7 +176,6 @@ function processRawData(rawData: any[], sensor: TemperatureSensor): SensorHistor
         dTime.getHours() === hour
       );
     });
-
     if (match) {
       chartData24h.push({ label: hourLabel, value: Number(match.value) });
     } else {
@@ -192,6 +184,7 @@ function processRawData(rawData: any[], sensor: TemperatureSensor): SensorHistor
     }
   }
 
+  // 2. Charts 7 Jours (Inchangé)
   const tempsByDay = new Map<string, number[]>();
   const dayKeysInOrder: string[] = [];
 
@@ -232,16 +225,14 @@ function processRawData(rawData: any[], sensor: TemperatureSensor): SensorHistor
     }
   });
 
-  const referenceDayKey = now.toLocaleDateString('fr-FR', {
-    weekday: 'short',
-    day: 'numeric',
-  });
-  const todayTemps = tempsByDay.get(referenceDayKey) || [];
-  const maxTempToday = todayTemps.length > 0 ? Math.max(...todayTemps) : null;
-  const minTempToday = todayTemps.length > 0 ? Math.min(...todayTemps) : null;
-  const avgTempToday =
-    todayTemps.length > 0
-      ? Math.round((todayTemps.reduce((a, b) => a + b, 0) / todayTemps.length) * 10) / 10
+  // 3. ✅ CORRECTION : Scalaires globaux sur TOUTES les données (pas juste today)
+  const allValues = sortedData.map((d) => Number(d.value)).filter((v) => !isNaN(v));
+
+  const maxTemp7d = allValues.length > 0 ? Math.max(...allValues) : null;
+  const minTemp7d = allValues.length > 0 ? Math.min(...allValues) : null;
+  const avgTemp7d =
+    allValues.length > 0
+      ? Math.round((allValues.reduce((a, b) => a + b, 0) / allValues.length) * 10) / 10
       : null;
 
   return {
@@ -250,9 +241,9 @@ function processRawData(rawData: any[], sensor: TemperatureSensor): SensorHistor
     data7dMin,
     data7dAvg,
     currentTemp: parseFloat(sensor.displayValue) || 0,
-    maxTempToday,
-    minTempToday,
-    avgTempToday,
+    maxTemp7d,
+    minTemp7d,
+    avgTemp7d,
     currentHourIndex: refHour,
   };
 }
