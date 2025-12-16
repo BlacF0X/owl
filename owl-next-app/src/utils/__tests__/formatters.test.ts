@@ -52,5 +52,16 @@ describe('Formatters Utils', () => {
       const future = '2025-11-20T12:10:00Z';
       expect(calculateDuration(future, refDate)).toBe('0min');
     });
+
+    it('should format exactly 1 hour (0 minutes)', () => {
+      // 1h pile avant (11:00)
+      const past = '2025-11-20T11:00:00Z';
+      const refDate = new Date('2025-11-20T12:00:00Z');
+
+      // diffHours = 1, diffMins = 0.
+      // Condition (0 > 0 || 1 === 0) est FALSE.
+      // Donc ça n'ajoute PAS "0min" à la fin. Résultat attendu : "1h" (avec un trim())
+      expect(calculateDuration(past, refDate)).toBe('1h');
+    });
   });
 });
