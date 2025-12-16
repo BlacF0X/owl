@@ -18,7 +18,7 @@ export interface TemperatureSensor {
   hub?: {
     hub_id: string;
     name: string;
-    created_at?: string; // ✅ AJOUT ICI
+    created_at?: string;
   };
   type: {
     typekey: string;
@@ -59,7 +59,7 @@ export default function TemperatureSensorCard({ sensor, history, viewMode, onRet
   }
 
   let dataForChart = history.data24h;
-  let tempForCircle = history.currentTemp;
+  let tempForCircle = parseFloat(sensor.displayValue) || 0;
   let statusLabel = 'Température en temps réel';
   let currentHour = history.currentHourIndex;
 

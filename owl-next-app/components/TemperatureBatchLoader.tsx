@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { Loader2 } from 'lucide-react';
 import TemperatureSensorCard from './TemperatureSensorCard';
@@ -21,6 +21,9 @@ export default function TemperatureBatchLoader({ sensors, viewMode }: Props) {
   const [histories, setHistories] = useState<Record<string, SensorHistory>>({});
   const [loading, setLoading] = useState(true);
 
+  // Ref pour suivre les Hubs dont l'historique est DÉJÀ chargé
+  const loadedHubsRef = useRef<Set<string>>(new Set());
+
   const sensorsByHub = useMemo(() => {
     const grouped = new Map<string, TemperatureSensor[]>();
     sensors.forEach((sensor) => {
@@ -40,6 +43,17 @@ export default function TemperatureBatchLoader({ sensors, viewMode }: Props) {
       return;
     }
 
+    // On identifie les Hubs qui n'ont PAS encore été chargés
+    const hubsToLoad = Array.from(sensorsByHub.keys()).filter(
+      (hubId) => !loadedHubsRef.current.has(hubId)
+    );
+
+    // Si tout est déjà chargé, on ne fait rien (sauf arrêter le loading si besoin)
+    if (hubsToLoad.length === 0) {
+      setLoading(false);
+      return;
+    }
+
     const loadAll = async () => {
       setLoading(true);
       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
@@ -52,10 +66,12 @@ export default function TemperatureBatchLoader({ sensors, viewMode }: Props) {
           return;
         }
 
-        const processed: Record<string, SensorHistory> = {};
+        const processedUpdates: Record<string, SensorHistory> = {};
 
-        const hubPromises = Array.from(sensorsByHub.entries()).map(async ([hubId, hubSensors]) => {
+        const hubPromises = hubsToLoad.map(async (hubId) => {
           try {
+            const hubSensors = sensorsByHub.get(hubId)!;
+
             const res = await fetch(`${API_URL}/api/temperature/hubs/${hubId}/readings`, {
               headers: { Authorization: `Bearer ${token}` },
             });
@@ -66,15 +82,20 @@ export default function TemperatureBatchLoader({ sensors, viewMode }: Props) {
 
             hubSensors.forEach((sensor) => {
               const rawData = groupedReadings[sensor.sensor_id] || [];
-              processed[sensor.sensor_id] = processRawData(rawData, sensor);
+              processedUpdates[sensor.sensor_id] = processRawData(rawData, sensor);
             });
+
+            // Marquer ce hub comme chargé
+            loadedHubsRef.current.add(hubId);
           } catch (err) {
             console.error(`Erreur hub ${hubId}:`, err);
           }
         });
 
         await Promise.all(hubPromises);
-        setHistories(processed);
+
+        // On fusionne avec les historiques existants au lieu de tout remplacer
+        setHistories((prev) => ({ ...prev, ...processedUpdates }));
       } catch (err) {
         console.error('Erreur batch loading:', err);
       } finally {
@@ -85,7 +106,7 @@ export default function TemperatureBatchLoader({ sensors, viewMode }: Props) {
     loadAll();
   }, [getToken, sensorsByHub]);
 
-  if (loading) {
+  if (loading && Object.keys(histories).length === 0) {
     return (
       <div className="flex flex-col gap-6 items-center justify-center py-12">
         <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
@@ -96,14 +117,27 @@ export default function TemperatureBatchLoader({ sensors, viewMode }: Props) {
 
   return (
     <div className="flex flex-col gap-6 w-full">
-      {sensors.map((sensor) => (
-        <TemperatureSensorCard
-          key={sensor.sensor_id}
-          sensor={sensor}
-          history={histories[sensor.sensor_id]}
-          viewMode={viewMode}
-        />
-      ))}
+      {sensors.map((sensor) => {
+        // Fusion des données LIVE avec l'historique
+        const history = histories[sensor.sensor_id];
+
+        // Si on a un historique, on force la valeur courante à être celle du capteur live (Pusher)
+        const liveHistory = history
+          ? {
+              ...history,
+              currentTemp: parseFloat(sensor.displayValue) || 0,
+            }
+          : undefined;
+
+        return (
+          <TemperatureSensorCard
+            key={sensor.sensor_id}
+            sensor={sensor}
+            history={liveHistory}
+            viewMode={viewMode}
+          />
+        );
+      })}
     </div>
   );
 }
