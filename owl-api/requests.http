@@ -13,7 +13,7 @@
 ### Changez ces valeurs selon vos besoins
 ### =================================================================
 @baseUrl = http://localhost:8080
-@authToken = {{$dotenv CLERK_TEST_TOKEN}}
+@authToken = {{$dotenv CLERK_TEST_TOKEN_BOB}}
 
 
 ### =================================================================
@@ -77,4 +77,13 @@ Authorization: Bearer {{authToken}}
 # @name GetStatsHoraires
 # Récupère la distribution des ouvertures par heure
 GET {{baseUrl}}/api/sensors/windows/stats?refDate={{targetDate}}
+Authorization: Bearer {{authToken}}
+
+
+
+
+### Test nouveau endpoint température groupé
+@hub_id = 24a7c9a9-5cb5-4d36-bded-c8458219080c
+
+GET {{baseUrl}}/api/temperature/hubs/{{hub_id}}/readings
 Authorization: Bearer {{authToken}}

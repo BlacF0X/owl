@@ -1,150 +1,151 @@
-import '@testing-library/jest-dom';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
-import TemperatureAlertLog from '../TemperatureAlertLog';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import TemperatureAlertLog from '@/components/TemperatureAlertLog';
+import type { TemperatureSensor } from '@/components/TemperatureSensorCard';
 
-// Mocks
+const mockGetToken = jest.fn().mockResolvedValue('fake-token');
+
 jest.mock('@clerk/nextjs', () => ({
-  useAuth: () => ({ getToken: jest.fn().mockResolvedValue('fake-token') }),
+  useAuth: () => ({
+    getToken: mockGetToken,
+  }),
 }));
 
-global.fetch = jest.fn();
+const mockSensors: TemperatureSensor[] = [
+  {
+    sensor_id: 'sensor-1',
+    name: 'Salon - Température',
+    displayValue: '21.5',
+    state_changed_at: new Date().toISOString(),
+    hub: { hub_id: 'hub-1', name: 'Hub Principal' },
+    type: { typekey: 'temperature', name: 'Température', unit: '°C' },
+  },
+];
 
-describe('TemperatureAlertLog Component', () => {
-  const mockSensors = [
-    { sensor_id: '1', name: 'Salon' },
-    { sensor_id: '2', name: 'Chambre' },
-  ] as any;
-
-  const mockToken = 'mockToken';
-
+describe('TemperatureAlertLog', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    // Par défaut, on retourne un tableau vide pour éviter les erreurs de map sur undefined
-    (global.fetch as jest.Mock).mockResolvedValue({
-      ok: true,
-      json: async () => [],
-    });
+    (global.fetch as jest.Mock).mockClear();
+    mockGetToken.mockClear();
   });
 
-  // Helper pour attendre la fin du chargement
-  const waitForLoadingToFinish = async () => {
-    await waitFor(() => {
-      expect(screen.queryByText(/Chargement des alertes/i)).not.toBeInTheDocument();
-    });
-  };
+  it('devrait afficher le titre', async () => {
+    // On doit toujours attendre la fin des effets pour éviter les warnings "act"
+    (global.fetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => [] });
+    render(<TemperatureAlertLog sensors={mockSensors} />);
 
-  // Test 1: Affichage du titre
-  it('affiche le titre du journal', async () => {
-    render(<TemperatureAlertLog sensors={mockSensors} token={mockToken} />);
-
-    expect(screen.getByText(/Journal des Alertes/i)).toBeInTheDocument();
-
-    // CORRECTION : On attend que le fetch se termine pour éviter l'erreur "act"
-    await waitForLoadingToFinish();
+    await waitFor(() =>
+      expect(screen.queryByText('Chargement des alertes...')).not.toBeInTheDocument()
+    );
+    expect(screen.getByText('Journal des Alertes')).toBeInTheDocument();
   });
 
-  // Test 2: Filtres présents
-  it('affiche les boutons de filtrage', async () => {
-    render(<TemperatureAlertLog sensors={mockSensors} token={mockToken} />);
+  it('devrait afficher la date formatée', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => [] });
+    render(<TemperatureAlertLog sensors={mockSensors} />);
+
+    await waitFor(() =>
+      expect(screen.queryByText('Chargement des alertes...')).not.toBeInTheDocument()
+    );
+
+    const today = new Date().toLocaleDateString('fr-FR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+    });
+    const formatted = today.charAt(0).toUpperCase() + today.slice(1);
+    expect(screen.getByText(formatted)).toBeInTheDocument();
+  });
+
+  it('devrait afficher les boutons de filtre et navigation', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => [] });
+    render(<TemperatureAlertLog sensors={mockSensors} />);
+
+    await waitFor(() =>
+      expect(screen.queryByText('Chargement des alertes...')).not.toBeInTheDocument()
+    );
 
     expect(screen.getByText('Toutes')).toBeInTheDocument();
-    expect(screen.getByText('Trop hautes')).toBeInTheDocument();
-    expect(screen.getByText('Trop basses')).toBeInTheDocument();
-
-    // CORRECTION : On attend la fin du cycle
-    await waitForLoadingToFinish();
+    expect(screen.getByLabelText('Jour précédent')).toBeInTheDocument();
   });
 
-  // Test 3: Aucune alerte
-  it('affiche un message quand aucune alerte', async () => {
-    render(<TemperatureAlertLog sensors={mockSensors} token={mockToken} />);
+  it('devrait afficher un loader pendant le chargement', () => {
+    (global.fetch as jest.Mock).mockImplementation(() => new Promise(() => {}));
+    render(<TemperatureAlertLog sensors={mockSensors} />);
+    expect(screen.getByText('Chargement des alertes...')).toBeInTheDocument();
+  });
 
+  it('devrait changer de jour avec le bouton précédent', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => [] });
+
+    render(<TemperatureAlertLog sensors={mockSensors} />);
+
+    // 1. Attendre chargement initial
+    await waitFor(() =>
+      expect(screen.queryByText('Chargement des alertes...')).not.toBeInTheDocument()
+    );
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+
+    // 2. Clic précédent
+    const prevButton = screen.getByLabelText('Jour précédent');
+    fireEvent.click(prevButton);
+
+    // 3. Attendre le 2ème appel fetch (déclenché par useEffect [selectedDate])
     await waitFor(() => {
-      expect(screen.getByText(/Aucune alerte pour cette journée/i)).toBeInTheDocument();
+      expect(global.fetch).toHaveBeenCalledTimes(2);
     });
   });
 
-  // Test 4: Changement de filtre
-  it('permet de cliquer sur les filtres sans crash', async () => {
-    render(<TemperatureAlertLog sensors={mockSensors} token={mockToken} />);
+  it('devrait filtrer par "Trop hautes"', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: async () => [
+        { value: 25.5, timestamp: '2025-12-16T10:00:00Z' },
+        { value: 15.0, timestamp: '2025-12-16T11:00:00Z' },
+      ],
+    });
 
-    await waitForLoadingToFinish();
+    render(<TemperatureAlertLog sensors={mockSensors} />);
+    await waitFor(() =>
+      expect(screen.queryByText('Chargement des alertes...')).not.toBeInTheDocument()
+    );
 
-    // Cliquer sur les filtres
-    fireEvent.click(screen.getByText('Trop hautes'));
-    fireEvent.click(screen.getByText('Trop basses'));
-    fireEvent.click(screen.getByText('Toutes'));
+    const highButton = screen.getByText(/Trop hautes/i);
+    fireEvent.click(highButton);
+
+    expect(screen.getByText(/25\.5/)).toBeInTheDocument();
+    expect(screen.queryByText(/15\.0/)).not.toBeInTheDocument();
+  });
+
+  it('devrait filtrer par "Trop basses"', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: async () => [
+        { value: 25.5, timestamp: '2025-12-16T10:00:00Z' },
+        { value: 15.0, timestamp: '2025-12-16T11:00:00Z' },
+      ],
+    });
+
+    render(<TemperatureAlertLog sensors={mockSensors} />);
+    await waitFor(() =>
+      expect(screen.queryByText('Chargement des alertes...')).not.toBeInTheDocument()
+    );
+
+    const lowButton = screen.getByText(/Trop basses/i);
+    fireEvent.click(lowButton);
+
+    expect(screen.getByText(/15\.0/)).toBeInTheDocument();
+    expect(screen.queryByText(/25\.5/)).not.toBeInTheDocument();
+  });
+
+  it('devrait gérer les erreurs API', async () => {
+    (global.fetch as jest.Mock).mockRejectedValue(new Error('Network error'));
+
+    render(<TemperatureAlertLog sensors={mockSensors} />);
+
+    // Le loader doit disparaitre même en cas d'erreur (le finally du useEffect)
+    await waitFor(() => {
+      expect(screen.queryByText('Chargement des alertes...')).not.toBeInTheDocument();
+    });
 
     expect(screen.getByText(/Aucune alerte/i)).toBeInTheDocument();
-  });
-
-  // Test 5: Navigation entre les dates
-  it('permet de naviguer entre les dates', async () => {
-    render(<TemperatureAlertLog sensors={mockSensors} token={mockToken} />);
-
-    await waitForLoadingToFinish();
-
-    const buttons = screen.getAllByRole('button');
-    // On clique sur précédent
-    fireEvent.click(buttons[buttons.length - 2]); // Hypothèse: les flèches sont les derniers boutons si les filtres sont premiers
-
-    // Le fetch est relancé au changement de date, on attend qu'il finisse
-    // Note: waitForLoadingToFinish attend que le loader disparaisse.
-    // S'il réapparaît très vite, waitFor le gère.
-    await waitForLoadingToFinish();
-  });
-
-  // Test 6: Gestion sans token
-  it("gère l'absence de token", async () => {
-    render(<TemperatureAlertLog sensors={mockSensors} token={null} />);
-
-    // Même sans token, le useEffect se lance et met setLoading(false)
-    // Il faut attendre cette mise à jour d'état
-    await waitForLoadingToFinish();
-
-    expect(screen.getByText(/Journal des Alertes/i)).toBeInTheDocument();
-  });
-
-  // Test 7: Gestion des capteurs vides
-  it('gère un tableau de capteurs vide', async () => {
-    render(<TemperatureAlertLog sensors={[]} token={mockToken} />);
-
-    // Même logique : le useEffect met à jour l'état loading
-    await waitForLoadingToFinish();
-
-    expect(screen.getByText(/Journal des Alertes/i)).toBeInTheDocument();
-  });
-
-  // Test 8: Les filtres sont interactifs
-  it('met en évidence le filtre actif', async () => {
-    render(<TemperatureAlertLog sensors={mockSensors} token={mockToken} />);
-
-    await waitForLoadingToFinish();
-
-    const toutesButton = screen.getByText('Toutes');
-    expect(toutesButton).toHaveClass('bg-white', 'text-slate-800', 'shadow-sm');
-  });
-
-  // Test 9: Affichage de la date du jour
-  it('affiche la date courante', async () => {
-    render(<TemperatureAlertLog sensors={mockSensors} token={mockToken} />);
-
-    const dateElements = screen.getAllByText(
-      /décembre|janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre/i
-    );
-    expect(dateElements.length).toBeGreaterThan(0);
-
-    // CORRECTION
-    await waitForLoadingToFinish();
-  });
-
-  // Test 10: Le composant se rend sans erreur
-  it('se rend correctement avec les props minimales', async () => {
-    const { container } = render(<TemperatureAlertLog sensors={mockSensors} token={mockToken} />);
-
-    expect(container.firstChild).toBeInTheDocument();
-
-    // CORRECTION
-    await waitForLoadingToFinish();
   });
 });
