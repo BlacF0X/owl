@@ -77,7 +77,7 @@ export default async function TemperaturesDataPage({
         <p className="mt-1 text-slate-600">{subtitle}</p>
       </header>
 
-      <TemperatureDashboard initialSensors={sensors} token={token} />
+      <TemperatureDashboard initialSensors={sensors} />
     </div>
   );
 }
