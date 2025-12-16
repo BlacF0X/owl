@@ -1,46 +1,54 @@
+import '@testing-library/jest-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import TemperatureBatchLoader from '@/components/TemperatureBatchLoader';
 import type { TemperatureSensor } from '@/components/TemperatureSensorCard';
 
+// Définition des données de test
 const mockSensors: TemperatureSensor[] = [
   {
     sensor_id: 'sensor-1',
     name: 'Salon - Température',
     displayValue: '21.5',
     state_changed_at: new Date().toISOString(),
-    hub: {
-      hub_id: 'hub-1',
-      name: 'Hub Principal',
-    },
-    type: {
-      typekey: 'temperature',
-      name: 'Température',
-      unit: '°C',
-    },
+    hub: { hub_id: 'hub-1', name: 'Hub Principal' },
+    type: { typekey: 'temperature', name: 'Température', unit: '°C' },
   },
   {
     sensor_id: 'sensor-2',
     name: 'Cuisine - Température',
     displayValue: '19.0',
     state_changed_at: new Date().toISOString(),
-    hub: {
-      hub_id: 'hub-1',
-      name: 'Hub Principal',
-    },
-    type: {
-      typekey: 'temperature',
-      name: 'Température',
-      unit: '°C',
-    },
+    hub: { hub_id: 'hub-1', name: 'Hub Principal' },
+    type: { typekey: 'temperature', name: 'Température', unit: '°C' },
   },
 ];
 
 describe('TemperatureBatchLoader', () => {
+  // Variable pour stocker l'espion de la console
+  let consoleErrorSpy: jest.SpyInstance;
+
   beforeEach(() => {
-    (global.fetch as jest.Mock).mockClear();
+    // 1. Nettoyer tous les mocks précédents
+    jest.clearAllMocks();
+
+    // 2. Mocker fetch par défaut pour qu'il réussisse (évite les erreurs inattendues)
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: async () => ({}),
+    });
+
+    // 3. Mocker console.error pour le rendre muet
+    // mockImplementation(() => {}) remplace la vraie fonction par une fonction vide
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    // 4. Restaurer la vraie console après CHAQUE test
+    consoleErrorSpy.mockRestore();
   });
 
   it('devrait afficher le loader pendant le chargement', () => {
+    // On simule une promesse qui ne se résout pas tout de suite
     (global.fetch as jest.Mock).mockImplementation(() => new Promise(() => {}));
 
     render(<TemperatureBatchLoader sensors={mockSensors} viewMode="current" />);
@@ -90,9 +98,7 @@ describe('TemperatureBatchLoader', () => {
   it('devrait passer le bon viewMode aux cartes', async () => {
     (global.fetch as jest.Mock).mockResolvedValue({
       ok: true,
-      json: async () => ({
-        'sensor-1': [],
-      }),
+      json: async () => ({ 'sensor-1': [] }),
     });
 
     const { rerender } = render(<TemperatureBatchLoader sensors={mockSensors} viewMode="max" />);
@@ -109,20 +115,30 @@ describe('TemperatureBatchLoader', () => {
   });
 
   it('devrait gérer les erreurs API silencieusement', async () => {
+    // On force l'erreur réseau
     (global.fetch as jest.Mock).mockRejectedValue(new Error('Network error'));
 
     render(<TemperatureBatchLoader sensors={mockSensors} viewMode="current" />);
 
+    // On attend que le chargement disparaisse (le composant gère l'erreur via catch)
     await waitFor(() => {
-      expect(screen.queryByText('Chargement')).not.toBeInTheDocument();
+      expect(
+        screen.queryByText("Chargement de l'historique des capteurs...")
+      ).not.toBeInTheDocument();
     });
+
+    // On vérifie que console.error a bien été appelé
+    // GRÂCE AU MOCK, rien ne s'affichera dans ton terminal
+    expect(consoleErrorSpy).toHaveBeenCalled();
   });
 
   it('devrait gérer un tableau de capteurs vide', async () => {
     render(<TemperatureBatchLoader sensors={[]} viewMode="current" />);
 
     await waitFor(() => {
-      expect(screen.queryByText('Chargement')).not.toBeInTheDocument();
+      expect(
+        screen.queryByText("Chargement de l'historique des capteurs...")
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -132,7 +148,9 @@ describe('TemperatureBatchLoader', () => {
     render(<TemperatureBatchLoader sensors={sensorsNoHub} viewMode="current" />);
 
     await waitFor(() => {
-      expect(screen.queryByText('Chargement')).not.toBeInTheDocument();
+      expect(
+        screen.queryByText("Chargement de l'historique des capteurs...")
+      ).not.toBeInTheDocument();
     });
   });
 });
