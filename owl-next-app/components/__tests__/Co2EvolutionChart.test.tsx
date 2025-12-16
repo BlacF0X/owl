@@ -7,9 +7,7 @@ jest.mock('recharts', () => ({
   ResponsiveContainer: ({ children }: any) => (
     <div data-testid="responsive-container">{children}</div>
   ),
-  AreaChart: ({ children }: any) => (
-    <div data-testid="recharts-area-chart">{children}</div>
-  ),
+  AreaChart: ({ children }: any) => <div data-testid="recharts-area-chart">{children}</div>,
   Area: () => <div />,
   XAxis: () => <div />,
   YAxis: () => <div />,
@@ -48,13 +46,7 @@ describe('Co2EvolutionChart Component', () => {
   });
 
   it('affiche le suffixe du titre si fourni', () => {
-    render(
-      <EvolutionChart
-        data={[]}
-        loading={false}
-        titleSuffix="Capteur Salon"
-      />,
-    );
+    render(<EvolutionChart data={[]} loading={false} titleSuffix="Capteur Salon" />);
     expect(screen.getByText('Capteur Salon')).toBeInTheDocument();
   });
 });
