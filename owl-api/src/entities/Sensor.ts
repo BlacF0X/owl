@@ -13,7 +13,7 @@ import { SensorType } from './SensorType.js';
 import { SensorReading } from './SensorReading.js';
 
 @Entity('sensors')
-@Unique(['hub', 'hardware_id']) 
+@Unique(['hub', 'hardware_id'])
 export class Sensor {
   @PrimaryGeneratedColumn('uuid')
   sensor_id!: string;

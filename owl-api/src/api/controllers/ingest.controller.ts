@@ -77,8 +77,8 @@ export const processIngest = async (req: Request, res: Response) => {
     });
     // Map pour accès rapide par nom : "Salon Temp" -> Entity
     const sensorsMap = new Map<string, Sensor>();
-    existingSensors.forEach(s => {
-        if(s.hardware_id) sensorsMap.set(s.hardware_id, s);
+    existingSensors.forEach((s) => {
+      if (s.hardware_id) sensorsMap.set(s.hardware_id, s);
     });
     // 3. Traitement des lectures
     const readingsToInsert: SensorReading[] = [];
