@@ -35,17 +35,12 @@ console.log(
 
 /**
  * Génère une valeur réaliste selon le type de capteur
- * CORRECTION : Suppression de 'iteration', utilisation du temps réel pour le cycle
  */
 const generateValue = (type: string, timestamp?: Date): string | number => {
   const now = timestamp || new Date();
   const hour = now.getHours() + now.getMinutes() / 60;
   const minuteOfDay = hour * 60;
 
-  // CORRECTION MAJEURE ICI :
-  // On calcule le "cycle" basé sur les minutes réelles écoulées (UNIX time).
-  // Cela remplace l'argument 'iteration' qui valait toujours 0.
-  // Le % 720 assure un cycle qui se répète toutes les 12 heures (720 minutes).
   const timeBasedCycle = Math.floor(now.getTime() / 60000) % 720;
 
   switch (type) {

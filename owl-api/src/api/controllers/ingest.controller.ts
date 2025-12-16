@@ -75,11 +75,20 @@ export const processIngest = async (req: Request, res: Response) => {
       where: { hub: { hub_id: hub.hub_id } },
       relations: ['sensorType'],
     });
-    // Map pour accès rapide par nom : "Salon Temp" -> Entity
-    const sensorsMap = new Map<string, Sensor>();
+
+    // Double Map pour la migration
+    const sensorsByHardwareId = new Map<string, Sensor>();
+    const sensorsByName = new Map<string, Sensor>();
+
     existingSensors.forEach((s) => {
-      if (s.hardware_id) sensorsMap.set(s.hardware_id, s);
+      // On indexe par hardware_id si dispo
+      if (s.hardware_id) {
+        sensorsByHardwareId.set(s.hardware_id, s);
+      }
+      // On indexe AUSSI par nom (pour le fallback)
+      sensorsByName.set(s.name, s);
     });
+
     // 3. Traitement des lectures
     const readingsToInsert: SensorReading[] = [];
     const sensorsToUpdate: Sensor[] = [];
@@ -95,7 +104,28 @@ export const processIngest = async (req: Request, res: Response) => {
       }
 
       // --- LOGIQUE AUTO-PROVISIONING ---
-      let sensor = sensorsMap.get(item.hardware_id);
+      // 1. Essai prioritaire par Hardware ID
+      let sensor = sensorsByHardwareId.get(item.hardware_id);
+
+      // 2. Fallback : Essai par Nom (Migration des anciens capteurs)
+      if (!sensor && item.sensor_name) {
+        const potentialMatch = sensorsByName.get(item.sensor_name);
+        // On vérifie que c'est bien le même type pour éviter des confusions bizarres
+        if (
+          potentialMatch &&
+          potentialMatch.sensorType.type_key === item.type
+        ) {
+          sensor = potentialMatch;
+
+          // MIGRATION : On sauve le hardware_id manquant !
+          console.log(
+            `🔧 Migration : Ajout hardware_id sur le capteur "${sensor.name}"`
+          );
+          sensor.hardware_id = item.hardware_id;
+          // On l'ajoute direct à la map principale pour la suite
+          sensorsByHardwareId.set(item.hardware_id, sensor);
+        }
+      }
 
       if (!sensor) {
         // Création à la volée
@@ -113,8 +143,9 @@ export const processIngest = async (req: Request, res: Response) => {
 
         // On doit sauvegarder immédiatement pour avoir un sensor_id pour les readings
         await queryRunner.manager.save(sensor);
-        // On l'ajoute à la map pour ne pas le recréer si présent 2x dans le payload
-        sensorsMap.set(sensor.name, sensor);
+        // Mise à jour des maps
+        sensorsByHardwareId.set(item.hardware_id, sensor);
+        sensorsByName.set(sensor.name, sensor);
       }
 
       // --- NORMALISATION & DETECTION CHANGEMENT ---

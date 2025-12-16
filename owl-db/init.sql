@@ -109,3 +109,17 @@ INSERT INTO SensorTypes (type_key, name, unit, description) VALUES
 -- =================================================================
 -- Fin du script
 -- =================================================================
+
+-- =================================================================
+-- Ajouts ultérieurs
+-- =================================================================
+
+ALTER TABLE Sensors ADD CONSTRAINT uq_sensors_hub_name UNIQUE (hub_id, name);
+
+ALTER TABLE sensors ADD COLUMN hardware_id VARCHAR(100) UNIQUE;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_sensors_hub_hardware_id ON Sensors (hub_id, hardware_id);
+
+-- =================================================================
+-- Fin des ajouts ultérieurs
+-- =================================================================
