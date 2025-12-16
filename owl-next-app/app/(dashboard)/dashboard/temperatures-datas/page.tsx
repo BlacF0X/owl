@@ -1,7 +1,8 @@
 import { currentUser, auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { fetchFromApi } from '@/src/lib/apiClient';
-import TemperatureDashboard, { TemperatureSensor } from '@/components/TemperatureDashboard';
+import TemperatureDashboard from '@/components/TemperatureDashboard';
+import type { TemperatureSensor } from '@/components/TemperatureSensorCard';
 
 export const dynamic = 'force-dynamic';
 
@@ -76,7 +77,7 @@ export default async function TemperaturesDataPage({
         <p className="mt-1 text-slate-600">{subtitle}</p>
       </header>
 
-      <TemperatureDashboard initialSensors={sensors} token={token} />
+      <TemperatureDashboard initialSensors={sensors} />
     </div>
   );
 }

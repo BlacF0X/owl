@@ -10,20 +10,36 @@ const createJestConfig = nextJest({
 const config: Config = {
   coverageProvider: 'v8',
   testEnvironment: 'jsdom',
+
+  // ✅ AJOUTÉ : Fichier de setup pour les tests
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+
   // Configuration pour gérer les alias de chemin (@/...)
   moduleNameMapper: {
     '^@/src/(.*)$': '<rootDir>/src/$1',
     '^@/components/(.*)$': '<rootDir>/components/$1',
+    '^@/(.*)$': '<rootDir>/$1', // ✅ AJOUTÉ : Support @/ global
   },
-  // Configuration optionnelle : fichier de setup à exécuter avant chaque test
-  // setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
+
   collectCoverageFrom: [
     'src/**/*.{js,jsx,ts,tsx}',
     'components/**/*.{js,jsx,ts,tsx}',
     'app/**/*.{js,jsx,ts,tsx}',
-    '!src/**/*.d.ts', // Ignorer les fichiers de déclaration
+    '!src/**/*.d.ts',
+    '!components/**/*.d.ts', // ✅ AJOUTÉ
+    '!components/**/*.stories.{js,jsx,ts,tsx}', // ✅ AJOUTÉ
     '!**/node_modules/**',
   ],
+
+  // ✅ AJOUTÉ : Seuils de couverture
+  coverageThreshold: {
+    global: {
+      branches: 70,
+      functions: 70,
+      lines: 70,
+      statements: 70,
+    },
+  },
 };
 
 // createJestConfig est exporté de cette façon pour s'assurer que next/jest peut charger la config Next.js async
