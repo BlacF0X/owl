@@ -18,7 +18,7 @@ export interface TemperatureSensor {
   hub?: {
     hub_id: string;
     name: string;
-    created_at?: string; // ✅ AJOUT ICI
+    created_at?: string;
   };
   type: {
     typekey: string;
@@ -27,15 +27,16 @@ export interface TemperatureSensor {
   };
 }
 
+// ✅ CORRECTION : On renomme les propriétés pour être clair (7 jours)
 export interface SensorHistory {
   data24h: ChartDataPoint[];
   data7dMax: ChartDataPoint[];
   data7dMin: ChartDataPoint[];
   data7dAvg: ChartDataPoint[];
   currentTemp: number;
-  maxTempToday: number | null;
-  minTempToday: number | null;
-  avgTempToday: number | null;
+  maxTemp7d: number | null; // Au lieu de maxTempToday
+  minTemp7d: number | null; // Au lieu de minTempToday
+  avgTemp7d: number | null; // Au lieu de avgTempToday
   currentHourIndex: number | null;
 }
 
@@ -59,23 +60,27 @@ export default function TemperatureSensorCard({ sensor, history, viewMode, onRet
   }
 
   let dataForChart = history.data24h;
-  let tempForCircle = history.currentTemp;
+
+  // En mode "current", on prend la valeur live du capteur (mis à jour par Pusher)
+  let tempForCircle = parseFloat(sensor.displayValue) || 0;
+
   let statusLabel = 'Température en temps réel';
   let currentHour = history.currentHourIndex;
 
+  // ✅ CORRECTION : Utilisation des nouvelles propriétés 7j
   if (viewMode === 'max') {
     dataForChart = history.data7dMax;
-    tempForCircle = history.maxTempToday ?? 0;
+    tempForCircle = history.maxTemp7d ?? 0;
     statusLabel = 'Température maximale (7j)';
     currentHour = null;
   } else if (viewMode === 'min') {
     dataForChart = history.data7dMin;
-    tempForCircle = history.minTempToday ?? 0;
+    tempForCircle = history.minTemp7d ?? 0;
     statusLabel = 'Température minimale (7j)';
     currentHour = null;
   } else if (viewMode === 'avg') {
     dataForChart = history.data7dAvg;
-    tempForCircle = history.avgTempToday ?? 0;
+    tempForCircle = history.avgTemp7d ?? 0;
     statusLabel = 'Température moyenne (7j)';
     currentHour = null;
   }
