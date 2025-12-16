@@ -14,7 +14,17 @@ export interface TemperatureSensor {
   sensor_id: string;
   name: string;
   displayValue: string;
-  hub?: { hub_id: string; name: string };
+  state_changed_at?: string;
+  hub?: {
+    hub_id: string;
+    name: string;
+    created_at?: string; // ✅ AJOUT ICI
+  };
+  type: {
+    typekey: string;
+    name: string;
+    unit: string;
+  };
 }
 
 export interface SensorHistory {

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@clerk/nextjs';
 import { Loader2 } from 'lucide-react';
@@ -29,10 +29,8 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
 
   const [hubSummaries, setHubSummaries] = useState<HubSummary[]>([]);
   const [hubsLoading, setHubsLoading] = useState(false);
-  const [hubsError, setHubsError] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
 
-  // Charger le token immédiatement
   useEffect(() => {
     let mounted = true;
     
@@ -41,10 +39,9 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
         const t = await getToken();
         if (mounted) {
           setToken(t);
-          console.log('[TemperatureDashboard] Token récupéré:', t ? '✅' : '❌');
         }
       } catch (error) {
-        console.error('[TemperatureDashboard] Erreur récupération token:', error);
+        console.error('[TemperatureDashboard] Erreur token:', error);
       }
     };
     
@@ -55,53 +52,65 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
     };
   }, [getToken]);
 
-  // Charger les données complètes des hubs (avec graphiques)
+  // ✅ OPTIMISATION : Mémoïsation des hubs uniques
+  const uniqueHubs = useMemo(() => {
+    const sensorsWithHub = initialSensors.filter((s) => s.hub);
+    return Array.from(
+      new Map(
+        sensorsWithHub.map((s) => [
+          s.hub!.hub_id,
+          { 
+            id: s.hub!.hub_id, 
+            name: s.hub!.name,
+            created_at: s.hub!.created_at
+          }
+        ])
+      ).values()
+    );
+  }, [initialSensors]);
+
+  // ✅ OPTIMISATION : 1 SEULE requête API par hub
   useEffect(() => {
     if (hubId) return;
     if (!token) return;
 
     const loadHubSummaries = async () => {
       setHubsLoading(true);
-      setHubsError(null);
 
       try {
         const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-        const sensorsWithHub = initialSensors.filter((s) => s.hub);
 
-        const uniqueHubs = Array.from(
-          new Map(
-            sensorsWithHub.map((s) => [s.hub!.hub_id, { id: s.hub!.hub_id, name: s.hub!.name }])
-          ).values()
-        );
-
-        const hubPromises = uniqueHubs.map(async ({ id: hId, name: hubName }) => {
+        const hubPromises = uniqueHubs.map(async ({ id: hId, name: hubName, created_at }) => {
           try {
-            const sensorsForHub = sensorsWithHub.filter((s) => s.hub?.hub_id === hId);
+            const sensorsForHub = initialSensors.filter((s) => s.hub?.hub_id === hId);
             const sensorCount = sensorsForHub.length;
             const currentTemp = sensorsForHub.length
               ? parseFloat(sensorsForHub[0].displayValue) || 0
               : 0;
 
-            const allReadingsPromises = sensorsForHub.map(async (sensor) => {
-              try {
-                const res = await fetch(
-                  `${API_URL}/api/sensors/${sensor.sensor_id}/readings?period=7d`,
-                  { headers: { Authorization: `Bearer ${token}` } }
-                );
-                if (!res.ok) return [];
-                return await res.json();
-              } catch {
-                return [];
-              }
+            // ✅ UNE SEULE requête pour tous les capteurs du hub
+            const res = await fetch(
+              `${API_URL}/api/temperature/hubs/${hId}/readings`,
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            if (!res.ok) {
+              return null;
+            }
+
+            const groupedReadings = await res.json();
+
+            const allReadings: Array<{ value: number; timestamp: Date }> = [];
+            Object.values(groupedReadings).forEach((readings: any) => {
+              readings.forEach((r: any) => {
+                allReadings.push({
+                  value: Number(r.value),
+                  timestamp: new Date(r.timestamp)
+                });
+              });
             });
 
-            const allReadings = (await Promise.all(allReadingsPromises)).flat();
-
             const sortedData = allReadings
-              .map((r: any) => ({
-                value: Number(r.value),
-                timestamp: new Date(r.timestamp),
-              }))
               .filter((r) => !isNaN(r.value))
               .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
 
@@ -109,6 +118,7 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
               return {
                 hubid: hId,
                 hubname: hubName,
+                hubcreatedat: created_at,
                 sensorcount: sensorCount,
                 currenttemp: currentTemp,
                 avgtemp7d: null,
@@ -117,14 +127,10 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
                 chartData24h: [],
                 chartData7dAvg: [],
                 chartData7dMax: [],
-                chartData7dMin: [],
+                chartData7dMin: []
               } as HubSummary;
             }
 
-            const lastDataPoint = sortedData[sortedData.length - 1];
-            const referenceDate = lastDataPoint.timestamp;
-
-            // 🔥 FIX : Utiliser l'heure LOCALE de Bruxelles
             const now = new Date();
             const refHour = now.getHours();
 
@@ -138,7 +144,6 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
                 continue;
               }
 
-              // 🔥 Filtrer sur l'heure LOCALE du timestamp
               const readings = sortedData.filter((d) => {
                 const localDate = new Date(d.timestamp.getTime());
                 return (
@@ -165,7 +170,7 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
             sortedData.forEach((item) => {
               const dayKey = item.timestamp.toLocaleDateString('fr-FR', {
                 weekday: 'short',
-                day: 'numeric',
+                day: 'numeric'
               });
               if (!tempsByDay.has(dayKey)) {
                 dayKeysInOrder.push(dayKey);
@@ -195,9 +200,9 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
               }
             });
 
-            const referenceDayKey = referenceDate.toLocaleDateString('fr-FR', {
+            const referenceDayKey = now.toLocaleDateString('fr-FR', {
               weekday: 'short',
-              day: 'numeric',
+              day: 'numeric'
             });
             const todayTemps = tempsByDay.get(referenceDayKey) || [];
             const maxtemp7d = todayTemps.length > 0 ? Math.max(...todayTemps) : null;
@@ -209,6 +214,7 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
             return {
               hubid: hId,
               hubname: hubName,
+              hubcreatedat: created_at,
               sensorcount: sensorCount,
               currenttemp: currentTemp,
               avgtemp7d,
@@ -217,7 +223,7 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
               chartData24h,
               chartData7dAvg,
               chartData7dMax,
-              chartData7dMin,
+              chartData7dMin
             } as HubSummary;
           } catch {
             return null;
@@ -229,14 +235,13 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
         setHubSummaries(validHubs);
       } catch (err) {
         console.error('Erreur chargement hubs:', err);
-        setHubsError('Erreur de chargement des hubs');
       } finally {
         setHubsLoading(false);
       }
     };
 
     loadHubSummaries();
-  }, [hubId, initialSensors, token, viewMode]);
+  }, [hubId, initialSensors, token, viewMode, uniqueHubs]);
 
   if (!initialSensors || initialSensors.length === 0) {
     return (
@@ -246,7 +251,6 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
     );
   }
 
-  // MODE COMPARISON
   if (viewMode === 'comparison') {
     return (
       <div className="flex flex-col gap-6 w-full pb-10">
@@ -257,7 +261,6 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
     );
   }
 
-  // MODE HUB SPÉCIFIQUE (hubId présent)
   if (hubId) {
     return (
       <div className="flex flex-col gap-6 w-full pb-10">
@@ -268,7 +271,6 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
     );
   }
 
-  // MODE TOUS LES HUBS (SANS AlertLog)
   return (
     <div className="flex flex-col gap-6 w-full pb-10">
       <DashboardViewButtons currentMode={viewMode} onChange={setViewMode} showComparison={false} />
@@ -277,10 +279,6 @@ export default function TemperatureDashboard({ initialSensors }: Props) {
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-12 w-12 animate-spin text-blue-600 mr-4" />
           <p className="text-slate-500">Chargement des hubs...</p>
-        </div>
-      ) : hubsError ? (
-        <div className="text-center py-12 bg-white rounded-xl shadow-sm">
-          <p className="text-red-500">{hubsError}</p>
         </div>
       ) : hubSummaries.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-xl shadow-sm">

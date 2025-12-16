@@ -19,11 +19,14 @@ interface Props {
 
 type FilterType = 'all' | 'high' | 'low';
 
+const ITEMS_PER_PAGE = 20; // ✅ Pagination
+
 const TemperatureAlertLog: React.FC<Props> = ({ sensors, token }) => {
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [filterType, setFilterType] = useState<FilterType>('all');
+  const [currentPage, setCurrentPage] = useState(1); // ✅ Page actuelle
 
   const MIN_THRESHOLD = 18;
   const MAX_THRESHOLD = 23;
@@ -32,18 +35,20 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors, token }) => {
     const newDate = new Date(selectedDate);
     newDate.setDate(selectedDate.getDate() - 1);
     setSelectedDate(newDate);
+    setCurrentPage(1); // ✅ Reset pagination
   };
 
   const goToNextDay = () => {
     const newDate = new Date(selectedDate);
     newDate.setDate(selectedDate.getDate() + 1);
     setSelectedDate(newDate);
+    setCurrentPage(1); // ✅ Reset pagination
   };
 
   const formattedDateTitle = selectedDate.toLocaleDateString('fr-FR', {
     weekday: 'long',
     day: 'numeric',
-    month: 'long',
+    month: 'long'
   });
   const displayDate = formattedDateTitle.charAt(0).toUpperCase() + formattedDateTitle.slice(1);
 
@@ -70,8 +75,8 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors, token }) => {
             const url = `${API_URL}/api/sensors/${sensor.sensor_id}/readings?period=7d&refDate=${selectedDate.toISOString()}`;
             const res = await fetch(url, {
               headers: {
-                Authorization: `Bearer ${token}`,
-              },
+                Authorization: `Bearer ${token}`
+              }
             });
 
             if (!res.ok) return;
@@ -91,7 +96,7 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors, token }) => {
                   sensorName: sensor.name,
                   value: val,
                   timestamp: new Date(reading.timestamp),
-                  type: 'low',
+                  type: 'low'
                 });
               } else if (val > MAX_THRESHOLD) {
                 allAlerts.push({
@@ -99,12 +104,12 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors, token }) => {
                   sensorName: sensor.name,
                   value: val,
                   timestamp: new Date(reading.timestamp),
-                  type: 'high',
+                  type: 'high'
                 });
               }
             });
           } catch {
-            // Erreur ignorée silencieusement
+            // Erreur ignorée
           }
         });
 
@@ -112,7 +117,7 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors, token }) => {
         allAlerts.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
         setAlerts(allAlerts);
       } catch {
-        // Erreur ignorée silencieusement
+        // Erreur ignorée
       } finally {
         setLoading(false);
       }
@@ -126,13 +131,19 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors, token }) => {
     return alert.type === filterType;
   });
 
+  // ✅ Pagination
+  const totalPages = Math.ceil(filteredAlerts.length / ITEMS_PER_PAGE);
+  const paginatedAlerts = filteredAlerts.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
   return (
     <div className="w-full bg-white rounded-xl shadow-md p-6 animate-in fade-in slide-in-from-bottom-4 mt-8 border border-red-100">
       {/* En-tête */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold text-slate-800">Journal des Alertes</h2>
         
-        {/* 🔥 FIX : Conteneur avec largeur fixe pour éviter le décalage */}
         <div className="flex items-center gap-2">
           <button
             onClick={goToPreviousDay}
@@ -142,7 +153,6 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors, token }) => {
             <ChevronLeft className="h-5 w-5" />
           </button>
           
-          {/* 🔥 Largeur fixe + centrage du texte */}
           <div className="w-64 text-center">
             <span className="text-sm font-medium text-slate-700">
               {displayDate}
@@ -163,7 +173,10 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors, token }) => {
       {/* Filtres */}
       <div className="flex gap-2 mb-4 flex-wrap">
         <button
-          onClick={() => setFilterType('all')}
+          onClick={() => {
+            setFilterType('all');
+            setCurrentPage(1);
+          }}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
             filterType === 'all'
               ? 'bg-slate-900 text-white shadow-sm'
@@ -173,7 +186,10 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors, token }) => {
           Toutes
         </button>
         <button
-          onClick={() => setFilterType('high')}
+          onClick={() => {
+            setFilterType('high');
+            setCurrentPage(1);
+          }}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
             filterType === 'high'
               ? 'bg-red-600 text-white shadow-sm'
@@ -183,7 +199,10 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors, token }) => {
           Trop hautes (&gt;{MAX_THRESHOLD}°C)
         </button>
         <button
-          onClick={() => setFilterType('low')}
+          onClick={() => {
+            setFilterType('low');
+            setCurrentPage(1);
+          }}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
             filterType === 'low'
               ? 'bg-blue-600 text-white shadow-sm'
@@ -197,7 +216,7 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors, token }) => {
       {/* Liste des alertes */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
           <p className="ml-3 text-slate-500">Chargement des alertes...</p>
         </div>
       ) : filteredAlerts.length === 0 ? (
@@ -205,40 +224,65 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors, token }) => {
           <p>Aucune alerte pour cette journée</p>
         </div>
       ) : (
-        <div className="space-y-2 max-h-96 overflow-y-auto">
-          {filteredAlerts.map((alert) => (
-            <div
-              key={alert.id}
-              className={`flex items-center justify-between p-4 rounded-lg ${
-                alert.type === 'high'
-                  ? 'bg-red-50 border-l-4 border-red-500'
-                  : 'bg-blue-50 border-l-4 border-blue-500'
-              }`}
-            >
-              <div>
-                <p className="font-semibold text-slate-800">{alert.sensorName}</p>
-                <p className="text-sm text-slate-600">
-                  {alert.timestamp.toLocaleTimeString('fr-FR', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </p>
+        <>
+          <div className="space-y-2 max-h-96 overflow-y-auto">
+            {paginatedAlerts.map((alert) => (
+              <div
+                key={alert.id}
+                className={`flex items-center justify-between p-4 rounded-lg ${
+                  alert.type === 'high'
+                    ? 'bg-red-50 border-l-4 border-red-500'
+                    : 'bg-blue-50 border-l-4 border-blue-500'
+                }`}
+              >
+                <div>
+                  <p className="font-semibold text-slate-800">{alert.sensorName}</p>
+                  <p className="text-sm text-slate-600">
+                    {alert.timestamp.toLocaleTimeString('fr-FR', {
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p
+                    className={`text-2xl font-bold ${
+                      alert.type === 'high' ? 'text-red-600' : 'text-blue-600'
+                    }`}
+                  >
+                    {alert.value.toFixed(1)}°C
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    {alert.type === 'high' ? 'Trop chaud' : 'Trop froid'}
+                  </p>
+                </div>
               </div>
-              <div className="text-right">
-                <p
-                  className={`text-2xl font-bold ${
-                    alert.type === 'high' ? 'text-red-600' : 'text-blue-600'
-                  }`}
-                >
-                  {alert.value.toFixed(1)}°C
-                </p>
-                <p className="text-xs text-slate-500">
-                  {alert.type === 'high' ? 'Trop chaud' : 'Trop froid'}
-                </p>
-              </div>
+            ))}
+          </div>
+
+          {/* ✅ Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-4 mt-6 pt-4 border-t border-slate-200">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Précédent
+              </button>
+              <span className="text-sm text-slate-600">
+                Page {currentPage} sur {totalPages} ({filteredAlerts.length} alerte{filteredAlerts.length > 1 ? 's' : ''})
+              </span>
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Suivant
+              </button>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
     </div>
   );

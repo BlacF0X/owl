@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
 import { Line } from 'react-chartjs-2';
+import { useMemo } from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -12,8 +12,7 @@ import {
   Tooltip,
   Legend,
   Filler,
-  TooltipItem,
-  ChartOptions,
+  ChartOptions
 } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
 
@@ -29,66 +28,64 @@ ChartJS.register(
   annotationPlugin
 );
 
+interface ChartDataPoint {
+  label: string;
+  value: number | null;
+}
+
 interface ChartProps {
-  data: { label: string; value: number | null }[];
+  data: ChartDataPoint[];
   currentHour?: number | null;
 }
 
 const COLORS = {
+  green: '#10b981',
   blue: '#3b82f6',
-  green: '#22c55e',
   red: '#ef4444',
+  green33: '#10b98133',
+  blue33: '#3b82f633',
+  red33: '#ef444433'
 };
 
-const getColor = (value: number) => {
-  if (value > 23) return COLORS.red;
-  if (value < 18) return COLORS.blue;
+const getColor = (val: number) => {
+  if (val > 23) return COLORS.red;
+  if (val < 18) return COLORS.blue;
   return COLORS.green;
 };
-
-interface SegmentContext {
-  p0: { parsed: { y: number } };
-  p1: { parsed: { y: number } };
-}
 
 export default function TemperatureDayChart({ data, currentHour }: ChartProps) {
   const safeData = data && data.length > 0 ? data : [];
 
-  // On détecte si on est en mode "Temps réel" (vue 24h) grâce à la présence de currentHour
   const isRealTime = currentHour !== null && currentHour !== undefined;
 
-  const chartData = {
+  // ✅ OPTIMISATION : Mémoïsation des données du graphique
+  const chartData = useMemo(() => ({
     labels: safeData.map((d) => d.label),
     datasets: [
       {
         label: 'Température',
         data: safeData.map((d) => d.value),
         segment: {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           borderColor: (ctx: any) => {
-            const context = ctx as SegmentContext;
-            if (!context.p1 || !context.p1.parsed) return COLORS.green;
-            const val = context.p1.parsed.y;
+            if (!ctx.p1 || !ctx.p1.parsed) return COLORS.green;
+            const val = ctx.p1.parsed.y;
             if (val > 23) return COLORS.red;
             if (val < 18) return COLORS.blue;
             return COLORS.green;
           },
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           backgroundColor: (ctx: any) => {
-            const context = ctx as SegmentContext;
-            if (!context.p1 || !context.p1.parsed) return `${COLORS.green}33`;
-            const val = context.p1.parsed.y;
-            if (val > 23) return `${COLORS.red}33`;
-            if (val < 18) return `${COLORS.blue}33`;
-            return `${COLORS.green}33`;
-          },
+            if (!ctx.p1 || !ctx.p1.parsed) return COLORS.green33;
+            const val = ctx.p1.parsed.y;
+            if (val > 23) return COLORS.red33;
+            if (val < 18) return COLORS.blue33;
+            return COLORS.green33;
+          }
         },
         fill: true,
         tension: 0.4,
         pointRadius: 0,
         pointHoverRadius: 6,
         pointBackgroundColor: '#fff',
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         pointBorderColor: (context: any) => {
           const val = context.raw as number | null;
           if (val === null) return COLORS.green;
@@ -96,98 +93,91 @@ export default function TemperatureDayChart({ data, currentHour }: ChartProps) {
         },
         pointBorderWidth: 2,
         borderWidth: 2,
-        spanGaps: false,
-      },
-    ],
-  };
+        spanGaps: false
+      }
+    ]
+  }), [safeData]);
 
-  const options: ChartOptions<'line'> = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        backgroundColor: '#fff',
-        titleColor: '#1e293b',
-        bodyColor: '#1e293b',
-        borderColor: '#e2e8f0',
-        borderWidth: 1,
-        padding: 10,
-        displayColors: false,
-        callbacks: {
-          label: (context: TooltipItem<'line'>) => {
-            if (context.parsed.y === null) return '';
-            return `${context.parsed.y.toFixed(1)}°C`;
-          },
-          labelColor: (context: TooltipItem<'line'>) => {
-            const val = context.raw as number | null;
-            if (val === null) return { borderColor: COLORS.green, backgroundColor: COLORS.green };
-            return {
-              borderColor: getColor(val),
-              backgroundColor: getColor(val),
-            };
-          },
-        },
-      },
-      annotation: {
-        annotations: isRealTime
-          ? {
-              line1: {
-                type: 'line',
-                xMin: currentHour,
-                xMax: currentHour,
-                borderColor: '#94a3b8',
-                borderWidth: 2,
-                borderDash: [5, 5],
-                label: {
-                  display: true,
-                  content: 'Maintenant',
-                  position: 'start',
-                  backgroundColor: 'rgba(148, 163, 184, 0.9)',
-                  color: 'white',
-                  font: { size: 10, weight: 'bold' },
-                  yAdjust: 0,
-                },
-              },
+  // ✅ OPTIMISATION : Mémoïsation des options
+  const options = useMemo<ChartOptions<'line'>>(() => {
+    const baseOptions: ChartOptions<'line'> = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#fff',
+          titleColor: '#1e293b',
+          bodyColor: '#1e293b',
+          borderColor: '#e2e8f0',
+          borderWidth: 1,
+          padding: 10,
+          displayColors: true,
+          callbacks: {
+            label: (context) => {
+              if (context.parsed.y === null) return '';
+              return `${context.dataset.label}: ${context.parsed.y.toFixed(1)}°C`;
             }
-          : {},
-      },
-    },
-    scales: {
-      x: {
-        grid: { display: false },
-        ticks: {
-          color: '#94a3b8',
-          font: { size: 10 },
-          maxRotation: 0,
-          // Modification ici : on désactive le saut automatique en mode 24h
-          autoSkip: !isRealTime,
-          maxTicksLimit: isRealTime ? 24 : 8,
+          }
         },
-        border: { display: false },
+        annotation: isRealTime && currentHour !== null
+          ? {
+              annotations: {
+                currentHourLine: {
+                  type: 'line',
+                  xMin: currentHour,
+                  xMax: currentHour,
+                  borderColor: '#3b82f6',
+                  borderWidth: 2,
+                  borderDash: [5, 5],
+                  label: {
+                    display: true,
+                    content: 'Maintenant',
+                    position: 'start',
+                    backgroundColor: '#3b82f6',
+                    color: '#fff',
+                    font: { size: 10, weight: 'bold' }
+                  }
+                }
+              }
+            }
+          : undefined
       },
-      y: {
-        min: 15,
-        max: 30,
-        grid: {
-          color: '#f1f5f9',
-          tickBorderDash: [5, 5],
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: {
+            color: '#94a3b8',
+            font: { size: 10 },
+            maxRotation: 0,
+            autoSkip: true,
+            maxTicksLimit: 8
+          },
+          border: { display: false }
         },
-        ticks: {
-          stepSize: 5,
-          color: '#94a3b8',
-          font: { size: 11 },
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          callback: (value: any) => `${value}°`,
-        },
-        border: { display: false },
+        y: {
+          min: 15,
+          max: 30,
+          grid: {
+            color: '#f1f5f9',
+            tickBorderDash: [5, 5]
+          },
+          ticks: {
+            stepSize: 5,
+            color: '#94a3b8',
+            font: { size: 11 },
+            callback: (value: any) => `${value}°`
+          },
+          border: { display: false }
+        }
       },
-    },
-    interaction: {
-      mode: 'index',
-      intersect: false,
-    },
-  };
+      interaction: {
+        mode: 'index',
+        intersect: false
+      }
+    };
+    return baseOptions;
+  }, [isRealTime, currentHour]);
 
   if (safeData.length === 0) {
     return (

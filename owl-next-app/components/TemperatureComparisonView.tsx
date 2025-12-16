@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { Loader2 } from 'lucide-react';
 import TemperatureComparisonChart from './TemperatureComparisonChart';
 import type { TemperatureSensor } from './TemperatureSensorCard';
 
 interface HistoryItem {
-  value_num: number | string;
+  valuenum: number | string;
   timestamp: string;
 }
 
@@ -21,34 +21,86 @@ export default function TemperatureComparisonView({ sensors }: Props) {
   const [labels, setLabels] = useState<string[]>([]);
   const [sensorsData, setSensorsData] = useState<Array<{ sensorName: string; data: (number | null)[] }>>([]);
   const [averageData, setAverageData] = useState<(number | null)[]>([]);
+  const [token, setToken] = useState<string | null>(null);
 
+  // ✅ OPTIMISATION 1 : Charger le token une seule fois
   useEffect(() => {
+    let mounted = true;
+    const fetchToken = async () => {
+      try {
+        const t = await getToken();
+        if (mounted) setToken(t);
+      } catch (err) {
+        console.error('Erreur token:', err);
+      }
+    };
+    fetchToken();
+    return () => { mounted = false; };
+  }, [getToken]);
+
+  // ✅ OPTIMISATION 2 : Grouper les capteurs par hub
+  const sensorsByHub = useMemo(() => {
+    const grouped = new Map<string, TemperatureSensor[]>();
+    sensors.forEach((sensor) => {
+      if (!sensor.hub) return;
+      const hubId = sensor.hub.hub_id;
+      if (!grouped.has(hubId)) {
+        grouped.set(hubId, []);
+      }
+      grouped.get(hubId)!.push(sensor);
+    });
+    return grouped;
+  }, [sensors]);
+
+  // ✅ OPTIMISATION 3 : Utiliser l'endpoint groupé
+  useEffect(() => {
+    if (!token) return;
+    if (sensorsByHub.size === 0) {
+      setLoading(false);
+      return;
+    }
+
     const fetchAllData = async () => {
-      const token = await getToken();
       setLoading(true);
       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
       try {
-        const allSensorsData = await Promise.all(
-          sensors.map(async (sensor) => {
-            try {
-              const res = await fetch(`${API_URL}/api/sensors/${sensor.sensor_id}/readings?period=7d`, {
-                headers: { Authorization: `Bearer ${token}` },
-              });
+        // ✅ UNE SEULE requête par hub au lieu de N requêtes par capteur
+        const hubPromises = Array.from(sensorsByHub.entries()).map(async ([hubId, hubSensors]) => {
+          try {
+            const res = await fetch(`${API_URL}/api/temperature/hubs/${hubId}/readings`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
 
-              if (!res.ok) return null;
+            if (!res.ok) return null;
 
-              const rawData: HistoryItem[] = await res.json();
-              const sortedData = rawData.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+            const groupedReadings = await res.json();
+
+            // Traiter chaque capteur du hub
+            return hubSensors.map((sensor) => {
+              const rawData = groupedReadings[sensor.sensor_id] || [];
+              
+              if (rawData.length === 0) return null;
+
+              const sortedData = rawData.sort((a: any, b: any) => 
+                new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+              );
 
               // Grouper par jour
               const tempsByDay = new Map<string, number[]>();
-              sortedData.forEach((item) => {
+              sortedData.forEach((item: any) => {
                 const d = new Date(item.timestamp);
-                const dayKey = d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' });
-                if (!tempsByDay.has(dayKey)) tempsByDay.set(dayKey, []);
-                const val = Number(item.value_num);
-                if (!isNaN(val)) tempsByDay.get(dayKey)?.push(val);
+                const dayKey = d.toLocaleDateString('fr-FR', {
+                  weekday: 'short',
+                  day: 'numeric'
+                });
+                if (!tempsByDay.has(dayKey)) {
+                  tempsByDay.set(dayKey, []);
+                }
+                const val = Number(item.value);
+                if (!isNaN(val)) {
+                  tempsByDay.get(dayKey)?.push(val);
+                }
               });
 
               // Calculer moyennes
@@ -61,14 +113,23 @@ export default function TemperatureComparisonView({ sensors }: Props) {
                 }
               });
 
-              return { sensorName: sensor.name, labels: dayLabels.slice(-7), data: dayAverages.slice(-7) };
-            } catch {
-              return null;
-            }
-          })
-        );
+              return {
+                sensorName: sensor.name,
+                labels: dayLabels.slice(-7),
+                data: dayAverages.slice(-7)
+              };
+            }).filter(Boolean);
+          } catch {
+            return null;
+          }
+        });
 
-        const validData = allSensorsData.filter(Boolean) as Array<{ sensorName: string; labels: string[]; data: number[] }>;
+        const results = await Promise.all(hubPromises);
+        const validData = results.flat().filter(Boolean) as Array<{
+          sensorName: string;
+          labels: string[];
+          data: number[];
+        }>;
 
         if (validData.length === 0) {
           setLoading(false);
@@ -80,7 +141,7 @@ export default function TemperatureComparisonView({ sensors }: Props) {
 
         const sensorsChartData = validData.map((sensor) => ({
           sensorName: sensor.sensorName,
-          data: sensor.data as (number | null)[],
+          data: sensor.data as (number | null)[]
         }));
 
         // Moyenne globale
@@ -100,7 +161,7 @@ export default function TemperatureComparisonView({ sensors }: Props) {
     };
 
     fetchAllData();
-  }, [sensors, getToken]);
+  }, [token, sensorsByHub]); // ✅ Dépendances optimisées
 
   if (loading) {
     return (
@@ -121,9 +182,15 @@ export default function TemperatureComparisonView({ sensors }: Props) {
 
   return (
     <div className="bg-white rounded-xl shadow-md p-6">
-      <h3 className="text-lg font-bold text-slate-800 mb-4">Comparaison des capteurs (7 derniers jours)</h3>
+      <h3 className="text-lg font-bold text-slate-800 mb-4">
+        Comparaison des capteurs (7 derniers jours)
+      </h3>
       <div className="w-full h-[500px]">
-        <TemperatureComparisonChart labels={labels} sensorsData={sensorsData} averageData={averageData} />
+        <TemperatureComparisonChart
+          labels={labels}
+          sensorsData={sensorsData}
+          averageData={averageData}
+        />
       </div>
     </div>
   );
