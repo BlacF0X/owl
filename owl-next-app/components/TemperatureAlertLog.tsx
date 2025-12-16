@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import type { TemperatureSensor } from './TemperatureSensorCard';
 
 interface AlertItem {
@@ -44,13 +45,11 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors, token }) => {
     day: 'numeric',
     month: 'long',
   });
-
-  const displayDate =
-    formattedDateTitle.charAt(0).toUpperCase() + formattedDateTitle.slice(1);
+  const displayDate = formattedDateTitle.charAt(0).toUpperCase() + formattedDateTitle.slice(1);
 
   useEffect(() => {
     if (!token) {
-      setLoading(true);
+      setLoading(false);
       return;
     }
 
@@ -69,9 +68,10 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors, token }) => {
         const promises = sensors.map(async (sensor) => {
           try {
             const url = `${API_URL}/api/sensors/${sensor.sensor_id}/readings?period=7d&refDate=${selectedDate.toISOString()}`;
-            
             const res = await fetch(url, {
-              headers: { Authorization: `Bearer ${token}` },
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
             });
 
             if (!res.ok) return;
@@ -80,7 +80,6 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors, token }) => {
 
             data.forEach((reading) => {
               const readingDateStr = new Date(reading.timestamp).toISOString().split('T')[0];
-              
               if (readingDateStr !== targetDateStr) return;
 
               const val = Number(reading.value);
@@ -132,20 +131,31 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors, token }) => {
       {/* En-tête */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold text-slate-800">Journal des Alertes</h2>
+        
+        {/* 🔥 FIX : Conteneur avec largeur fixe pour éviter le décalage */}
         <div className="flex items-center gap-2">
           <button
             onClick={goToPreviousDay}
-            className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600"
+            className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex-shrink-0"
+            aria-label="Jour précédent"
           >
-            ←
+            <ChevronLeft className="h-5 w-5" />
           </button>
-          <span className="text-sm font-medium text-slate-700 px-4">{displayDate}</span>
+          
+          {/* 🔥 Largeur fixe + centrage du texte */}
+          <div className="w-64 text-center">
+            <span className="text-sm font-medium text-slate-700">
+              {displayDate}
+            </span>
+          </div>
+          
           <button
             onClick={goToNextDay}
             disabled={selectedDate.toDateString() === new Date().toDateString()}
-            className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+            aria-label="Jour suivant"
           >
-            →
+            <ChevronRight className="h-5 w-5" />
           </button>
         </div>
       </div>
@@ -170,7 +180,7 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors, token }) => {
               : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
           }`}
         >
-          Trop hautes (≥ {MAX_THRESHOLD}°C)
+          Trop hautes (&gt;{MAX_THRESHOLD}°C)
         </button>
         <button
           onClick={() => setFilterType('low')}
@@ -180,7 +190,7 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors, token }) => {
               : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
           }`}
         >
-          Trop basses (≤ {MIN_THRESHOLD}°C)
+          Trop basses (&lt;{MIN_THRESHOLD}°C)
         </button>
       </div>
 
@@ -200,7 +210,9 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors, token }) => {
             <div
               key={alert.id}
               className={`flex items-center justify-between p-4 rounded-lg ${
-                alert.type === 'high' ? 'bg-red-50 border-l-4 border-red-500' : 'bg-blue-50 border-l-4 border-blue-500'
+                alert.type === 'high'
+                  ? 'bg-red-50 border-l-4 border-red-500'
+                  : 'bg-blue-50 border-l-4 border-blue-500'
               }`}
             >
               <div>
@@ -213,7 +225,11 @@ const TemperatureAlertLog: React.FC<Props> = ({ sensors, token }) => {
                 </p>
               </div>
               <div className="text-right">
-                <p className={`text-2xl font-bold ${alert.type === 'high' ? 'text-red-600' : 'text-blue-600'}`}>
+                <p
+                  className={`text-2xl font-bold ${
+                    alert.type === 'high' ? 'text-red-600' : 'text-blue-600'
+                  }`}
+                >
                   {alert.value.toFixed(1)}°C
                 </p>
                 <p className="text-xs text-slate-500">
