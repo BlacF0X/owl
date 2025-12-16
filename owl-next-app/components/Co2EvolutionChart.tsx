@@ -1,127 +1,169 @@
+'use client';
+
 import React from 'react';
-import { BarChart2 } from 'lucide-react';
-import { Bar } from 'react-chartjs-2';
+import { Wind, Activity } from 'lucide-react';
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
   Tooltip,
-  Legend,
-  ChartOptions,
-} from 'chart.js';
-import { EvolutionData } from './Co2Types';
+  ResponsiveContainer,
+} from 'recharts';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+// 1. Définition du type pour un point de donnée
+export interface Co2DataPoint {
+  hour: string;
+  ppm: number;
+  height?: number;
+}
 
-interface EvolutionChartProps {
-  data: EvolutionData[];
+interface Co2EvolutionChartProps {
+  data: Co2DataPoint[];
   loading: boolean;
   titleSuffix?: string;
 }
 
-export const EvolutionChart: React.FC<EvolutionChartProps> = ({ data, loading, titleSuffix }) => {
-  const options: ChartOptions<'bar'> = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        backgroundColor: '#1e293b',
-        padding: 12,
-        titleFont: { size: 13, family: 'Inter, sans-serif' },
-        bodyFont: { size: 13, weight: 'bold', family: 'Inter, sans-serif' },
-        cornerRadius: 8,
-        displayColors: false,
-        callbacks: {
-          label: (context) => `${context.raw} ppm`,
-          title: (items) => `Heure : ${items[0].label}`,
-        },
-      },
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        max: 2000,
-        border: { display: false },
-        grid: { color: '#f1f5f9' },
-        ticks: { font: { size: 11 }, color: '#64748b', padding: 10 },
-      },
-      x: {
-        type: 'category',
-        grid: { display: false },
-        ticks: {
-          font: { size: 11 },
-          color: '#64748b',
-          maxRotation: 0,
-          autoSkip: true,
-          maxTicksLimit: 8,
-        },
-      },
-    },
-    animation: { duration: 600, easing: 'easeOutQuart' },
+// 2. Interface pour les props du Tooltip Recharts pour éviter le 'any'
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: Array<{ value: number }>;
+  label?: string;
+}
+
+export const EvolutionChart: React.FC<Co2EvolutionChartProps> = ({
+  data,
+  loading,
+  titleSuffix,
+}) => {
+  const ppmValues = data.map((d) => d.ppm);
+
+  // Calcul du Max
+  const max = ppmValues.length > 0 ? Math.max(...ppmValues) : 0;
+
+  // Calcul de la Moyenne
+  const avg =
+    ppmValues.length > 0 ? Math.round(ppmValues.reduce((a, b) => a + b, 0) / ppmValues.length) : 0;
+
+  // Détermine la couleur
+  const getColor = () => {
+    if (max > 1200) return '#f43f5e'; // Rouge
+    if (max > 800) return '#f59e0b'; // Orange
+    return '#10b981'; // Vert
   };
 
-  const chartData = {
-    labels: data.map((d) => d.hour),
-    datasets: [
-      {
-        label: 'CO2 (ppm)',
-        data: data.map((d) => d.ppm),
-        backgroundColor: data.map((d) => {
-          if (d.ppm > 1200) return '#f43f5e';
-          if (d.ppm > 800) return '#f59e0b';
-          return '#10b981';
-        }),
-        borderRadius: 4,
-        barThickness: 'flex' as const,
-        maxBarThickness: 32,
-      },
-    ],
+  const mainColor = getColor();
+
+  // Tooltip personnalisé avec le type corrigé
+  const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white p-3 border border-slate-200 rounded-lg shadow-lg text-xs">
+          <p className="font-bold text-slate-800 mb-1">Qualité de l'air</p>
+          <p className="text-slate-600">
+            Heure : <span className="font-semibold">{label}</span>
+          </p>
+          <p className="text-slate-600">
+            CO₂ : <span className="font-semibold">{payload[0].value} ppm</span>
+          </p>
+        </div>
+      );
+    }
+    return null;
   };
 
   return (
     <div className="rounded-xl bg-white p-6 shadow-sm border border-slate-200 h-full flex flex-col">
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-blue-50 rounded-lg border border-blue-100 text-blue-600">
-            <BarChart2 className="h-5 w-5" />
-          </div>
-          <div>
-            <h2 className="text-lg font-bold text-slate-800">Évolution 24h</h2>
-            {titleSuffix && (
-              <p className="text-xs font-medium text-slate-500 mt-0.5">{titleSuffix}</p>
-            )}
-          </div>
+      {/* En-tête avec Icone et Titre */}
+      <div className="flex items-center gap-3 mb-6">
+        <div
+          className="p-2 rounded-lg border"
+          style={{
+            backgroundColor: `${mainColor}10`,
+            borderColor: `${mainColor}30`,
+          }}
+        >
+          <Wind className="h-5 w-5" style={{ color: mainColor }} />
         </div>
-
-        <div className="flex gap-3 text-xs text-slate-600 font-medium bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
-          <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-500"></span> &lt; 800
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-amber-500"></span> 800-1200
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-rose-500"></span> &gt; 1200
-          </div>
+        <div>
+          <h2 className="text-lg font-bold text-slate-800">Évolution CO₂</h2>
+          <p className="text-xs font-medium text-slate-500">
+            {titleSuffix || '24 dernières heures'}
+          </p>
         </div>
       </div>
 
-      <div className="relative flex-1 w-full min-h-[320px]">
-        {loading ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 backdrop-blur-[1px] z-10 rounded-lg">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-3"></div>
-            <p className="text-sm font-medium text-slate-500">Chargement des données...</p>
+      {/* Résumé des stats (Moyenne + Max) */}
+      {!loading && data.length > 0 && (
+        <div className="mb-6 flex flex-wrap gap-4">
+          <div className="rounded-lg bg-slate-50 px-4 py-2 border border-slate-100">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Moyenne</p>
+            <p className="text-2xl font-bold text-slate-700">
+              {avg} <span className="text-sm font-normal text-slate-400">ppm</span>
+            </p>
           </div>
-        ) : !data || data.length === 0 ? (
+          <div className="rounded-lg bg-slate-50 px-4 py-2 border border-slate-100">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Max</p>
+            <p className="text-2xl font-bold text-slate-700">
+              {max} <span className="text-sm font-normal text-slate-400">ppm</span>
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Zone du Graphique */}
+      <div className="relative flex-1 min-h-[250px] w-full">
+        {loading ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 z-10 rounded-lg backdrop-blur-sm">
+            <Activity className="h-8 w-8 text-slate-300 animate-bounce mb-2" />
+            <p className="text-sm font-medium text-slate-400">Chargement...</p>
+          </div>
+        ) : data.length === 0 ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-50/50 rounded-lg border-2 border-dashed border-slate-200">
-            <BarChart2 className="h-10 w-10 mb-3 text-slate-300" />
+            <Wind className="h-10 w-10 mb-3 text-slate-300" />
             <p className="text-sm font-medium text-slate-400">Aucune donnée récente</p>
           </div>
         ) : (
-          <Bar options={options} data={chartData} />
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="colorCo2" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={mainColor} stopOpacity={0.3} />
+                  <stop offset="95%" stopColor={mainColor} stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+              <XAxis
+                dataKey="hour"
+                tick={{ fontSize: 11, fill: '#64748b' }}
+                axisLine={false}
+                tickLine={false}
+                tickMargin={10}
+              />
+              <YAxis
+                tick={{ fontSize: 11, fill: '#64748b' }}
+                axisLine={false}
+                tickLine={false}
+                domain={[0, (dataMax: number) => Math.max(dataMax + 100, 1000)]}
+                unit=" ppm"
+                width={50}
+              />
+              <Tooltip
+                content={<CustomTooltip />}
+                cursor={{ stroke: '#94a3b8', strokeWidth: 1, strokeDasharray: '4 4' }}
+              />
+              <Area
+                type="monotone"
+                dataKey="ppm"
+                stroke={mainColor}
+                strokeWidth={3}
+                fillOpacity={1}
+                fill="url(#colorCo2)"
+                activeDot={{ r: 6, strokeWidth: 0, fill: mainColor }}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
         )}
       </div>
     </div>
