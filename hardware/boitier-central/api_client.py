@@ -5,8 +5,8 @@ import json_rel
 
 # URL de ton API (Attention: si tu testes en local, localhost ne marchera pas sur le Pico)
 # En prod: "https://ton-domaine.vercel.app/api"
-API_URL = "http://192.168.1.49:8080/api" 
-API_KEY = "sk_owl_p@0UgN7M27k8tnsB7I9zUf4N@gePA5rkJEe2Lfzt%7woP7YhwZrsh^3CK*UOnw!6QN9P%93n*Yf1pYx2@44gvyuO#XLbhYY#H03t3ocPDv@BBWqyJGsZ17gjb1Qk$1Id" # Ta clé OWL_API_KEY définie dans le .env backend
+API_URL = "https://project-owl-api.vercel.app/api/ingest"   # adapte IP/port
+API_KEY = "API_KEY"
 
 def register_hub():
     infos = json_rel.get_infos()
