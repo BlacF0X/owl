@@ -8,8 +8,8 @@ base = json_rel.get_infos()
 WIFI_SSID = base["home_wifi"]["ssid"]
 WIFI_PASSWORD = base["home_wifi"]["psd"]
 
-API_URL = "http://10.229.38.125:8080/api/ingest"   # adapte IP/port
-API_KEY = "sk_owl_p@0UgN7M27k8tnsB7I9zUf4N@gePA5rkJEe2Lfzt%7woP7YhwZrsh^3CK*UOnw!6QN9P%93n*Yf1pYx2@44gvyuO#XLbhYY#H03t3ocPDv@BBWqyJGsZ17gjb1Qk$1Id"
+API_URL = "https://project-owl-api.vercel.app/api/ingest"   # adapte IP/port
+API_KEY = "API_KEY"
 
 def connect_wifi():
     wlan = network.WLAN(network.STA_IF)
