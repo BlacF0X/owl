@@ -28,7 +28,6 @@ describe('TemperatureAlertLog', () => {
   });
 
   it('devrait afficher le titre', async () => {
-    // On doit toujours attendre la fin des effets pour éviter les warnings "act"
     (global.fetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => [] });
     render(<TemperatureAlertLog sensors={mockSensors} />);
 
@@ -95,11 +94,14 @@ describe('TemperatureAlertLog', () => {
   });
 
   it('devrait filtrer par "Trop hautes"', async () => {
+    // ✅ CORRECTION : Utilisation de la date du jour dynamique
+    const todayIso = new Date().toISOString().split('T')[0];
+
     (global.fetch as jest.Mock).mockResolvedValue({
       ok: true,
       json: async () => [
-        { value: 25.5, timestamp: '2025-12-16T10:00:00Z' },
-        { value: 15.0, timestamp: '2025-12-16T11:00:00Z' },
+        { value: 25.5, timestamp: `${todayIso}T10:00:00Z` },
+        { value: 15.0, timestamp: `${todayIso}T11:00:00Z` },
       ],
     });
 
@@ -116,11 +118,14 @@ describe('TemperatureAlertLog', () => {
   });
 
   it('devrait filtrer par "Trop basses"', async () => {
+    // ✅ CORRECTION : Utilisation de la date du jour dynamique
+    const todayIso = new Date().toISOString().split('T')[0];
+
     (global.fetch as jest.Mock).mockResolvedValue({
       ok: true,
       json: async () => [
-        { value: 25.5, timestamp: '2025-12-16T10:00:00Z' },
-        { value: 15.0, timestamp: '2025-12-16T11:00:00Z' },
+        { value: 25.5, timestamp: `${todayIso}T10:00:00Z` },
+        { value: 15.0, timestamp: `${todayIso}T11:00:00Z` },
       ],
     });
 
